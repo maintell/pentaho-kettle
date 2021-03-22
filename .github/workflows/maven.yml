@@ -1,0 +1,42 @@
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Build with Maven
+      run: mvn clean install -Dmaven.test.skip=true      
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.2
+      with:    
+        path: ${{ github.workspace }}/assemblies/**/*
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+         tag_name: kettle-auto
+         release_name: kettle-auto
+         body: |
+            kettle-auto
+         draft: false
+         prerelease: true
