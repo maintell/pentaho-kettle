@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -26,12 +26,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.stubbing.Answer;
+import org.pentaho.di.core.Const;
+import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.variables.VariableSpace;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -70,6 +74,46 @@ public class FileInputListTest {
     assertEquals( 2, result.length );
     assertEquals( sFileA, result[ 0 ] );
     assertEquals( sFileB, result[ 1 ] );
+  }
+
+  @Test
+  public void testSpecialCharsInFileNamesDefaultBehavior() throws IOException, KettleException {
+    String fileNameWithSpaces = "file name with spaces";
+    tempFolder.newFile( fileNameWithSpaces );
+
+    VariableSpace spaceMock = mock( VariableSpace.class );
+    when( spaceMock.environmentSubstitute( any( String[].class ) ) ).thenAnswer(
+      (Answer<String[]>) invocationOnMock -> (String[]) invocationOnMock.getArguments()[ 0 ] );
+
+    String[] folderNameList = { tempFolder.getRoot().getPath() };
+    String[] emptyStringArray = { "" };
+
+    boolean[] fileRequiredList = { true };
+    String[] paths = FileInputList
+      .createFilePathList( spaceMock, folderNameList, emptyStringArray, emptyStringArray, emptyStringArray,
+        fileRequiredList );
+    assertTrue( "File with spaces not found", paths[ 0 ].endsWith( fileNameWithSpaces ) );
+  }
+
+  @Test
+  public void testSpecialCharsInFileNamesEscaped() throws IOException, KettleException {
+    System.setProperty( Const.KETTLE_RETURN_ESCAPED_URI_STRINGS, "Y" );
+    String fileNameWithSpaces = "file name with spaces";
+    tempFolder.newFile( fileNameWithSpaces );
+
+    VariableSpace spaceMock = mock( VariableSpace.class );
+    when( spaceMock.environmentSubstitute( any( String[].class ) ) ).thenAnswer(
+      (Answer<String[]>) invocationOnMock -> (String[]) invocationOnMock.getArguments()[ 0 ] );
+
+    String[] folderNameList = { tempFolder.getRoot().getPath() };
+    String[] emptyStringArray = { "" };
+
+    boolean[] fileRequiredList = { true };
+    String[] paths = FileInputList
+      .createFilePathList( spaceMock, folderNameList, emptyStringArray, emptyStringArray, emptyStringArray,
+        fileRequiredList );
+    assertFalse( "File with spaces not encoded", paths[ 0 ].endsWith( fileNameWithSpaces ) );
+    System.setProperty( Const.KETTLE_RETURN_ESCAPED_URI_STRINGS, "N" );
   }
 
   @Test

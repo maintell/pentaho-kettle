@@ -2,7 +2,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -23,6 +23,8 @@
 package org.pentaho.di.job.entries.job;
 
 import org.apache.commons.vfs2.FileObject;
+import org.pentaho.di.base.IMetaFileLoader;
+import org.pentaho.di.base.MetaFileLoaderImpl;
 import org.pentaho.di.cluster.SlaveServer;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
@@ -45,7 +47,6 @@ import org.pentaho.di.core.parameters.DuplicateParamException;
 import org.pentaho.di.core.parameters.NamedParams;
 import org.pentaho.di.core.parameters.NamedParamsDefault;
 import org.pentaho.di.core.util.CurrentDirectoryResolver;
-import org.pentaho.di.core.util.StringUtil;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
@@ -730,8 +731,7 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
       List<RowMetaAndData> rows = new ArrayList<RowMetaAndData>( result.getRows() );
 
       while ( ( first && !execPerRow )
-        || ( execPerRow && rows != null && iteration <= rows.size() && result.getNrErrors() == 0 ) ) {
-        // PDI-18776: '<' was changed to '<=' to make sure we iterate once in case Execute Every Input Row checkbox is checked
+        || ( execPerRow && rows != null && iteration < rows.size() && result.getNrErrors() == 0 ) ) {
 
         first = false;
         // Clear the result rows of the result
@@ -957,6 +957,7 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
           job.setInternalKettleVariables( this );
           job.copyParametersFrom( jobMeta );
           job.setInteractive( parentJob.isInteractive() );
+          job.setGatheringMetrics( parentJob.isGatheringMetrics() );
           if ( job.isInteractive() ) {
             job.getJobEntryListeners().addAll( parentJob.getJobEntryListeners() );
           }
@@ -1380,6 +1381,7 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
    */
   @Deprecated
   public JobMeta getJobMeta( Repository rep, VariableSpace space ) throws KettleException {
+    parentJobMeta.getMetaFileCache( ); //Get the cache from the parent or create it
     if ( rep != null ) {
       return getJobMeta( rep, rep.getMetaStore(), space );
     } else {
@@ -1410,51 +1412,9 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
   }
 
   public JobMeta getJobMeta( Repository rep, IMetaStore metaStore, VariableSpace space ) throws KettleException {
-    JobMeta jobMeta = null;
     try {
-      CurrentDirectoryResolver r = new CurrentDirectoryResolver();
-      VariableSpace tmpSpace = r.resolveCurrentDirectory( specificationMethod, space, rep, parentJob, getFilename() );
-
-      switch ( specificationMethod ) {
-        case FILENAME:
-          String realFilename = tmpSpace.environmentSubstitute( getFilename() );
-
-          try {
-            jobMeta = new JobMeta( tmpSpace, realFilename, rep, metaStore, null );
-          } catch ( KettleException e ) {
-            // try to load from repository, this job may have been developed locally and later uploaded to the repository
-            jobMeta = getJobMetaFromRepository( rep, r, realFilename, tmpSpace );
-          }
-          break;
-        case REPOSITORY_BY_NAME:
-          String realDirectory = tmpSpace.environmentSubstitute( getDirectory() != null ? getDirectory() : "" );
-          String realJobName = tmpSpace.environmentSubstitute( getJobName() );
-
-          String transPath = StringUtil.trimEnd( realDirectory, '/' ) + RepositoryFile.SEPARATOR + StringUtil.trimStart( realJobName, '/' );
-
-          if ( transPath.startsWith( "file://" ) || transPath.startsWith( "zip:file://" ) || transPath.startsWith( "hdfs://" ) ) {
-            if ( !transPath.endsWith( RepositoryObjectType.JOB.getExtension() ) ) {
-              transPath = transPath + RepositoryObjectType.JOB.getExtension();
-            }
-            jobMeta = new JobMeta( tmpSpace, transPath, rep, metaStore, null );
-          } else {
-            jobMeta = getJobMetaFromRepository( rep, r, transPath, tmpSpace );
-          }
-          break;
-        case REPOSITORY_BY_REFERENCE:
-          if ( rep != null ) {
-            // Load the last version...
-            //
-            jobMeta = rep.loadJob( jobObjectId, null );
-            break;
-          } else {
-            throw new KettleException(
-              "Could not execute job specified in a repository since we're not connected to one" );
-          }
-        default:
-          throw new KettleException( "The specified object location specification method '"
-            + specificationMethod + "' is not yet supported in this job entry." );
-      }
+      IMetaFileLoader<JobMeta> metaFileLoader = new MetaFileLoaderImpl<>( this, specificationMethod );
+      JobMeta jobMeta = metaFileLoader.getMetaForEntry( rep, metaStore, space );
 
       if ( jobMeta != null ) {
         jobMeta.setRepository( rep );

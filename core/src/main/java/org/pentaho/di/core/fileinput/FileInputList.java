@@ -22,6 +22,20 @@
 
 package org.pentaho.di.core.fileinput;
 
+import org.apache.commons.vfs2.AllFileSelector;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSelectInfo;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileType;
+import org.apache.commons.vfs2.provider.compressed.CompressedFileFileObject;
+import org.apache.commons.vfs2.provider.local.LocalFile;
+import org.pentaho.di.core.Const;
+import org.pentaho.di.core.logging.LogChannel;
+import org.pentaho.di.core.logging.LogChannelInterface;
+import org.pentaho.di.core.util.Utils;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.vfs.KettleVFS;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,19 +47,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import org.apache.commons.vfs2.AllFileSelector;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSelectInfo;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileType;
-import org.apache.commons.vfs2.provider.compressed.CompressedFileFileObject;
-import org.pentaho.di.core.Const;
-import org.pentaho.di.core.util.Utils;
-import org.pentaho.di.core.logging.LogChannel;
-import org.pentaho.di.core.logging.LogChannelInterface;
-import org.pentaho.di.core.variables.VariableSpace;
-import org.pentaho.di.core.vfs.KettleVFS;
 
 public class FileInputList {
   private List<FileObject> files = new ArrayList<>();
@@ -100,11 +101,12 @@ public class FileInputList {
     StringBuilder buffer = new StringBuilder();
     for ( Iterator<FileObject> iter = nonExistantFiles.iterator(); iter.hasNext(); ) {
       FileObject file = iter.next();
-      buffer.append( file.getName().getURI() );
+      buffer.append( Const.optionallyDecodeUriString( file.getName().getURI() ) );
       buffer.append( Const.CR );
     }
     return buffer.toString();
   }
+
 
   private static boolean[] includeSubdirsFalse( int iLength ) {
     boolean[] includeSubdirs = new boolean[ iLength ];
@@ -134,7 +136,7 @@ public class FileInputList {
         .getFiles();
     String[] filePaths = new String[ fileList.size() ];
     for ( int i = 0; i < filePaths.length; i++ ) {
-      filePaths[ i ] = fileList.get( i ).getName().getURI();
+      filePaths[ i ] = Const.optionallyDecodeUriString( fileList.get( i ).getName().getURI() );
     }
     return filePaths;
   }
@@ -324,6 +326,10 @@ public class FileInputList {
 
             private boolean hasAccess( FileObject fileObject ) {
               try {
+                if ( fileObject instanceof LocalFile ) {
+                  // fileObject.isReadable wrongly returns true in windows file system even if not readable
+                  return Files.isReadable( Paths.get( ( new File( fileObject.getName().getPath() ) ).toURI() ) );
+                }
                 return fileObject.isReadable();
               } catch ( FileSystemException e ) {
                 // Something went wrong... well, let's assume "no access"!
@@ -403,7 +409,7 @@ public class FileInputList {
   public String[] getUrlStrings() {
     String[] fileStrings = new String[ files.size() ];
     for ( int i = 0; i < fileStrings.length; i++ ) {
-      fileStrings[ i ] = files.get( i ).getPublicURIString();
+      fileStrings[ i ] = Const.optionallyDecodeUriString( files.get( i ).getPublicURIString() );
     }
     return fileStrings;
   }

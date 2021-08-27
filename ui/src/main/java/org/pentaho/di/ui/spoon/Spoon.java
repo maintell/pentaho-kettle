@@ -1181,6 +1181,21 @@ public class Spoon extends ApplicationWindow implements AddUndoPositionInterface
     }
   }
 
+
+  /**
+   * PDI-18997 - clear specific repository directory when connect and or disconnect from server
+   */
+  public void clearRepositoryDirectory() {
+    for ( TabMapEntry entry : delegates.tabs.getTabs() ) {
+      Object managedObject = entry.getObject().getManagedObject();
+      if ( managedObject instanceof AbstractMeta ) {
+        AbstractMeta abstractMeta = (AbstractMeta) managedObject;
+        abstractMeta.setRepositoryDirectory( new RepositoryDirectory() );
+        abstractMeta.setFilename( null );
+      }
+    }
+  }
+
   /**
    * Search the transformation meta-data.
    *
@@ -1846,7 +1861,7 @@ public class Spoon extends ApplicationWindow implements AddUndoPositionInterface
 
       final String lastFileId = Integer.toString( i );
 
-      Action action = new Action( "open-last-file-" + ( i + 1 ), Action.AS_DROP_DOWN_MENU ) {
+      Action action = new Action( "open-last-file-" + ( i + 1 ), Action.AS_PUSH_BUTTON ) {
         @Override
         public void run() {
           lastFileSelect( lastFileId );
@@ -4277,6 +4292,7 @@ public class Spoon extends ApplicationWindow implements AddUndoPositionInterface
         SpoonPluginManager.getInstance().notifyLifecycleListeners( SpoonLifeCycleEvent.REPOSITORY_DISCONNECTED );
         enableMenus();
         updateTreeForActiveAbstractMetas();
+        clearRepositoryDirectory();
       }
     }
   }

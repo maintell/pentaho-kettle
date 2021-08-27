@@ -3,7 +3,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -26,6 +26,8 @@ package org.pentaho.di.core;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.provider.UriParser;
 import org.apache.http.conn.util.InetAddressUtils;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -1199,6 +1201,15 @@ public class Const {
   // See PDI-18810 for details
   public static final String KETTLE_COMPATIBILITY_MDI_INJECTED_FILE_ALWAYS_IN_FILESYSTEM = "KETTLE_COMPATIBILITY_MDI_INJECTED_FILE_ALWAYS_IN_FILESYSTEM";
 
+  // See PDI-19138 for details
+  public static final String KETTLE_JSON_INPUT_INCLUDE_NULLS = "KETTLE_JSON_INPUT_INCLUDE_NULLS";
+
+  /**
+   * This property when set to Y force the same output file even when splits is required.
+   * See PDI-19064 for details
+   */
+  public static final String KETTLE_JSON_OUTPUT_FORCE_SAME_OUTPUT_FILE = "KETTLE_JSON_OUTPUT_FORCE_SAME_OUTPUT_FILE";
+
   /**
    * The XML file that contains the list of native import rules
    */
@@ -1486,6 +1497,104 @@ public class Const {
    */
   public static final String KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE_DEFAULT =
     KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE_LEGACY;
+
+  /**
+   * This environment variable will be used to determine whether file URI strings returned from input steps are returned
+   * encoded (spaces and other special characters escaped) or decoded (default legacy behavior).
+   */
+  public static final String KETTLE_RETURN_ESCAPED_URI_STRINGS = "KETTLE_RETURN_ESCAPED_URI_STRINGS";
+
+  /**
+   * <p>This environment variable is used to define how which calculation method is to be used by the 'Add a Checksum'
+   * step.</p>
+   * <p>Three options exist:</p>
+   * <ul>
+   *   <li>{@link #KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES}: calculate Checksum based on Byte representation of
+   *   fields; as in versions since 8.1</li>
+   *   <li>{@link #KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS}: calculate Checksum based on Pentaho String
+   *   representation of fields (applying format masks); as in versions until 7.1</li>
+   *   <li>{@link #KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS}: calculate Checksum based on Native String
+   *   representation of fields; as in version 8.0</li>
+   * </ul>
+   * <p>The default is {@value #KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT}.</p>
+   *
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT
+   */
+  public static final String KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD = "KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD";
+
+  /**
+   * <p>The value to use for setting the {@link #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD}, so that Checksum is
+   * calculated based on Byte representation of fields. Calculation method used by version 8.1 and after.</p>
+   *
+   * @see #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT
+   */
+  public static final String KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES = "BYTES";
+
+  /**
+   * <p>The value to use for setting the {@link #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD}, so that Checksum is
+   * calculated based on Pentaho String representation of fields (applying format masks). Calculation method used by
+   * version 7.1 and prior versions.</p>
+   *
+   * @see #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT
+   */
+  public static final String KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS = "PENTAHO_STRINGS";
+
+  /**
+   * <p>The value to use for setting the {@link #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD}, so that Checksum is
+   * calculated based on Native String representation of fields. Calculation method used by version 8.0.</p>
+   *
+   * @see #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT
+   */
+  public static final String KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS = "NATIVE_STRINGS";
+
+  /**
+   * <p>The default value for the {@link #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD}.</p>
+   *
+   * @see #KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_PENTAHO_STRINGS
+   * @see #KETTLE_CHECKSUM_EVALUATION_METHOD_NATIVE_STRINGS
+   */
+  public static final String KETTLE_CHECKSUM_EVALUATION_METHOD_DEFAULT = KETTLE_CHECKSUM_EVALUATION_METHOD_BYTES;
+
+  /**
+   * <p>While one assumes that a day has 24 hours, due to daylight savings time settings, it may have 23 hours (the day
+   * Summer time goes into effect) or 25 hours (Winter time).</p>
+   * <p>Imagine Summer time: when clocks reach 1:00, it goes forward 1 hour to 2:00</p>
+   * <p>This means that, when adding 2 hours to 0:30, one gets 3:30</p>
+   * <p>By setting this environment variable to {@code "N"}, DateDiff performs calculations based on local time; as so,
+   * the difference between these two values (3:30 and 0:30) will be 3 hours difference.</p>
+   * <p>Setting this environment variable to {@code "Y"}, DateDiff performs calculations based on UTC time; as so, the
+   * difference between these two values (3:30 and 0:30) will be 2 hours difference.</p>
+   * <p>The default is {@value #KETTLE_DATEDIFF_DST_AWARE_DEFAULT}.</p>
+   *
+   * @see #KETTLE_DATEDIFF_DST_AWARE_DEFAULT
+   */
+  public static final String KETTLE_DATEDIFF_DST_AWARE = "KETTLE_DATEDIFF_DST_AWARE";
+
+  /**
+   * <p>The default value for the {@link #KETTLE_DATEDIFF_DST_AWARE}.</p>
+   *
+   * @see #KETTLE_DATEDIFF_DST_AWARE
+   */
+  public static final String KETTLE_DATEDIFF_DST_AWARE_DEFAULT = "N";
+
+  /**
+   * If true, kettle check for new site files to update in the named cluster every time a named cluster is resolved
+   */
+  public static final String KETTLE_AUTO_UPDATE_SITE_FILE = "KETTLE_AUTO_UPDATE_SITE_FILE";
 
   /**
    * rounds double f to any number of places after decimal point Does arithmetic using BigDecimal class to avoid integer
@@ -3794,6 +3903,28 @@ public class Const {
       return content;
     }
     return StringEscapeUtils.escapeXml( content );
+  }
+
+
+  /**
+   * Convert a string containing a URI with escaped special characters and return the decoded version depending on
+   * system property settings.
+   * @param uri
+   * @return decoded URI string
+   */
+  public static String optionallyDecodeUriString( String uri ) {
+    boolean decodeUri = !System.getProperty( KETTLE_RETURN_ESCAPED_URI_STRINGS, "N" )
+      .equalsIgnoreCase( "Y" );
+    if ( decodeUri ) {
+      try {
+        return UriParser.decode( uri );
+      } catch ( FileSystemException e ) {
+        // return the raw string if the URI is malformed (bad escape sequence)
+        return uri;
+      }
+    } else {
+      return uri;
+    }
   }
 
   /**

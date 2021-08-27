@@ -3,7 +3,7 @@
  *
  * Pentaho Data Integration
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
  *
  *******************************************************************************
  *
@@ -56,6 +56,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
+import org.pentaho.di.base.IMetaFileCache;
 import org.pentaho.di.cluster.SlaveServer;
 import org.pentaho.di.core.BlockingBatchingRowSet;
 import org.pentaho.di.core.BlockingRowSet;
@@ -631,6 +632,7 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
 
     this.log = new LogChannel( this, parent );
     this.logLevel = log.getLogLevel();
+    this.log.setHooks( this );
 
     if ( this.containerObjectId == null ) {
       this.containerObjectId = log.getContainerObjectId();
@@ -724,7 +726,8 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
         transMeta = new TransMeta( filename, false );
       }
 
-      this.log = LogChannel.GENERAL;
+      this.log = new LogChannel( LogChannel.GENERAL_SUBJECT, false, false );
+      this.log.setHooks( this );
 
       transMeta.initializeVariablesFrom( parent );
       initializeVariablesFrom( parent );
@@ -778,6 +781,13 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
     //
     if ( arguments != null ) {
       setArguments( arguments );
+    }
+
+    if ( parentTrans != null ) {
+      IMetaFileCache.setCacheInstance( transMeta, IMetaFileCache.initialize( parentTrans, log ) );
+    } else {
+      //If there is no parent, one of these still needs to be called to instantiate a new cache
+      IMetaFileCache.setCacheInstance( transMeta, IMetaFileCache.initialize( parentJob, log ) );
     }
 
     activateParameters();
@@ -1431,6 +1441,12 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
 
         try {
           shutdownHeartbeat( trans != null ? trans.heartbeat : null );
+          if ( trans != null && transMeta.getParent() == null && trans.parentJob == null && trans.parentTrans == null ) {
+            if ( log.isDetailed() && transMeta.getMetaFileCache() != null ) {
+              transMeta.getMetaFileCache().logCacheSummary( log );
+            }
+            transMeta.setMetaFileCache( null );
+          }
 
           ExtensionPointHandler.callExtensionPoint( log, KettleExtensionPoint.TransformationFinish.id, trans );
         } catch ( KettleException e ) {
@@ -5770,6 +5786,19 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
     }
 
     return Const.HEARTBEAT_PERIODIC_INTERVAL_IN_SECS;
+  }
+
+  @Override public void callBeforeLog() {
+    if ( parent != null ) {
+      parent.callBeforeLog();
+    }
+  }
+
+  @Override public void callAfterLog() {
+    if ( parent != null ) {
+      parent.callAfterLog();
+    }
+    this.logDate = new Date();
   }
 
 }

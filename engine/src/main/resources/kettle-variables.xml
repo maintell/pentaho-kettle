@@ -589,5 +589,21 @@
     <default-value>Y</default-value>
   </kettle-variable>
 
-</kettle-variables>
+  <kettle-variable>
+    <description>This environment variable is used to define which calculation method is to be used by the 'Add a Checksum' step:
+      "BYTES" (default) - based on Byte representation of fields; as in versions since 8.1
+      "PENTAHO_STRINGS" - based on Pentaho String representation of fields (applying format masks); as in versions until 7.1
+      "NATIVE_STRINGS" - based on Native String representation of fields; as in version 8.0</description>
+    <variable>KETTLE_DEFAULT_CHECKSUM_EVALUATION_METHOD</variable>
+    <default-value>BYTES</default-value>
+  </kettle-variable>
 
+  <kettle-variable>
+    <description>This environment variable is used to define how DateDiff ('Modified JavaScript value' step) performs regarding DST (Daylight Savings Time):
+      "N" (default) - uses local time, meaning it assumes a continuum between the two given dates ignoring any time-hop that may had occurred between them
+      "Y" - uses UTC, meaning it will take into acount any time-hop that may had occurred between the two given dates</description>
+    <variable>KETTLE_DATEDIFF_DST_AWARE</variable>
+    <default-value>N</default-value>
+  </kettle-variable>
+
+</kettle-variables>
