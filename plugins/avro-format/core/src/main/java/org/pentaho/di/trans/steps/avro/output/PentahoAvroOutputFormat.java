@@ -1,31 +1,24 @@
-/*******************************************************************************
+/*! ******************************************************************************
  *
- * Pentaho Big Data
+ * Pentaho
  *
- * Copyright (C) 2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.avro.output;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.pentaho.di.core.row.value.ValueMetaBase;
 import org.pentaho.di.trans.steps.avro.AvroSpec;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -39,8 +32,13 @@ import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.vfs.KettleVFS;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.FileAlreadyExistsException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -217,8 +215,10 @@ public class PentahoAvroOutputFormat implements IPentahoAvroOutputFormat {
               fieldNode.set( AvroSpec.TYPE_NODE, typeNode );
             }
           }
-          if ( f.getDefaultValue() != null ) {
-            fieldNode.put( AvroSpec.DEFAULT_NODE, f.getDefaultValue() );
+          if ( f.getDefaultValue() != null && StringUtils.isNotEmpty( f.getDefaultValue() ) ) {
+            //default value has to be converted to required JsonNode type for further validation in Schema.class (org.apache.avro.Schema.java)
+            JsonNode defaultObject = mapper.convertValue( mapDefaultValuesToDataTypes( f.getDefaultValue(), type ), JsonNode.class );
+            fieldNode.putIfAbsent( AvroSpec.DEFAULT_NODE, defaultObject );
           }
           fieldNodes.add( fieldNode );
         }
@@ -241,5 +241,107 @@ public class PentahoAvroOutputFormat implements IPentahoAvroOutputFormat {
   public void setVariableSpace( VariableSpace variableSpace ) {
     this.variableSpace = variableSpace;
   }
+  /**
+   * Converts the provided default value(String.class) to corresponding data type as provided by 'type' parameter.
+   * <p>
+   * @param defaultValue The default value provided.
+   * @param type The AvroSpec data type.
+   * @return The converted data type object.
+   */
+  private Object mapDefaultValuesToDataTypes( String defaultValue, AvroSpec.DataType type ) {
+    try {
+      switch ( type ) {
+        case BOOLEAN:
+          return Boolean.parseBoolean( defaultValue );
+        case DATE:
+          return getDateTypeForDefaultValue( defaultValue );
+        case FLOAT:
+          return Float.parseFloat( defaultValue );
+        case DOUBLE:
+          return Double.parseDouble( defaultValue );
+        case LONG:
+        case INTEGER:
+          return Long.parseLong( defaultValue );
+        case DECIMAL:
+          return getDecimalTypeForDefaultValue( defaultValue );
+        case STRING:
+          return String.valueOf( defaultValue );
+        case BYTES:
+          return defaultValue.getBytes();
+        case TIMESTAMP_MILLIS:
+          return getTimeStampTypeForDefaultValue( defaultValue );
+        default:
+          return defaultValue;
+      }
+    } catch ( NumberFormatException | ParseException exception ) {
+      throw new IllegalArgumentException( "Not a valid default value " + defaultValue + " for data type " + type + " - " + exception.getMessage());
+    }
 
+  }
+
+  /**
+   * Converts the default value as Big decimal value and return bytes.
+   * <p>
+   * @param defaultValue The default value provided.
+   * @return The byte array of big decimal value.
+   */
+  private byte[] getDecimalTypeForDefaultValue( String defaultValue ) {
+    BigDecimal bigDecimalValue = new BigDecimal( defaultValue );
+    return bigDecimalValue.unscaledValue().toByteArray();
+  }
+
+  /**
+   * Converts the default value to Date.
+   *
+   * <P>
+   *  ValueMetaBase.DEFAULT_DATE_PARSE_MASK is the default date parser used for
+   *  Avro To PDI and vice-versa conversions.
+   * @see PentahoAvroRecordWriter#createAvroRecord
+   * @see org.pentaho.di.trans.steps.avro.AvroToPdiConverter #convertToPentahoType(int, String, IAvroInputField)
+   * </P>
+   *
+   * <p>
+   * @param defaultValue The default value provided.
+   * @return The integer value of converted default value to Date.
+   */
+  private int getDateTypeForDefaultValue( String defaultValue ) throws ParseException {
+    Date defaultDate;
+    DateFormat dateFormat = new SimpleDateFormat( ValueMetaBase.DEFAULT_DATE_PARSE_MASK );
+
+    try {
+      defaultDate = dateFormat.parse( defaultValue );
+      LocalDate localDate = defaultDate.toInstant()
+              .atZone( ZoneId.systemDefault() )
+              .toLocalDate();
+      return (int) localDate.toEpochDay();
+    } catch ( ParseException pe ) {
+      throw new ParseException( "The default value " + defaultValue + " should be of format : " + ValueMetaBase.DEFAULT_DATE_PARSE_MASK, pe.getErrorOffset() );
+    }
+
+  }
+
+  /**
+   * Converts the default value to TimeStamp(in Milliseconds).
+   *
+   * <P>
+   *  ValueMetaBase.DEFAULT_TIMESTAMP_PARSE_MASK is the default timestamp parser used for
+   *  Avro To PDI and vice-versa conversions.
+   * @see PentahoAvroRecordWriter#createAvroRecord
+   * </P>
+   *
+   * <p>
+   * @param defaultValue The default value provided.
+   * @return The long value of converted default value to Date and Time.
+   */
+  private long getTimeStampTypeForDefaultValue( String defaultValue ) throws ParseException {
+    Date defaultTimeStamp;
+    DateFormat dateFormat = new SimpleDateFormat( ValueMetaBase.DEFAULT_TIMESTAMP_PARSE_MASK );
+
+    try {
+      defaultTimeStamp = dateFormat.parse( defaultValue );
+      return defaultTimeStamp.getTime();
+    } catch ( ParseException pe ) {
+      throw new ParseException( "The default value " + defaultValue + " should be of format : " + ValueMetaBase.DEFAULT_TIMESTAMP_PARSE_MASK, pe.getErrorOffset() );
+    }
+  }
 }

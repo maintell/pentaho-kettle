@@ -1,19 +1,15 @@
-/*!
- * Copyright 2010 - 2019 Hitachi Vantara.  All rights reserved.
+/*! ******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Pentaho
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 package org.pentaho.di.repository.pur;
 
 import java.io.Serializable;
@@ -72,12 +68,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
@@ -136,11 +132,13 @@ public class PurRepositoryUnitTest extends RepositoryTestLazySupport {
     when( mockRootFolder.getId() ).thenReturn( "/" );
     when( mockRootFolder.getPath() ).thenReturn( "/" );
     when( mockRepo.getFile( "/" ) ).thenReturn( mockRootFolder );
+    RepositoryFileTree mockRepositoryFileTree = mock( RepositoryFileTree.class );
+    when( mockRepositoryFileTree.getFile() ).thenReturn( mockRootFolder );
+    when( mockRepo.getTree( "/", -1, null, true ) ).thenReturn( mockRepositoryFileTree );
     purRepository.connect( "TEST_USER", "TEST_PASSWORD" );
     purRepository.getObjectInformation( objectId, repositoryObjectType );
     verify( mockRepo ).getAcl( testFileId );
   }
-
 
   @Test
   public void testRootIsNotVisible() throws KettleException {
@@ -199,7 +197,7 @@ public class PurRepositoryUnitTest extends RepositoryTestLazySupport {
     when( mockRootFolder.getPath() ).thenReturn( "/" );
 
     List<RepositoryFile> rootChildren = new ArrayList<>( Collections.singletonList( mockFile ) );
-    when( mockRepo.getChildren( argThat( IsInstanceOf.<RepositoryRequest>instanceOf( RepositoryRequest.class ) ) ) )
+    when( mockRepo.getChildren( org.mockito.hamcrest.MockitoHamcrest.argThat( IsInstanceOf.<RepositoryRequest>instanceOf( RepositoryRequest.class ) ) ) )
       .thenReturn( rootChildren );
     // for Lazy Repo
     when( mockRepo.getFile( "/" ) ).thenReturn( mockRootFolder );
@@ -253,7 +251,7 @@ public class PurRepositoryUnitTest extends RepositoryTestLazySupport {
     when( mockRootFolder.getPath() ).thenReturn( "/" );
 
     List<RepositoryFile> rootChildren = new ArrayList<>( Arrays.asList( mockEtcFolder, mockFolderVisible ) );
-    when( mockRepo.getChildren( argThat( IsInstanceOf.<RepositoryRequest>instanceOf( RepositoryRequest.class ) ) ) )
+    when( mockRepo.getChildren( org.mockito.hamcrest.MockitoHamcrest.argThat( IsInstanceOf.<RepositoryRequest>instanceOf( RepositoryRequest.class ) ) ) )
       .thenReturn( rootChildren );
     // for Lazy Repo
     when( mockRepo.getFile( "/" ) ).thenReturn( mockRootFolder );
@@ -405,9 +403,14 @@ public class PurRepositoryUnitTest extends RepositoryTestLazySupport {
 
     when( mockRepo.getTree( anyString(), anyInt(), anyString(), anyBoolean() ) ).thenReturn( mockRepositoryTree );
     when( mockRepo.getTree( any( RepositoryRequest.class ) ) ).thenReturn( mockRepositoryTree );
-    when( mockRepo.getTree( argThat( new ArgumentMatcher<RepositoryRequest>() {
+
+    when( mockRepo.getTree( argThat( (ArgumentMatcher<RepositoryRequest>) new ArgumentMatcher() {
       @Override public boolean matches( Object argument ) {
         return ( (RepositoryRequest) argument ).getPath().equals( "/public" );
+      }
+
+      @Override public Class<?> type() {
+        return RepositoryRequest.class;
       }
     } ) ) ).thenReturn( publicFolderTree );
     when( mockRepositoryTree.getFile() ).thenReturn( mockRootFolder );
@@ -419,6 +422,7 @@ public class PurRepositoryUnitTest extends RepositoryTestLazySupport {
     when( mockRepo.getFile( "/" ) ).thenReturn( mockRootFolder );
     when( mockRepo.getFile( "/public" ) ).thenReturn( publicFolder );
     purRepository.connect( "TEST_USER", "TEST_PASSWORD" );
+    when( mockRepo.getTree( "/", -1, null, true ) ).thenReturn( mockRepositoryTree );
     List<RepositoryElementMetaInterface> repositoryObjects =
       purRepository.findDirectory( "/public" ).getRepositoryObjects();
     assertThat( repositoryObjects.size(), is( 2 ) );

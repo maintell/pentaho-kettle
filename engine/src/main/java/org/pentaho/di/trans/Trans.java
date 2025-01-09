@@ -1,25 +1,16 @@
 //CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans;
 
@@ -142,6 +133,7 @@ import org.pentaho.di.trans.step.StepMetaDataCombi;
 import org.pentaho.di.trans.step.StepPartitioningMeta;
 import org.pentaho.di.trans.steps.mappinginput.MappingInput;
 import org.pentaho.di.trans.steps.mappingoutput.MappingOutput;
+import org.pentaho.di.www.CarteSingleton;
 import org.pentaho.di.www.PrepareExecutionTransServlet;
 import org.pentaho.di.www.RegisterPackageServlet;
 import org.pentaho.di.www.RegisterTransServlet;
@@ -150,7 +142,6 @@ import org.pentaho.di.www.SocketRepository;
 import org.pentaho.di.www.StartExecutionTransServlet;
 import org.pentaho.di.www.WebResult;
 import org.pentaho.metastore.api.IMetaStore;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.pentaho.di.trans.Trans.BitMaskStatus.FINISHED;
 import static org.pentaho.di.trans.Trans.BitMaskStatus.RUNNING;
@@ -186,8 +177,6 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
    * The log channel interface.
    */
   protected LogChannelInterface log;
-
-  protected boolean loggingObjectInUse;
 
   /**
    * The log level.
@@ -570,7 +559,6 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
    * Instantiates a new transformation.
    */
   public Trans() {
-    setLoggingObjectInUse(true);
     status = new AtomicInteger();
 
     transListeners = Collections.synchronizedList( new ArrayList<TransListener>() );
@@ -653,15 +641,6 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
         String.valueOf( transMeta.nrTransHops() ) ) );
     }
 
-  }
-
-  @Override
-  public boolean isLoggingObjectInUse() {
-    return loggingObjectInUse;
-  }
-
-  public void setLoggingObjectInUse( boolean inUse ) {
-    loggingObjectInUse = inUse;
   }
 
   /**
@@ -797,7 +776,6 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
 
     log.snap( Metrics.METRIC_TRANSFORMATION_EXECUTION_START );
     log.snap( Metrics.METRIC_TRANSFORMATION_INIT_START );
-
     ExtensionPointHandler.callExtensionPoint( log, KettleExtensionPoint.TransformationPrepareExecution.id, this );
 
     checkCompatibility();
@@ -1386,7 +1364,10 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
           synchronized ( Trans.this ) {
             nrOfFinishedSteps++;
 
-            if ( nrOfFinishedSteps >= steps.size() ) {
+            // This check for isFinished() is a hack to prevent the transformation from finishing more than once.
+            // This only happens running a transformation with an Abort transformation step on a Carte server EE.
+            // Check PDI-20172 for more information.
+            if ( !isFinished() && nrOfFinishedSteps >= steps.size() ) {
               // Set the finished flag
               //
               setFinished( true );
@@ -1641,7 +1622,6 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
    * @throws KettleException if any errors occur during notification
    */
   protected void fireTransFinishedListeners() throws KettleException {
-    setLoggingObjectInUse( false );
     // PDI-5229 sync added
     synchronized ( transListeners ) {
       if ( transListeners.size() == 0 ) {
@@ -5126,6 +5106,9 @@ public class Trans implements VariableSpace, NamedParams, HasLogChannelInterface
    * @return the socket repository
    */
   public SocketRepository getSocketRepository() {
+    if ( socketRepository == null ) {
+      return ( socketRepository = CarteSingleton.getInstance().getSocketRepository() );
+    }
     return socketRepository;
   }
 

@@ -1,30 +1,22 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.ui.database.event;
 
 import java.util.Properties;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import org.pentaho.di.core.database.BaseDatabaseMeta;
 import org.pentaho.di.core.database.DatabaseInterface;
 import org.pentaho.di.core.database.DatabaseMeta;
@@ -32,6 +24,8 @@ import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.plugins.DatabasePluginType;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.plugins.PluginRegistry;
+import org.pentaho.ui.util.Launch;
+import org.pentaho.ui.util.Launch.Status;
 import org.pentaho.ui.xul.XulComponent;
 import org.pentaho.ui.xul.XulDomContainer;
 import org.pentaho.ui.xul.XulException;
@@ -48,8 +42,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -91,6 +86,10 @@ public class DataHandlerTest {
   @Before
   public void setUp() throws Exception {
     dataHandler = new DataHandler();
+    // avoid actually opening browser windows during test
+    Launch noLaunch = mock( Launch.class );
+    when( noLaunch.openURL( anyString() ) ).thenReturn( Status.Success );
+    dataHandler.launch = noLaunch;
     xulDomContainer = mock( XulDomContainer.class );
 
     document = mock( Document.class );
@@ -140,7 +139,6 @@ public class DataHandlerTest {
   @Test
   public void testLoadConnectionData() throws Exception {
 
-
     DatabaseInterface dbInterface = mock( DatabaseInterface.class );
     when( dbInterface.getDefaultDatabasePort() ).thenReturn( 5309 );
     DataHandler.connectionMap.put( "myDb", dbInterface );
@@ -174,12 +172,11 @@ public class DataHandlerTest {
 
   @Test
   public void testLoadAccessDataWithSelectedItem() throws Exception {
-    when( accessBox.getSelectedItem() ).thenReturn( "ODBC" );
 
     DatabaseInterface dbInterface = mock( DatabaseInterface.class );
     DatabaseMeta databaseMeta = mock( DatabaseMeta.class );
     when( dbInterface.getAccessTypeList() ).thenReturn(
-      new int[]{ DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC } );
+      new int[]{ DatabaseMeta.TYPE_ACCESS_NATIVE } );
     when( dbInterface.getDefaultDatabasePort() ).thenReturn( 5309 );
     when( connectionBox.getSelectedItem() ).thenReturn( "myDb" );
     DataHandler.connectionMap.put( "myDb", dbInterface );

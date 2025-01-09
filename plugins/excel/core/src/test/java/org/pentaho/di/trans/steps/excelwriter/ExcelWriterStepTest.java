@@ -1,33 +1,24 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelwriter;
 
-import com.google.common.io.Files;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,16 +41,17 @@ import org.pentaho.di.utils.TestUtils;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.net.URL;
+import java.nio.file.Files;
 import java.util.Date;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -69,22 +61,26 @@ import static org.mockito.Mockito.when;
 
 public class ExcelWriterStepTest {
 
+  public static URL getTemplateTestXlsx() {
+    return ExcelWriterStepTest.class.getResource( "template_test.xlsx" );
+  }
+
+  public static URL getTemplateWithFormattingXlsx() {
+    return ExcelWriterStepTest.class.getResource( "template_with_formatting.xlsx" );
+  }
+
   private static final String SHEET_NAME = "Sheet1";
   private static final String XLS = "xls";
   private static final String DOT_XLS = '.' + XLS;
   private static final String XLSX = "xlsx";
   private static final String DOT_XLSX = '.' + XLSX;
-  private static final String EMPTY_STRING = "";
 
   private Workbook wb;
   private StepMockHelper<ExcelWriterStepMeta, ExcelWriterStepData> mockHelper;
   private ExcelWriterStep step;
 
-  private ExcelWriterStepMeta stepMeta;
   private ExcelWriterStepMeta metaMock;
   private ExcelWriterStepData dataMock;
-
-  private File templateFile;
 
   @Before
   public void setUp() throws Exception {
@@ -97,7 +93,6 @@ public class ExcelWriterStepTest {
     step = spy( new ExcelWriterStep(
       mockHelper.stepMeta, mockHelper.stepDataInterface, 0, mockHelper.transMeta, mockHelper.trans ) );
 
-    stepMeta = new ExcelWriterStepMeta();
     metaMock = mock( ExcelWriterStepMeta.class );
     dataMock = mock( ExcelWriterStepData.class );
   }
@@ -135,7 +130,7 @@ public class ExcelWriterStepTest {
   @Test
   public void testPrepareNextOutputFile() throws Exception {
     assertTrue( step.init( metaMock, dataMock ) );
-    File outDir = Files.createTempDir();
+    File outDir = Files.createTempDirectory( "" ).toFile();
     String testFileOut = outDir.getAbsolutePath() + File.separator + "test.xlsx";
     when( step.buildFilename( 0 ) ).thenReturn( testFileOut );
     when( metaMock.isTemplateEnabled() ).thenReturn( true );
@@ -143,7 +138,7 @@ public class ExcelWriterStepTest {
     when( metaMock.isHeaderEnabled() ).thenReturn( true );
     when( metaMock.getExtension() ).thenReturn( XLSX );
     dataMock.createNewFile = true;
-    dataMock.realTemplateFileName = getClass().getResource( "template_test.xlsx" ).getFile();
+    dataMock.realTemplateFileName = getTemplateTestXlsx().getFile();
     dataMock.realSheetname = SHEET_NAME;
     step.prepareNextOutputFile();
   }
@@ -151,13 +146,13 @@ public class ExcelWriterStepTest {
   @Test
   public void testWriteUsingTemplateWithFormatting() throws Exception {
     assertTrue( step.init( metaMock, dataMock ) );
-    String path = Files.createTempDir().getAbsolutePath() + File.separator + "formatted.xlsx";
+    String path = Files.createTempDirectory( "" ).toFile().getAbsolutePath() + File.separator + "formatted.xlsx";
 
     dataMock.fieldnrs = new int[] { 0 };
     dataMock.linkfieldnrs = new int[] { -1 };
     dataMock.commentfieldnrs = new int[] { -1 };
     dataMock.createNewFile = true;
-    dataMock.realTemplateFileName = getClass().getResource( "template_with_formatting.xlsx" ).getFile();
+    dataMock.realTemplateFileName = getTemplateWithFormattingXlsx().getFile();
     dataMock.realSheetname = "TicketData";
     dataMock.inputRowMeta = mock( RowMetaInterface.class );
 
@@ -165,7 +160,7 @@ public class ExcelWriterStepTest {
     ValueMetaInterface vmi = mock( ValueMetaInteger.class );
     doReturn( ValueMetaInterface.TYPE_INTEGER ).when( vmi ).getType();
     doReturn( "name" ).when( vmi ).getName();
-    doReturn( 12.0 ).when( vmi ).getNumber( anyObject() );
+    doReturn( 12.0 ).when( vmi ).getNumber( any() );
 
     doReturn( path ).when( step ).buildFilename( 0 );
     doReturn( true ).when( metaMock ).isTemplateEnabled();
@@ -179,6 +174,7 @@ public class ExcelWriterStepTest {
 
     step.prepareNextOutputFile();
 
+    assertTrue( "must use streaming", dataMock.sheet instanceof SXSSFSheet );
     dataMock.posY = 1;
     dataMock.sheet = spy( dataMock.sheet );
     step.writeNextLine( new Object[] { 12 } );
@@ -194,7 +190,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_BIGNUMBER ).when( vmi ).getType();
     doReturn( "value_bigNumber" ).when( vmi ).getName();
-    doReturn( Double.MAX_VALUE ).when( vmi ).getNumber( anyObject() );
+    doReturn( Double.MAX_VALUE ).when( vmi ).getNumber( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -206,7 +202,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_BINARY ).when( vmi ).getType();
     doReturn( "value_binary" ).when( vmi ).getName();
-    doReturn( "a1b2c3d4e5f6g7h8i9j0" ).when( vmi ).getString( anyObject() );
+    doReturn( "a1b2c3d4e5f6g7h8i9j0" ).when( vmi ).getString( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -218,7 +214,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_BOOLEAN ).when( vmi ).getType();
     doReturn( "value_bool" ).when( vmi ).getName();
-    doReturn( Boolean.FALSE ).when( vmi ).getBoolean( anyObject() );
+    doReturn( Boolean.FALSE ).when( vmi ).getBoolean( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -230,7 +226,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_DATE ).when( vmi ).getType();
     doReturn( "value_date" ).when( vmi ).getName();
-    doReturn( new Date() ).when( vmi ).getDate( anyObject() );
+    doReturn( new Date() ).when( vmi ).getDate( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -242,7 +238,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_INTEGER ).when( vmi ).getType();
     doReturn( "value_integer" ).when( vmi ).getName();
-    doReturn( Double.MAX_VALUE ).when( vmi ).getNumber( anyObject() );
+    doReturn( Double.MAX_VALUE ).when( vmi ).getNumber( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -254,7 +250,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_INET ).when( vmi ).getType();
     doReturn( "value_internetAddress" ).when( vmi ).getName();
-    doReturn( "127.0.0.1" ).when( vmi ).getString( anyObject() );
+    doReturn( "127.0.0.1" ).when( vmi ).getString( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -266,7 +262,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_NUMBER ).when( vmi ).getType();
     doReturn( "value_number" ).when( vmi ).getName();
-    doReturn( Double.MIN_VALUE ).when( vmi ).getNumber( anyObject() );
+    doReturn( Double.MIN_VALUE ).when( vmi ).getNumber( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }
@@ -278,7 +274,7 @@ public class ExcelWriterStepTest {
     Object vObj = new Object();
     doReturn( ValueMetaInterface.TYPE_STRING ).when( vmi ).getType();
     doReturn( "value_string" ).when( vmi ).getName();
-    doReturn( "a_string" ).when( vmi ).getString( anyObject() );
+    doReturn( "a_string" ).when( vmi ).getString( any() );
 
     testBaseXlsx( vmi, vObj, false, false );
   }

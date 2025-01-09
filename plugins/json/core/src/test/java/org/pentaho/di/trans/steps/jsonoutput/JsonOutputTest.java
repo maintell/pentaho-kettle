@@ -1,48 +1,27 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.jsonoutput;
 
-import java.io.File;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import junit.framework.TestCase;
-
 import org.apache.commons.io.FileUtils;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.internal.util.reflection.Whitebox;
 import org.pentaho.di.TestUtilities;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.RowMetaAndData;
 import org.pentaho.di.core.logging.LoggingObjectInterface;
@@ -53,21 +32,34 @@ import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaInteger;
 import org.pentaho.di.core.row.value.ValueMetaString;
+import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.trans.RowStepCollector;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransHopMeta;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.steps.dummytrans.DummyTransMeta;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
 import org.pentaho.di.trans.steps.rowgenerator.RowGeneratorMeta;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.internal.util.reflection.Whitebox.setInternalState;
+import java.io.File;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * This class was a "copy and modification" of Kettle's JsonOutputTests.
@@ -451,12 +443,12 @@ public class JsonOutputTest extends TestCase {
     when( stepMeta.getStepMetaInterface() ).thenReturn( jsonOutputMeta );
 
     JsonOutput jsonOutput = spy( new JsonOutput( stepMeta, jsonOutputData, copyNr, transMeta, trans ) );
-    setInternalState( jsonOutput, "meta", jsonOutputMeta );
+    ReflectionTestUtils.setField( jsonOutput, "meta", jsonOutputMeta );
 
     System.setProperty( Const.KETTLE_JSON_OUTPUT_FORCE_SAME_OUTPUT_FILE, "Y" );
     jsonOutput.buildFilename();
 
-    verify( jsonOutputMeta, times( 1 ) ).buildFilename( anyString(), any( Date.class ) );
+    verify( jsonOutputMeta, times( 1 ) ).buildFilename( any(), any() );
   }
 
   @Test
@@ -477,8 +469,8 @@ public class JsonOutputTest extends TestCase {
     when( jsonOutputMeta.getParentStepMeta() ).thenReturn( stepMeta );
 
     JsonOutput jsonOutput = spy( new JsonOutput( stepMeta, jsonOutputData, copyNr, transMeta, trans ) );
-    setInternalState( jsonOutput, "meta", jsonOutputMeta );
-    setInternalState( jsonOutput, "data", jsonOutputData );
+    ReflectionTestUtils.setField( jsonOutput, "meta", jsonOutputMeta );
+    ReflectionTestUtils.setField( jsonOutput, "data", jsonOutputData );
 
     System.setProperty( Const.KETTLE_JSON_OUTPUT_FORCE_SAME_OUTPUT_FILE, "N" );
     jsonOutput.buildFilename();

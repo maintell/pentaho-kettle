@@ -1,28 +1,20 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.tableoutput;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.di.core.database.Database;
 import org.pentaho.di.core.database.DatabaseInterface;
@@ -39,7 +31,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -112,9 +104,11 @@ public class TableOutputTest {
     when( tableOutputMeta.truncateTable() ).thenReturn( true );
     when( tableOutputSpy.getCopy() ).thenReturn( 0 );
     when( tableOutputSpy.getUniqueStepNrAcrossSlaves() ).thenReturn( 0 );
+    when( tableOutputMeta.getTableName() ).thenReturn( "fooTable" );
+    when( tableOutputMeta.getSchemaName() ).thenReturn( "barSchema" );
 
     tableOutputSpy.truncateTable();
-    verify( db ).truncateTable( anyString(), anyString() );
+    verify( db ).truncateTable( any(), any() );
   }
 
   @Test
@@ -123,9 +117,11 @@ public class TableOutputTest {
     when( tableOutputSpy.getCopy() ).thenReturn( 1 );
     when( tableOutputSpy.getUniqueStepNrAcrossSlaves() ).thenReturn( 0 );
     when( tableOutputSpy.getPartitionID() ).thenReturn( "partition id" );
+    when( tableOutputMeta.getTableName() ).thenReturn( "fooTable" );
+    when( tableOutputMeta.getSchemaName() ).thenReturn( "barSchema" );
 
     tableOutputSpy.truncateTable();
-    verify( db ).truncateTable( anyString(), anyString() );
+    verify( db ).truncateTable( any(), any() );
   }
 
   @Test
@@ -172,6 +168,7 @@ public class TableOutputTest {
     Object[] row = new Object[]{};
     doReturn( row ).when( tableOutputSpy ).getRow();
     tableOutputSpy.first = false;
+    doNothing().when( tableOutputSpy ).putRow( any(), any() );
     doReturn( null ).when( tableOutputSpy ).writeToTable( any( RowMetaInterface.class ), any( row.getClass() ) );
 
     boolean result = tableOutputSpy.processRow( tableOutputMeta, tableOutputData );

@@ -1,29 +1,17 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.job.entries.copyfiles;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,9 +26,12 @@ import org.pentaho.di.trans.steps.named.cluster.NamedClusterEmbedManager;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -55,6 +46,8 @@ public class JobEntryCopyFilesTest {
   private NamedClusterEmbedManager mockNamedClusterEmbedManager;
 
   private final String EMPTY = "";
+
+  private final String REGEX_URL_PASSWORD = ":[^:@/]+@";
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
@@ -101,7 +94,6 @@ public class JobEntryCopyFilesTest {
     verify( entry, atLeast( 1 ) ).preprocessfilefilder( any( String[].class ) );
     assertFalse( result.getResult() );
     assertEquals( 1, result.getNrErrors() );
-    verify( mockNamedClusterEmbedManager ).passEmbeddedMetastoreKey( anyObject(), anyString() );
   }
 
   @Test
@@ -152,22 +144,20 @@ public class JobEntryCopyFilesTest {
 
   @Test
   public void saveLoadWithPassword() throws Exception {
-    String[] srcPath = new String[] { "EMPTY_SOURCE_URL-0-hdfs://user321:321fake@foo.bar.com:8020/user/user321" };
-    String[] destPath = new String[] { "EMPTY_DEST_URL-0-hdfs://user123:fake123@foo.bar.com:8020/user/user123" };
+    String srcPath = "EMPTY_SOURCE_URL-0-hdfs://user321:321fake@foo.bar.com:8020/user/user321";
+    String destPath = "EMPTY_DEST_URL-0-hdfs://user123:fake123@foo.bar.com:8020/user/user123";
 
-    String srcPathScrubbedEncoded = "EMPTY_SOURCE_URL-0-hdfs://user321:&lt;password&gt;@foo.bar.com:8020/user/user321";
-    String destPathScrubbedEncoded = "EMPTY_DEST_URL-0-hdfs://user123:&lt;password&gt;@foo.bar.com:8020/user/user123";
+    // sanity check for password field in URL
+    assertTrue( containsPassword( srcPath ) );
+    assertTrue( containsPassword( destPath ) );
 
-    String srcPathScrubbed = "EMPTY_SOURCE_URL-0-hdfs://user321:<password>@foo.bar.com:8020/user/user321";
-    String destPathScrubbed = "EMPTY_DEST_URL-0-hdfs://user123:<password>@foo.bar.com:8020/user/user123";
-
-    entry.source_filefolder = srcPath;
-    entry.destination_filefolder = destPath;
+    entry.source_filefolder = new String[] { srcPath };
+    entry.destination_filefolder = new String[] { destPath };
     entry.wildcard = new String[] { EMPTY };
 
-    String xml = "<entry>" + entry.getXML() + "</entry>";
-    assertTrue( xml.contains( srcPathScrubbedEncoded ) );
-    assertTrue( xml.contains( destPathScrubbedEncoded ) );
+    String xml = "<entry>" + entry.getXML() + "</entry>"; // runs through all the loadURL and saveURL logic
+    assertTrue( xml.contains( srcPath ) );
+    assertTrue( xml.contains( destPath ) );
     JobEntryCopyFiles loadedentry = new JobEntryCopyFiles();
     InputStream is = new ByteArrayInputStream( xml.getBytes() );
     loadedentry.loadXML( XMLHandler.getSubNode(
@@ -180,8 +170,20 @@ public class JobEntryCopyFilesTest {
       null,
       null,
       null );
-    assertTrue( loadedentry.destination_filefolder[0].equals( destPathScrubbed ) );
-    assertTrue( loadedentry.source_filefolder[0].equals( srcPathScrubbed ) );
+    // NOTE: passwords should not be "scrubbed"
+    assertEquals( srcPath, loadedentry.source_filefolder[0] );
+    assertEquals( destPath, loadedentry.destination_filefolder[0] );
     verify( mockNamedClusterEmbedManager, times( 2 ) ).registerUrl( anyString() );
   }
+
+  /**
+   * determiens in a well-defined URL contains a password field delimited by the terminators:
+   * <code>:</code> and <code>@</code>.
+   * @param url
+   * @return true if password present, false otherwise
+   */
+  protected boolean containsPassword( String url ) {
+    return Pattern.compile( REGEX_URL_PASSWORD ).matcher( url ).find();
+  }
+
 }

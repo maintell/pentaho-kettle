@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.pentahoreporting;
 
@@ -62,7 +53,7 @@ import org.w3c.dom.Node;
         description = "BaseStep.TypeTooltipDesc.PentahoReportingOutput",
         categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Output",
         image = "JFR.svg",
-        documentationUrl = "Products/Pentaho_Reporting_Output",
+        documentationUrl = "mk-95pdia003/pdi-transformation-steps/pentaho-reporting-output",
         i18nPackageName = "org.pentaho.di.trans.steps.pentahoreporting" )
 @InjectionSupported( localizationPrefix = "PentahoReportingOutputMeta.Injection.", groups = { "PARAMETERS" } )
 public class PentahoReportingOutputMeta extends BaseStepMeta implements StepMetaInterface {
@@ -111,7 +102,9 @@ public class PentahoReportingOutputMeta extends BaseStepMeta implements StepMeta
   public static final String XML_TAG_PARAMETER = "parameter";
 
   public static final String XML_TAG_INPUT_FILE_FIELD = "input_file_field";
+  public static final String XML_TAG_INPUT_FILE_FIELD_LEGACY = "file_input_field";
   public static final String XML_TAG_OUTPUT_FILE_FIELD = "output_file_field";
+  public static final String XML_TAG_OUTPUT_FILE_FIELD_LEGACY = "file_output_field";
   public static final String XML_TAG_INPUT_FILE = "input_file";
   public static final String XML_TAG_OUTPUT_FILE = "output_file";
   public static final String XML_TAG_USE_VALUES_FROM_FIELDS = "use_values_from_fields";
@@ -222,10 +215,18 @@ public class PentahoReportingOutputMeta extends BaseStepMeta implements StepMeta
   public void readRep( Repository rep, IMetaStore metaStore, ObjectId idStep, List<DatabaseMeta> databases ) throws KettleException {
     try {
       inputFileField = rep.getStepAttributeString( idStep, XML_TAG_INPUT_FILE_FIELD );
+      if ( inputFileField == null ) {
+        //Might have legacy XML tag names
+        inputFileField = rep.getStepAttributeString( idStep, XML_TAG_INPUT_FILE_FIELD_LEGACY );
+      }
       outputFileField = rep.getStepAttributeString( idStep, XML_TAG_OUTPUT_FILE_FIELD );
+      if ( outputFileField == null ) {
+        //Might have legacy XML tag names
+        outputFileField = rep.getStepAttributeString( idStep, XML_TAG_OUTPUT_FILE_FIELD_LEGACY );
+      }
       inputFile = rep.getStepAttributeString( idStep, XML_TAG_INPUT_FILE );
       outputFile = rep.getStepAttributeString( idStep, XML_TAG_OUTPUT_FILE );
-      useValuesFromFields = rep.getStepAttributeBoolean( idStep, XML_TAG_USE_VALUES_FROM_FIELDS );
+      useValuesFromFields = rep.getStepAttributeBoolean( idStep, 0, XML_TAG_USE_VALUES_FROM_FIELDS, true );
       createParentFolder = rep.getStepAttributeBoolean( idStep, XML_TAG_CREATE_PARENT_FOLDER );
       parameterFieldMap = new HashMap<String, String>();
       int nrParameters = rep.countNrStepAttributes( idStep, XML_TAG_PARAMETER + "_" + XML_TAG_NAME );

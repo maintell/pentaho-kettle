@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.spoon.delegates;
 
@@ -90,8 +81,12 @@ public class SpoonDBDelegate extends SpoonDelegate {
       return; // program error, exit just to make sure.
     }
 
-    String originalName = databaseMeta.getName();
     getDatabaseDialog().setDatabaseMeta( databaseMeta );
+    if ( getDatabaseDialog().getDatabaseMeta() == null ) {
+      return;
+    }
+
+    String originalName = databaseMeta.getName();
     getDatabaseDialog().setDatabases( hasDatabasesInterface.getDatabases() );
     String newname = getDatabaseDialog().open();
     if ( !Utils.isEmpty( newname ) ) { // null: CANCEL
@@ -140,6 +135,9 @@ public class SpoonDBDelegate extends SpoonDelegate {
       databaseMetaCopy.setName( dupename );
 
       getDatabaseDialog().setDatabaseMeta( databaseMetaCopy );
+      if ( getDatabaseDialog().getDatabaseMeta() == null ) {
+        return;
+      }
 
       String newname = getDatabaseDialog().open();
       if ( newname != null ) { // null: CANCEL
@@ -492,6 +490,10 @@ public class SpoonDBDelegate extends SpoonDelegate {
     }
 
     getDatabaseDialog().setDatabaseMeta( databaseMeta );
+    if ( getDatabaseDialog().getDatabaseMeta() == null ) {
+      return;
+    }
+
     String con_name = getDatabaseDialog().open();
     if ( !Utils.isEmpty( con_name ) ) {
       con_name = con_name.trim();

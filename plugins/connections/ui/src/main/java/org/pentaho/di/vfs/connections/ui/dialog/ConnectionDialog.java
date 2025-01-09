@@ -1,24 +1,15 @@
-/*******************************************************************************
+/*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.vfs.connections.ui.dialog;
 
 import org.eclipse.swt.SWT;
@@ -46,15 +37,21 @@ import org.pentaho.di.connections.ConnectionDetails;
 import org.pentaho.di.connections.ConnectionManager;
 import org.pentaho.di.connections.ui.dialog.ConnectionRenameDialog;
 import org.pentaho.di.connections.ui.tree.ConnectionFolderProvider;
+import org.pentaho.di.connections.vfs.VFSConnectionDetails;
 import org.pentaho.di.connections.vfs.VFSDetailsComposite;
+import org.pentaho.di.connections.vfs.provider.ConnectionFileNameParser;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.EngineMetaInterface;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.variables.VariableSpace;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.core.vfs.connections.ui.dialog.VFSDetailsCompositeHelper;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.ui.core.PropsUI;
+import org.pentaho.di.ui.core.events.dialog.SelectionAdapterFileDialogTextVar;
 import org.pentaho.di.ui.core.gui.GUIResource;
 import org.pentaho.di.ui.core.gui.WindowProperty;
+import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.spoon.Spoon;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.util.HelpUtils;
@@ -78,6 +75,8 @@ public class ConnectionDialog extends Dialog {
   private static final ConnectionManager connectionManager = ConnectionManager.getInstance();
   private static final int TEXT_VAR_FLAGS = SWT.SINGLE | SWT.LEFT | SWT.BORDER;
 
+  private final VariableSpace variableSpace = Variables.getADefaultVariableSpace();
+
   Supplier<Spoon> spoonSupplier = Spoon::getInstance;
   private String connectionTypeKey;
   private ConnectionDetails connectionDetails;
@@ -100,6 +99,7 @@ public class ConnectionDialog extends Dialog {
   private Composite wDetailsWrapperComp;
   private ScrolledComposite wScrolledComposite;
   private String originalName;
+  private TextVar wRootPath;
 
   public ConnectionDialog( Shell shell, int width, int height ) {
     super( shell, SWT.NONE );
@@ -226,6 +226,14 @@ public class ConnectionDialog extends Dialog {
     populateWidgets();
 
     //add listeners
+
+    // Cancel typing invalid characters for a connection name.
+    wName.addListener( SWT.KeyDown, event -> {
+      if ( !getConnectionFileNameParser().isValidConnectionNameCharacter( event.character ) ) {
+        event.doit = false;
+      }
+    } );
+
     wName.addModifyListener( modifyEvent -> setName( wName.getText() ) );
     wConnectionType.addSelectionListener( new SelectionAdapter() {
       @Override public void widgetSelected( SelectionEvent selectionEvent ) {
@@ -234,6 +242,10 @@ public class ConnectionDialog extends Dialog {
       }
     } );
     wDescription.addModifyListener( modifyEvent -> connectionDetails.setDescription( wDescription.getText() ) );
+  }
+
+  protected ConnectionFileNameParser getConnectionFileNameParser() {
+    return ConnectionFileNameParser.getInstance();
   }
 
   private void setConnectionType() { // When first loaded
@@ -290,6 +302,9 @@ public class ConnectionDialog extends Dialog {
       vfsDetailsComposite = (VFSDetailsComposite) connectionDetails.openDialog( wDetailsWrapperComp, props );
     }
 
+    //root path
+    addRootPathComponent();
+
     wScrolledComposite.setExpandHorizontal( false );
     wScrolledComposite.setExpandVertical( true );
     wScrolledComposite.setContent( wDetailsWrapperComp );
@@ -297,6 +312,63 @@ public class ConnectionDialog extends Dialog {
     wScrolledComposite.setMinSize(
       wDetailsWrapperComp.computeSize( wConnectionTypeComp.getClientArea().width, SWT.DEFAULT ) );
     wConnectionTypeComp.layout();
+  }
+
+  private void addRootPathComponent() {
+    VFSConnectionDetails vfsConnectionDetails = asVFSConnectionDetails( connectionDetails );
+    if ( vfsConnectionDetails != null && vfsConnectionDetails.isRootPathSupported() ) {
+      Control control = getLastWidgetFromParentComposite( wDetailsWrapperComp );
+      Label wlRootPath =  helper.createLabel( wDetailsWrapperComp, SWT.LEFT | SWT.WRAP, "ConnectionDialog.RootFolderPath.Label", control );
+      wRootPath = helper.createTextVar( variableSpace, wDetailsWrapperComp, TEXT_VAR_FLAGS, wlRootPath, 0 );
+      wRootPath.setText( Const.NVL( vfsConnectionDetails.getRootPath(), "" ) );
+      wRootPath.addModifyListener( modifyEvent -> vfsConnectionDetails.setRootPath( wRootPath.getText() ) );
+
+      Object adapter = vfsDetailsComposite.getRootPathSelectionAdapter( wRootPath );
+      if ( adapter instanceof SelectionAdapterFileDialogTextVar ) {
+        SelectionAdapterFileDialogTextVar selectionAdapterFileDialogTextVar = (SelectionAdapterFileDialogTextVar) adapter;
+        addBrowseButtonForRootPathComponent( selectionAdapterFileDialogTextVar, wlRootPath );
+      }
+    }
+  }
+
+  private void addBrowseButtonForRootPathComponent( SelectionAdapterFileDialogTextVar adapter, Label wlRootPath ) {
+
+    Button wBrowseButton = new Button( wDetailsWrapperComp, SWT.PUSH );
+    wBrowseButton.setText( BaseMessages.getString( PKG, "ConnectionDialog.Browse.Label" ) );
+    props.setLook( wBrowseButton );
+    FormData fdButton = new FormData();
+    fdButton.top = new FormAttachment( wlRootPath, MARGIN * 2 );
+    fdButton.right = new FormAttachment( 100, 0 );
+    wBrowseButton.setLayoutData( fdButton );
+    wBrowseButton.addSelectionListener( adapter );
+
+    FormData fdTextVar = new FormData();
+    fdTextVar.top = new FormAttachment( wlRootPath, MARGIN * 2 );
+    fdTextVar.left = new FormAttachment( 0, 0 );
+    fdTextVar.right = new FormAttachment( wBrowseButton, -8 );
+    wRootPath.setLayoutData( fdTextVar );
+
+  }
+
+  private Control getLastWidgetFromParentComposite( Composite composite ) {
+    if ( composite != null && !isEmpty( composite.getChildren() ) ) {
+      Control[] controls = composite.getChildren();
+      int i = controls.length - 1;
+      while ( i >= 0 ) {
+        if ( !controls[i].getVisible() ) {
+          i--;
+          continue;
+        }
+        return controls[i];
+      }
+    }
+    return null;
+  }
+
+  private VFSConnectionDetails asVFSConnectionDetails( ConnectionDetails connectionDetails ) {
+    return ( connectionDetails instanceof VFSConnectionDetails )
+            ? (VFSConnectionDetails) connectionDetails
+            : null;
   }
 
   private void transferFieldsFromOldToNew( ConnectionDetails connectionDetails,
@@ -308,8 +380,12 @@ public class ConnectionDialog extends Dialog {
   private void populateWidgets() {
     wConnectionType.select( getIndexOfKey( connectionTypeKey ) );
     updateConnectionType( connectionTypeKey );
-    wName.setText( Const.NVL( connectionDetails.getName(), "" ) );
+    updateNameWidget();
     wDescription.setText( Const.NVL( connectionDetails.getDescription(), "" ) );
+  }
+
+  private void updateNameWidget() {
+    wName.setText( Const.NVL( connectionDetails.getName(), "" ) );
   }
 
   private String convertTypeLabelToKey( String typeLabel ) {
@@ -337,8 +413,18 @@ public class ConnectionDialog extends Dialog {
   }
 
   private void setName( String name ) {
-    connectionDetails.setName( name );
-    connectionName = name;
+    // While the KeyDown event prevents directly typing special characters, as well as any flashing that would otherwise
+    // occur from allowing to type a character, and to then remove it, this sanitization ensures that if the user, for
+    // example, pastes text into the text box, it still gets sanitized.
+    String sanitizedName = getConnectionFileNameParser().sanitizeConnectionName( name );
+
+    connectionDetails.setName( sanitizedName );
+    connectionName = sanitizedName;
+
+    // Update back the name widget, but only if any sanitization actually occurred, avoiding cycles.
+    if ( !sanitizedName.equals( name ) ) {
+      updateNameWidget();
+    }
   }
 
   private void cancel() {
@@ -402,15 +488,18 @@ public class ConnectionDialog extends Dialog {
       return BaseMessages.getString( PKG, "ConnectionDialog.validate.failure.sameNameOnDifferentType",
         connectionDetails.getName(), convertKeyToTypeLabel( attemptReadDetails.getType() ) );
     }
+    VFSConnectionDetails vfsConnectionDetails = asVFSConnectionDetails( connectionDetails );
+    if ( vfsConnectionDetails != null && vfsConnectionDetails.isRootPathRequired() && isEmpty( vfsConnectionDetails.getRootPath() ) ) {
+      return BaseMessages.getString( PKG, "ConnectionDialog.validate.failure.rootPath" );
+    }
     return vfsDetailsComposite.validate();
   }
 
   private void test() {
     if ( validateEntries() ) {
-      boolean result = false;
       MessageBox mb;
       try {
-        result = connectionManager.test( connectionDetails );
+        boolean result = connectionManager.test( connectionDetails );
         if ( !result ) {
           mb = new MessageBox( shell, SWT.OK | SWT.ICON_ERROR );
           mb.setMessage( BaseMessages.getString( PKG, "ConnectionDialog.test.failure" ) );

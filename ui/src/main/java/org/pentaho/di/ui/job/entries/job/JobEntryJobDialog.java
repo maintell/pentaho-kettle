@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.job.entries.job;
 
@@ -249,10 +240,15 @@ public class JobEntryJobDialog extends JobEntryBaseDialog implements JobEntryDia
     return jobEntry.parameters;
   }
 
+  @VisibleForTesting
+  protected JobEntryJob newJobEntryJob() {
+    return new JobEntryJob();
+  }
+
   protected void getParameters( JobMeta inputJobMeta ) {
     try {
       if ( inputJobMeta == null ) {
-        JobEntryJob jej = new JobEntryJob();
+        JobEntryJob jej = newJobEntryJob();
         getSpecificationPath( jej );
         getInfo( jej );
         inputJobMeta = jej.getJobMeta( rep, metaStore, jobMeta );

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.logging;
 
@@ -86,6 +77,7 @@ public class LoggingRegistry {
   private int purgeTimerCount;
   /** Stat that counts the amount of Objects removed from registry map.**/
   private int purgedObjectCount;
+  private boolean purgeTimerScheduledAlready = false;
 
   /** Sync object **/
   private final Object syncObject = new Object();
@@ -99,9 +91,6 @@ public class LoggingRegistry {
     this.lastModificationTime = new Date();
     this.purgeTimerCount = 0;
     this.purgedObjectCount = 0;
-
-    updateFromProperties();
-    installPurgeTimer();
   }
 
   public static LoggingRegistry getInstance() {
@@ -241,6 +230,17 @@ public class LoggingRegistry {
     this.purgeTimeout = Const.toInt( EnvUtil.getSystemProperty( Const.KETTLE_LOGGING_REGISTRY_PURGE_TIMEOUT ),
       DEFAULT_PURGE_TIMER );
   }
+
+  /**
+   * Schedule the Purge Timer.
+   */
+  public void schedulePurgeTimer() {
+    if ( !purgeTimerScheduledAlready ) {
+      installPurgeTimer();
+      purgeTimerScheduledAlready = true;
+    }
+  }
+
 
   /**
    * Searches for a LogChannel and returns a list of children IDs.
@@ -544,7 +544,7 @@ public class LoggingRegistry {
       String objId = obj.getLogChannelId();
 
       // Only Objects that are tied to a buffer can be purged.
-      if ( !channelsNotToRemove.contains( objId ) && !map.get(objId).isLoggingObjectInUse() ) {
+      if ( !channelsNotToRemove.contains( objId ) ) {
         // Object is safe to remove, but the counter for purged objects will only be incremented if it is really
         // removed from the map as it's possible for the object to not exist on the map.
         if ( null != map.remove( objId ) ) {
@@ -604,7 +604,7 @@ public class LoggingRegistry {
   /**
    * Setups and schedules the PurgeTimer task.
    */
-  private void installPurgeTimer() {
+  private void  installPurgeTimer( ) {
 
     if ( purgeTimer == null ) {
       purgeTimer = new Timer( "LoggingRegistryPurgeTimer", true );

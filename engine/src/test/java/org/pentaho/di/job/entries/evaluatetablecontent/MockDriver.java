@@ -1,31 +1,19 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.evaluatetablecontent;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.mockito.stubbing.Answer;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -34,17 +22,19 @@ import java.sql.DriverPropertyInfo;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.mockito.stubbing.Answer;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MockDriver implements Driver {
-  private static final List<MockDriver> drivers = new ArrayList<MockDriver>();
+  private static final List<MockDriver> drivers = new ArrayList<>();
 
   public static synchronized void registerInstance() throws SQLException {
     MockDriver driver = new MockDriver();
@@ -64,7 +54,7 @@ public class MockDriver implements Driver {
   }
 
   @Override
-  public boolean acceptsURL( String url ) throws SQLException {
+  public boolean acceptsURL( String url ) {
     return true;
   }
 
@@ -84,7 +74,7 @@ public class MockDriver implements Driver {
     when( rs.next() ).thenAnswer( new Answer<Boolean>() {
       private int count = 0;
 
-      public Boolean answer( org.mockito.invocation.InvocationOnMock invocation ) throws Throwable {
+      public Boolean answer( org.mockito.invocation.InvocationOnMock invocation ) {
         return count++ == 0;
       }
     } );
@@ -109,12 +99,12 @@ public class MockDriver implements Driver {
   }
 
   @Override
-  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger() {
     return null;
   }
 
   @Override
-  public DriverPropertyInfo[] getPropertyInfo( String url, Properties info ) throws SQLException {
+  public DriverPropertyInfo[] getPropertyInfo( String url, Properties info ) {
     // TODO Auto-generated method stub
     return null;
   }

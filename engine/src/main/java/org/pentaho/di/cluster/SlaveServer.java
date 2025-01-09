@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.cluster;
 
@@ -979,6 +970,14 @@ public class SlaveServer extends ChangedFlag implements Cloneable, SharedObjectI
     String xml =
       execService( GetJobStatusServlet.CONTEXT_PATH + "/?name=" + URLEncoder.encode( jobName, "UTF-8" ) + "&id="
         + Const.NVL( carteObjectId, "" ) + "&xml=Y&from=" + startLogLineNr, true );
+    return SlaveServerJobStatus.fromXML( xml );
+  }
+
+  public SlaveServerJobStatus getJobStatusTail( String jobName, String carteObjectId, int maxNumberOfLines )
+    throws Exception {
+    String xml =
+      execService( GetJobStatusServlet.CONTEXT_PATH + "/?name=" + URLEncoder.encode( jobName, "UTF-8" ) + "&id="
+        + Const.NVL( carteObjectId, "" ) + "&xml=Y&tail=" + maxNumberOfLines, true );
     return SlaveServerJobStatus.fromXML( xml );
   }
 

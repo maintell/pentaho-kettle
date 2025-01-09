@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.msaccessbulkload;
 
@@ -69,11 +60,12 @@ import com.healthmarketscience.jackcess.Database;
  *
  */
 
-@JobEntry( id = "MS_ACCESS_BULK_LOAD", image = "ui/images/deprecated.svg",
-  suggestion = "JobEntryMSAccessBulkLoad.SuggestedEntry",
-  categoryDescription = "i18n:org.pentaho.di.job:JobCategory.Category.Deprecated",
-  i18nPackageName = "org.pentaho.di.job.entries.msaccessbulkload",
-  name = "JobEntryMSAccessBulkLoad.Name.Default", description = "JobEntryMSAccessBulkLoad.Tooltip" )
+// BACKLOG-38582 Remove specific deprecated steps and job entries from PDI, Please uncomment to enable plugin if needed.
+//@JobEntry( id = "MS_ACCESS_BULK_LOAD", image = "ui/images/deprecated.svg",
+//  suggestion = "JobEntryMSAccessBulkLoad.SuggestedEntry",
+//  categoryDescription = "i18n:org.pentaho.di.job:JobCategory.Category.Deprecated",
+//  i18nPackageName = "org.pentaho.di.job.entries.msaccessbulkload",
+//  name = "JobEntryMSAccessBulkLoad.Name.Default", description = "JobEntryMSAccessBulkLoad.Tooltip" )
 public class JobEntryMSAccessBulkLoad extends JobEntryBase implements Cloneable, JobEntryInterface {
   private static Class<?> PKG = JobEntryMSAccessBulkLoad.class; // for i18n purposes, needed by Translator2!!
 
@@ -536,7 +528,6 @@ public class JobEntryMSAccessBulkLoad extends JobEntryBase implements Cloneable,
     }
 
     displayResults();
-    setLoggingObjectInUse( false );
     return result;
   }
 

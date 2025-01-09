@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.core.database;
 
 import org.pentaho.di.core.encryption.Encr;
@@ -63,31 +54,23 @@ public class RedshiftDatabaseMeta extends PostgreSQLDatabaseMeta {
 
   @Override
   public String getDriverClass() {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      return "sun.jdbc.odbc.JdbcOdbcDriver";
-    } else {
-      return "com.amazon.redshift.jdbc.Driver";
-    }
+    return "com.amazon.redshift.jdbc.Driver";
   }
 
   @Override
   public String getURL( String hostname, String port, String databaseName ) {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      return "jdbc:odbc:" + databaseName;
+    if ( Arrays.asList( PROFILE_CREDENTIALS, IAM_CREDENTIALS ).contains( getAttribute( JDBC_AUTH_METHOD, "" ) ) ) {
+      return "jdbc:redshift:iam://" + hostname + ":" + port + "/" + databaseName;
     } else {
-      if ( Arrays.asList( PROFILE_CREDENTIALS, IAM_CREDENTIALS ).contains( getAttribute( JDBC_AUTH_METHOD, "" ) ) ) {
-        return "jdbc:redshift:iam://" + hostname + ":" + port + "/" + databaseName;
-      } else {
-        return "jdbc:redshift://" + hostname + ":" + port + "/" + databaseName;
-      }
+      return "jdbc:redshift://" + hostname + ":" + port + "/" + databaseName;
     }
   }
 
   @Override public void putOptionalOptions( Map<String, String> extraOptions ) {
     if ( IAM_CREDENTIALS.equals( getAttribute( JDBC_AUTH_METHOD, "" ) ) ) {
-      extraOptions.put( "REDSHIFT.AccessKeyID", getAttribute( IAM_ACCESS_KEY_ID, "" ) );
+      extraOptions.put( "REDSHIFT.AccessKeyID", Encr.decryptPassword( getAttribute( IAM_ACCESS_KEY_ID, "" ) ) );
       extraOptions.put( "REDSHIFT.SecretAccessKey", Encr.decryptPassword( getAttribute( IAM_SECRET_ACCESS_KEY, "" ) ) );
-      extraOptions.put( "REDSHIFT.SessionToken", getAttribute( IAM_SESSION_TOKEN, "" ) );
+      extraOptions.put( "REDSHIFT.SessionToken", Encr.decryptPassword( getAttribute( IAM_SESSION_TOKEN, "" ) ) );
     } else if ( PROFILE_CREDENTIALS.equals( getAttribute( JDBC_AUTH_METHOD, "" ) ) ) {
       extraOptions.put( "REDSHIFT.Profile", getAttribute( IAM_PROFILE_NAME, "" ) );
     }

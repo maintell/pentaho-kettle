@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.trans.steps.rest;
 
@@ -29,13 +20,13 @@ import org.junit.Test;
 import org.pentaho.di.trans.steps.rest.RestMeta;
 import org.pentaho.di.ui.core.widget.ComboVar;
 import org.pentaho.di.ui.core.widget.TableView;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.reflect.Whitebox.setInternalState;
 
 public class RestDialogTest {
 
@@ -59,19 +50,19 @@ public class RestDialogTest {
   public void setup() {
     doCallRealMethod().when( dialog ).setMethod();
 
-    setInternalState( dialog, "wlBody", bodyl );
-    setInternalState( dialog, "wBody", body );
-    setInternalState( dialog, "wApplicationType", type );
+    ReflectionTestUtils.setField( dialog, "wlBody", bodyl );
+    ReflectionTestUtils.setField( dialog, "wBody", body );
+    ReflectionTestUtils.setField( dialog, "wApplicationType", type );
 
-    setInternalState( dialog, "wlParameters", paramsl );
-    setInternalState( dialog, "wParameters", params );
-    setInternalState( dialog, "wGet", paramsb );
+    ReflectionTestUtils.setField( dialog, "wlParameters", paramsl );
+    ReflectionTestUtils.setField( dialog, "wParameters", params );
+    ReflectionTestUtils.setField( dialog, "wGet", paramsb );
 
-    setInternalState( dialog, "wlMatrixParameters", matrixl );
-    setInternalState( dialog, "wMatrixParameters", matrix );
-    setInternalState( dialog, "wMatrixGet", matrixb );
+    ReflectionTestUtils.setField( dialog, "wlMatrixParameters", matrixl );
+    ReflectionTestUtils.setField( dialog, "wMatrixParameters", matrix );
+    ReflectionTestUtils.setField( dialog, "wMatrixGet", matrixb );
 
-    setInternalState( dialog, "wMethod", method );
+    ReflectionTestUtils.setField( dialog, "wMethod", method );
   }
 
   @Test

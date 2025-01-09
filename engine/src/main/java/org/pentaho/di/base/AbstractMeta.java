@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.base;
 
@@ -33,6 +24,9 @@ import org.pentaho.di.core.EngineMetaInterface;
 import org.pentaho.di.core.NotePadMeta;
 import org.pentaho.di.core.Props;
 import org.pentaho.di.core.attributes.metastore.EmbeddedMetaStore;
+import org.pentaho.di.core.bowl.Bowl;
+import org.pentaho.di.core.bowl.DefaultBowl;
+import org.pentaho.di.core.bowl.HasBowlInterface;
 import org.pentaho.di.core.changed.ChangedFlag;
 import org.pentaho.di.core.changed.ChangedFlagInterface;
 import org.pentaho.di.core.changed.PDIObserver;
@@ -96,7 +90,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractMeta implements ChangedFlagInterface, UndoInterface, HasDatabasesInterface, VariableSpace,
   EngineMetaInterface, NamedParams, HasSlaveServersInterface, AttributesInterface, HasRepositoryInterface,
-  LoggingObjectInterface {
+  HasBowlInterface, LoggingObjectInterface {
 
   /**
    * Constant = 1
@@ -133,6 +127,8 @@ public abstract class AbstractMeta implements ChangedFlagInterface, UndoInterfac
   protected String filename;
 
   protected RepositoryDirectoryInterface directory;
+
+  protected Bowl bowl = DefaultBowl.getInstance();
 
   /**
    * The repository to reference in the one-off case that it is needed
@@ -397,6 +393,14 @@ public abstract class AbstractMeta implements ChangedFlagInterface, UndoInterfac
   public void setRepositoryDirectory( RepositoryDirectoryInterface directory ) {
     this.directory = directory;
     setInternalKettleVariables();
+  }
+
+  public Bowl getBowl() {
+    return bowl;
+  }
+
+  public void setBowl( Bowl bowl ) {
+    this.bowl = bowl;
   }
 
   /**
@@ -1558,11 +1562,6 @@ public abstract class AbstractMeta implements ChangedFlagInterface, UndoInterfac
     this.logLevel = logLevel;
   }
 
-  @Override
-  public boolean isLoggingObjectInUse() {
-    return getParent() == null ? false : getParent().isLoggingObjectInUse();
-  }
-
   public IMetaStore getMetaStore() {
     return metaStore;
   }
@@ -1640,7 +1639,7 @@ public abstract class AbstractMeta implements ChangedFlagInterface, UndoInterfac
     return sharedObjects;
   }
 
-  protected boolean loadSharedObject( SharedObjectInterface object ) {
+  public boolean loadSharedObject( SharedObjectInterface object ) {
     if ( object instanceof DatabaseMeta ) {
       DatabaseMeta databaseMeta = (DatabaseMeta) object;
       databaseMeta.shareVariablesWith( this );

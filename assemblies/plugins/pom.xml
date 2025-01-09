@@ -11,27 +11,26 @@
   <parent>
     <artifactId>pdi-assemblies</artifactId>
     <groupId>org.pentaho.di</groupId>
-    <version>9.6.0.0-SNAPSHOT</version>
+    <version>10.3.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
     <!-- plugins -->
     <pdi-core-plugin.version>${project.version}</pdi-core-plugin.version>
-    <big-data-plugin.version>9.6.0.0-SNAPSHOT</big-data-plugin.version>
-    <kettle-version-checker.version>${project.version}</kettle-version-checker.version>
-    <kettle-dummy-plugin.version>${project.version}</kettle-dummy-plugin.version>
+    <big-data-plugin.version>10.3.0.0-SNAPSHOT</big-data-plugin.version>
     <kettle-s3csvinput-plugin.version>${project.version}</kettle-s3csvinput-plugin.version>
     <kettle-shapefilereader-plugin.version>${project.version}</kettle-shapefilereader-plugin.version>
-    <kettle-drools5-plugin.version>${project.version}</kettle-drools5-plugin.version>
+    <kettle-drools8-plugin.version>${project.version}</kettle-drools8-plugin.version>
     <kettle-gpload-plugin.version>${project.version}</kettle-gpload-plugin.version>
     <kettle-hl7-plugin.version>${project.version}</kettle-hl7-plugin.version>
-    <kettle-palo-plugin.version>${project.version}</kettle-palo-plugin.version>
-    <pdi-google-analytics-plugin.version>9.6.0.0-SNAPSHOT</pdi-google-analytics-plugin.version>
-    <pdi-salesforce-plugin.version>9.6.0.0-SNAPSHOT</pdi-salesforce-plugin.version>
+    <mail-job-plugin.version>${project.version}</mail-job-plugin.version>
+    <pdi-salesforce-plugin.version>10.3.0.0-SNAPSHOT</pdi-salesforce-plugin.version>
     <monet-db-bulk-loader-plugin.version>${project.version}</monet-db-bulk-loader-plugin.version>
     <yaml-input-plugin.version>${project.version}</yaml-input-plugin.version>
-    <pentaho-reporting-plugin.version>9.6.0.0-SNAPSHOT</pentaho-reporting-plugin.version>
+    <pentaho-reporting-plugin.version>10.3.0.0-SNAPSHOT</pentaho-reporting-plugin.version>
     <ms-access-plugin.version>${project.version}</ms-access-plugin.version>
+    <get-file-sftp-plugin.version>${project.version}</get-file-sftp-plugin.version>
+    <ftps-plugin.version>${project.version}</ftps-plugin.version>
     <oracle-bulk-loader-plugin.version>${project.version}</oracle-bulk-loader-plugin.version>
     <terafast-bulk-loader-plugin.version>${project.version}</terafast-bulk-loader-plugin.version>
     <postgresql-db-bulk-loader-plugin.version>${project.version}</postgresql-db-bulk-loader-plugin.version>
@@ -40,19 +39,19 @@
     <excel-plugin.version>${project.version}</excel-plugin.version>
     <ldap-plugin.version>${project.version}</ldap-plugin.version>
     <ivw-bulk-loader-plugin.version>${project.version}</ivw-bulk-loader-plugin.version>
+    <sftpput-plugin.version>${project.version}</sftpput-plugin.version>
+    <put-file-sftp-plugin.version>${project.version}</put-file-sftp-plugin.version>
     <edi2xml-plugin.version>${project.version}</edi2xml-plugin.version>
+    <random-cc-number-generator-plugin.version>${project.version}</random-cc-number-generator-plugin.version>
+    <credit-card-validator-plugin.version>${project.version}</credit-card-validator-plugin.version>
     <mondrianinput-plugin.version>${project.version}</mondrianinput-plugin.version>
-    <lucid-db-streaming-loader-plugin.version>${project.version}</lucid-db-streaming-loader-plugin.version>
-    <gp-bulk-loader-plugin.version>${project.version}</gp-bulk-loader-plugin.version>
-    <pentaho-googledrive-vfs-plugin.version>${project.version}</pentaho-googledrive-vfs-plugin.version>
-    <elasticsearch-bulk-insert-plugin.version>${project.version}</elasticsearch-bulk-insert-plugin.version>
-    <pdi-sap-plugin.version>9.6.0.0-SNAPSHOT</pdi-sap-plugin.version>
-    <pentaho-cassandra-plugin.version>9.6.0.0-SNAPSHOT</pentaho-cassandra-plugin.version>
+    <pdi-sap-plugin.version>10.3.0.0-SNAPSHOT</pdi-sap-plugin.version>
+    <jms-streaming-plugin.version>${project.version}</jms-streaming-plugin.version>
     <pdi-teradata-tpt-plugin-package.version>${project.version}</pdi-teradata-tpt-plugin-package.version>
-    <pdi-platform-utils-plugin.version>9.6.0.0-SNAPSHOT</pdi-platform-utils-plugin.version>
-    <vertica-bulkloader-plugin.version>9.6.0.0-SNAPSHOT</vertica-bulkloader-plugin.version>
-    <pdi-pur-plugin.version>9.6.0.0-SNAPSHOT</pdi-pur-plugin.version>
-    <pentaho-mongodb-plugin.version>9.6.0.0-SNAPSHOT</pentaho-mongodb-plugin.version>
+    <pdi-platform-utils-plugin.version>10.3.0.0-SNAPSHOT</pdi-platform-utils-plugin.version>
+    <vertica-bulkloader-plugin.version>10.3.0.0-SNAPSHOT</vertica-bulkloader-plugin.version>
+    <pdi-pur-plugin.version>10.3.0.0-SNAPSHOT</pdi-pur-plugin.version>
+    <pentaho-mongodb-plugin.version>10.3.0.0-SNAPSHOT</pentaho-mongodb-plugin.version>
     <engine-configuration-plugin.version>${project.version}</engine-configuration-plugin.version>
     <metastore-locator-plugin.version>${project.version}</metastore-locator-plugin.version>
     <repository-locator-plugin.version>${project.version}</repository-locator-plugin.version>
@@ -61,14 +60,23 @@
     <repositories-plugin.version>${project.version}</repositories-plugin.version>
     <connections-plugin.version>${project.version}</connections-plugin.version>
     <meta-inject-plugin.version>${project.version}</meta-inject-plugin.version>
-    <jms-streaming-plugin.version>${project.version}</jms-streaming-plugin.version>
     <mqtt-streaming-plugin.version>${project.version}</mqtt-streaming-plugin.version>
     <pentaho-s3-vfs-plugin.version>${project.version}</pentaho-s3-vfs-plugin.version>
     <pdi-avro-format-plugin.version>${project.version}</pdi-avro-format-plugin.version>
-    <pentaho-metaverse.version>9.6.0.0-SNAPSHOT</pentaho-metaverse.version>
-    <pdi-xml-plugin.version>9.6.0.0-SNAPSHOT</pdi-xml-plugin.version>
-    <pdi-json-plugin.version>9.6.0.0-SNAPSHOT</pdi-json-plugin.version>
-    <pdi-rest-plugin.version>9.6.0.0-SNAPSHOT</pdi-rest-plugin.version>
+    <mail-plugin.version>${project.version}</mail-plugin.version>
+    <pentaho-metaverse.version>10.3.0.0-SNAPSHOT</pentaho-metaverse.version>
+    <pdi-xml-plugin.version>10.3.0.0-SNAPSHOT</pdi-xml-plugin.version>
+    <pdi-json-plugin.version>10.3.0.0-SNAPSHOT</pdi-json-plugin.version>
+    <pdi-rest-plugin.version>${project.version}</pdi-rest-plugin.version>
+    <get-repository-names-plugin.version>${project.version}</get-repository-names-plugin.version>
+    <connected-to-repository-plugin.version>${project.version}</connected-to-repository-plugin.version>
+    <export-repository-plugin.version>${project.version}</export-repository-plugin.version>
+    <ftp-delete-plugin.version>${project.version}</ftp-delete-plugin.version>
+    <mail-validator-plugin.version>${project.version}</mail-validator-plugin.version>
+    <email-messages-plugin.version>${project.version}</email-messages-plugin.version>
+    <put-a-file-with-ftp-plugin.version>${project.version}</put-a-file-with-ftp-plugin.version>
+    <get-file-with-ftp.version>${project.version}</get-file-with-ftp.version>
+    <msg-box-info.version>${project.version}</msg-box-info.version>
   </properties>
 
   <dependencies>
@@ -76,30 +84,6 @@
       <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>pdi-core-plugins</artifactId>
       <version>${pdi-core-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>kettle-version-checker</artifactId>
-      <version>${kettle-version-checker.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>kettle-dummy-plugin</artifactId>
-      <version>${kettle-dummy-plugin.version}</version>
       <type>zip</type>
       <exclusions>
         <exclusion>
@@ -122,6 +106,30 @@
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>get-file-sftp-plugin</artifactId>
+      <version>${get-file-sftp-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>ftps-plugin</artifactId>
+      <version>${ftps-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>kettle-shapefilereader-plugin</artifactId>
       <version>${kettle-shapefilereader-plugin.version}</version>
       <type>zip</type>
@@ -134,8 +142,20 @@
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>kettle-drools5-plugin</artifactId>
-      <version>${kettle-drools5-plugin.version}</version>
+      <artifactId>mail-job-plugins</artifactId>
+      <version>${mail-job-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>kettle-drools8-plugin</artifactId>
+      <version>${kettle-drools8-plugin.version}</version>
       <type>zip</type>
       <exclusions>
         <exclusion>
@@ -170,30 +190,6 @@
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>kettle-palo-plugin</artifactId>
-      <version>${kettle-palo-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>pdi-google-analytics-plugin</artifactId>
-      <version>${pdi-google-analytics-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>pdi-salesforce-plugin</artifactId>
       <version>${pdi-salesforce-plugin.version}</version>
       <type>zip</type>
@@ -208,6 +204,30 @@
       <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>monet-db-bulk-loader-plugins</artifactId>
       <version>${monet-db-bulk-loader-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>mail-validator-plugins</artifactId>
+      <version>${mail-validator-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>ftp-delete-plugins</artifactId>
+      <version>${ftp-delete-plugin.version}</version>
       <type>zip</type>
       <exclusions>
         <exclusion>
@@ -314,6 +334,54 @@
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>random-cc-number-generator-plugins</artifactId>
+      <version>${random-cc-number-generator-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>credit-card-validator-plugins</artifactId>
+      <version>${credit-card-validator-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>sftpput-plugin</artifactId>
+      <version>${sftpput-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>put-file-sftp-plugins</artifactId>
+      <version>${put-file-sftp-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>mondrianinput-plugin</artifactId>
       <version>${mondrianinput-plugin.version}</version>
       <type>zip</type>
@@ -374,68 +442,8 @@
     </dependency>
     <dependency>
       <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>lucid-db-streaming-loader-plugin</artifactId>
-      <version>${lucid-db-streaming-loader-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>gp-bulk-loader-plugin</artifactId>
-      <version>${gp-bulk-loader-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>pentaho-googledrive-vfs-plugin</artifactId>
-      <version>${pentaho-googledrive-vfs-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
-      <artifactId>elasticsearch-bulk-insert-plugin</artifactId>
-      <version>${elasticsearch-bulk-insert-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>kettle-sap-plugin</artifactId>
       <version>${pdi-sap-plugin.version}</version>
-      <type>zip</type>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.pentaho</groupId>
-      <artifactId>pentaho-cassandra-plugin-package</artifactId>
-      <version>${pentaho-cassandra-plugin.version}</version>
       <type>zip</type>
       <exclusions>
         <exclusion>
@@ -662,7 +670,7 @@
     </dependency>
     <dependency>
       <groupId>pentaho</groupId>
-      <artifactId>pentaho-streaming-kafka-plugin-zip</artifactId>
+      <artifactId>pentaho-streaming-kafka-plugin</artifactId>
       <version>${big-data-plugin.version}</version>
       <type>zip</type>
       <exclusions>
@@ -712,6 +720,102 @@
       <groupId>org.pentaho.di.plugins</groupId>
       <artifactId>kettle-rest-plugin</artifactId>
       <version>${pdi-rest-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>get-repository-names-plugins</artifactId>
+      <version>${get-repository-names-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>mail-plugins</artifactId>
+      <version>${mail-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>connected-to-repository-plugins</artifactId>
+      <version>${connected-to-repository-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>export-repository-plugins</artifactId>
+      <version>${export-repository-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>email-messages-plugins</artifactId>
+      <version>${email-messages-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>put-a-file-with-ftp-plugins</artifactId>
+      <version>${put-a-file-with-ftp-plugin.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>get-file-with-ftp-plugins</artifactId>
+      <version>${get-file-with-ftp.version}</version>
+      <type>zip</type>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.pentaho.di.plugins</groupId>
+      <artifactId>msg-box-info-plugins</artifactId>
+      <version>${msg-box-info.version}</version>
       <type>zip</type>
       <exclusions>
         <exclusion>

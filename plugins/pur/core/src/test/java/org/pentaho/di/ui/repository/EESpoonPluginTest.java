@@ -1,19 +1,15 @@
-/*!
- * Copyright 2010 - 2017 Hitachi Vantara.  All rights reserved.
+/*! ******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Pentaho
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 package org.pentaho.di.ui.repository;
 
 import org.junit.Before;
@@ -39,8 +35,8 @@ import org.pentaho.di.ui.spoon.SpoonLifecycleListener.SpoonLifeCycleEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.any;
@@ -122,11 +118,14 @@ public class EESpoonPluginTest {
     return argThat( new EESpoonPluginTest.AnyClassMatcher() );
   }
 
-  private class AnyClassMatcher extends ArgumentMatcher<Class<? extends IRepositoryService>> {
+  private class AnyClassMatcher implements ArgumentMatcher<Class<? extends IRepositoryService>> {
 
-    @Override
-    public boolean matches( final Object arg ) {
+    @Override public boolean matches( Class<? extends IRepositoryService> argument ) {
       return true;
+    }
+
+    @Override public Class<?> type() {
+      return ArgumentMatcher.super.type();
     }
   }
 

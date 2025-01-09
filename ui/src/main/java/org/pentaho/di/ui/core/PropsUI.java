@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.core;
 
@@ -50,6 +41,7 @@ import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.plugins.LifecyclePluginType;
 import org.pentaho.di.core.plugins.PluginInterface;
 import org.pentaho.di.core.plugins.PluginRegistry;
+import org.pentaho.di.core.util.StringUtil;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.laf.BasePropertyHandler;
 import org.pentaho.di.ui.core.gui.GUIResource;
@@ -93,6 +85,8 @@ public class PropsUI extends Props {
   protected List<LastUsedFile> lastUsedFiles;
   protected List<LastUsedFile> openTabFiles;
   protected Map<String, List<LastUsedFile>> lastUsedRepoFiles;
+
+  protected String lastUsedLocalFile;
 
   protected String overriddenFileName;
 
@@ -249,6 +243,7 @@ public class PropsUI extends Props {
     lastUsedRepoFiles = new LinkedHashMap<>();
     openTabFiles = new ArrayList<LastUsedFile>();
     screens = new Hashtable<String, WindowProperty>();
+    lastUsedLocalFile = StringUtil.EMPTY_STRING;
 
     properties.setProperty( STRING_LOG_LEVEL, getLogLevel() );
     properties.setProperty( STRING_LOG_FILTER, getLogFilter() );
@@ -369,6 +364,7 @@ public class PropsUI extends Props {
   }
 
   public void setLastFiles() {
+    properties.setProperty( "lastUsedLocalFile", lastUsedLocalFile );
     properties.setProperty( "lastfiles", "" + lastUsedFiles.size() );
     for ( int i = 0; i < lastUsedFiles.size(); i++ ) {
       LastUsedFile lastUsedFile = lastUsedFiles.get( i );
@@ -469,6 +465,14 @@ public class PropsUI extends Props {
     addLastRepoFile( lastUsedFile );
   }
 
+  public void setLastUsedLocalFile( String filePath ) {
+    lastUsedLocalFile = filePath;
+  }
+
+  public String getLastUsedLocalFile() {
+    return lastUsedLocalFile;
+  }
+
   private void addLastRepoFile( LastUsedFile lastUsedFile ) {
     String repositoryName = lastUsedFile.getRepositoryName();
     String username = lastUsedFile.getUsername() != null ? lastUsedFile.getUsername() : "";
@@ -530,6 +534,8 @@ public class PropsUI extends Props {
         new LastUsedFile( fileType, filename, directory, sourceRepository, repositoryName, isOpened,
           openItemTypes ) );
     }
+
+    lastUsedLocalFile = Const.NVL( properties.getProperty( "lastUsedLocalFile" ), "" );
   }
 
   public void loadLastUsedRepoFiles() {

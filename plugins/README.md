@@ -9,16 +9,19 @@ __List of the current core plugins:__
 * google-analytics
 * gp-bulk-loader
 * drools
+* mail-job
 * dummy
 * gpload
+* get-file-sftp
+* ftps
+* sftpput
 * hl7
 * json
-* openerp
+* mail
 * palo
 * s3csvinput
 * sap
 * shapefilereader
-* version-checker
 * xml
 * log4j
 * lucid-db-streaming-loader
@@ -26,10 +29,13 @@ __List of the current core plugins:__
 * monet-db-bulk-loader
 * ms-access-bulk-loader
 * postgresql-db-bulk-loader
+* put-file-sftp
 * infobright-bulk-loader
 * excel
 * ivw-bulk-loader
 * edi2xml
+* random-cc-number-generator
+* credit-card-validator
 * engine-configuration
 * pur
 * repositories
@@ -39,6 +45,14 @@ __List of the current core plugins:__
 * yaml-input
 * pentaho-reporting
 * mondrianinput
+* get-repository-names
+* connected-to-repository
+* export-repository
+* ftp-delete
+* mail-validator
+* email-messages
+* put-a-file-with-ftp
+* get-file-with-ftp
 
 __Deprecated plugins:__
 

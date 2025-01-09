@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.fileinput.text;
 
@@ -30,6 +21,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
+import org.pentaho.di.core.bowl.DefaultBowl;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.RowSet;
 import org.pentaho.di.core.exception.KettleFileException;
@@ -67,7 +59,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -298,6 +290,7 @@ public class TextFileInputTest {
     Mockito.when( input.getRowFrom( rowset ) ).thenReturn( obj1, obj2, null );
     Mockito.doReturn( rwi ).when( rowset ).getRowMeta();
     Mockito.when( rwi.getString( obj2, 0 ) ).thenReturn( "filename1", "filename2" );
+    Mockito.when( input.getTransMeta().getBowl() ).thenReturn( DefaultBowl.getInstance() );
     List<Object[]> output = TransTestingUtil.execute( input, meta, data, 0, false );
 
     List<String> passThroughKeys = new ArrayList<>( data.passThruFields.keySet() );
@@ -353,6 +346,7 @@ public class TextFileInputTest {
     Mockito.when( input.getTransMeta().listVariables() ).thenReturn( space.listVariables() );
     Mockito.when( input.getTransMeta().getVariable( anyString() ) ).thenAnswer( (Answer<String>)
       invocation -> space.getVariable( (String) invocation.getArguments()[0] ) );
+    Mockito.when( input.getTransMeta().getBowl() ).thenReturn( DefaultBowl.getInstance() );
 
     Mockito.doReturn( rwi ).when( rowset ).getRowMeta();
     Mockito.when( rwi.getString( obj2, 0 ) ).thenReturn( "ram:///." );

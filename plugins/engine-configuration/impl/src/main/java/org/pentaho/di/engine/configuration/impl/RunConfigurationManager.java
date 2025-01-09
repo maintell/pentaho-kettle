@@ -1,37 +1,31 @@
-/*
- * *****************************************************************************
+/*! ******************************************************************************
  *
- *  Pentaho Data Integration
+ * Pentaho
  *
- *  Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *  *******************************************************************************
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
- *  this file except in compliance with the License. You may obtain a copy of the
- *  License at
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- * *****************************************************************************
- *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.engine.configuration.impl;
 
+import org.pentaho.di.core.bowl.Bowl;
+import org.pentaho.di.core.bowl.DefaultBowl;
 import org.pentaho.di.engine.configuration.api.RunConfiguration;
 import org.pentaho.di.engine.configuration.api.RunConfigurationExecutor;
 import org.pentaho.di.engine.configuration.api.RunConfigurationProvider;
 import org.pentaho.di.engine.configuration.api.RunConfigurationService;
 import org.pentaho.di.engine.configuration.impl.pentaho.DefaultRunConfigurationProvider;
+import org.pentaho.di.metastore.MetaStoreConst;
+import org.pentaho.metastore.api.IMetaStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.function.Supplier;
 import java.util.List;
 
 /**
@@ -48,6 +42,14 @@ public class RunConfigurationManager implements RunConfigurationService {
       instance = new RunConfigurationManager();
     }
     return instance;
+  }
+
+  public static RunConfigurationManager getInstance( Bowl bowl ) {
+
+    CheckedMetaStoreSupplier bowlSupplier = () -> bowl != null ? bowl.getMetastore() :
+        DefaultBowl.getInstance().getMetastore();
+    RunConfigurationProvider provider = new DefaultRunConfigurationProvider( bowlSupplier );
+    return  new RunConfigurationManager( Collections.singletonList( provider ) );
   }
 
   public RunConfigurationManager( List<RunConfigurationProvider> runConfigurationProviders ) {

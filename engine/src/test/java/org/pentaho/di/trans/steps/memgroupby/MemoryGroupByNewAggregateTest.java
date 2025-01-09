@@ -1,28 +1,19 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.memgroupby;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -30,7 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -56,19 +47,19 @@ public class MemoryGroupByNewAggregateTest {
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     mockHelper =
-        new StepMockHelper<MemoryGroupByMeta, MemoryGroupByData>( "Memory Group By", MemoryGroupByMeta.class,
-            MemoryGroupByData.class );
+      new StepMockHelper<>( "Memory Group By", MemoryGroupByMeta.class,
+        MemoryGroupByData.class );
     when( mockHelper.logChannelInterfaceFactory.create( any(), any( LoggingObjectInterface.class ) ) ).thenReturn(
         mockHelper.logChannelInterface );
     when( mockHelper.trans.isRunning() ).thenReturn( true );
 
     // In this step we will distinct String aggregations from numeric ones
-    strings = new ArrayList<Integer>();
+    strings = new ArrayList<>();
     strings.add( MemoryGroupByMeta.TYPE_GROUP_CONCAT_COMMA );
     strings.add( MemoryGroupByMeta.TYPE_GROUP_CONCAT_STRING );
 
     // Statistics will be initialized with collections...
-    statistics = new ArrayList<Integer>();
+    statistics = new ArrayList<>();
     statistics.add( MemoryGroupByMeta.TYPE_GROUP_MEDIAN );
     statistics.add( MemoryGroupByMeta.TYPE_GROUP_PERCENTILE );
   }

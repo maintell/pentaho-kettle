@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.step.jms.context;
 
@@ -94,39 +85,47 @@ public class WebsphereMQProvider implements JmsProvider {
   }
 
   @Override public JMSContext getContext( JmsDelegate meta ) {
-
-    MQUrlResolver resolver = new MQUrlResolver( meta );
-
-    MQConnectionFactory connFactory = isQueue( meta )
-      ? new MQQueueConnectionFactory() : new MQTopicConnectionFactory();
-
-    connFactory.setHostName( resolver.host );
-
-    if ( meta.sslEnabled ) {
-      // try to configure SSL settings
-      try {
-        SSLContext sslContext = meta.sslUseDefaultContext ? SSLContext.getDefault() : getSslContext( meta );
-        SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-
-        connFactory.setSSLFipsRequired( meta.ibmSslFipsRequired.toLowerCase().startsWith( "t" )
-          || meta.ibmSslFipsRequired.toLowerCase().startsWith( "y" ) );
-        connFactory.setSSLSocketFactory( sslSocketFactory );
-        connFactory.setSSLCipherSuite( meta.sslCipherSuite );
-
-      } catch ( GeneralSecurityException | IOException e ) {
-        throw new IllegalStateException( e );
-      }
-    }
+    ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 
     try {
-      connFactory.setPort( resolver.port );
-      connFactory.setQueueManager( resolver.queueManager );
-      connFactory.setChannel( resolver.channel );
-      connFactory.setTransportType( WMQConstants.WMQ_CM_CLIENT );
-    } catch ( JMSException e ) {
-      throw new IllegalStateException( e );
+      // Buried in the IBM jar is a json file of cipher suite mappings that the client needs to read during
+      // Java class initialization. Setting the thread classloader to the plugin's classloader so that it can be found.
+      Thread.currentThread().setContextClassLoader( MQConnectionFactory.class.getClassLoader() );
+      MQUrlResolver resolver = new MQUrlResolver( meta );
+
+      MQConnectionFactory connFactory = isQueue( meta )
+        ? new MQQueueConnectionFactory() : new MQTopicConnectionFactory();
+
+      connFactory.setHostName( resolver.host );
+
+      if ( meta.sslEnabled ) {
+        // try to configure SSL settings
+        try {
+          SSLContext sslContext = meta.sslUseDefaultContext ? SSLContext.getDefault() : getSslContext( meta );
+          SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+          connFactory.setSSLFipsRequired( meta.ibmSslFipsRequired.toLowerCase().startsWith( "t" )
+            || meta.ibmSslFipsRequired.toLowerCase().startsWith( "y" ) );
+          connFactory.setSSLSocketFactory( sslSocketFactory );
+          connFactory.setSSLCipherSuite( meta.sslCipherSuite );
+
+        } catch ( GeneralSecurityException | IOException e ) {
+          throw new IllegalStateException( e );
+        }
+      }
+
+      try {
+        connFactory.setPort( resolver.port );
+        connFactory.setQueueManager( resolver.queueManager );
+        connFactory.setChannel( resolver.channel );
+        connFactory.setTransportType( WMQConstants.WMQ_CM_CLIENT );
+      } catch ( JMSException e ) {
+        throw new IllegalStateException( e );
+      }
+      return connFactory.createContext( meta.ibmUsername, meta.ibmPassword );
+    } finally {
+      Thread.currentThread().setContextClassLoader( currentClassLoader );
     }
-    return connFactory.createContext( meta.ibmUsername, meta.ibmPassword );
 
   }
 

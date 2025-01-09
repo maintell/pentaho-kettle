@@ -1,32 +1,21 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
@@ -64,8 +53,6 @@ import org.pentaho.di.trans.steps.userdefinedjavaclass.UserDefinedJavaClassDef;
 import org.pentaho.di.trans.steps.userdefinedjavaclass.UserDefinedJavaClassMeta;
 import org.pentaho.metastore.api.IMetaStore;
 import org.pentaho.metastore.stores.memory.MemoryMetaStore;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -83,10 +70,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -100,8 +88,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith ( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
 public class TransMetaTest {
   public static final String STEP_NAME = "Any step name";
 
@@ -142,20 +128,18 @@ public class TransMetaTest {
 
   @Test
   public void getThisStepFieldsPassesCloneRowMeta() throws Exception {
-    final String overriddenValue = "overridden";
+    final String overriddenValue = "value";
 
     StepMeta nextStep = mockStepMeta( "nextStep" );
 
     StepMetaInterface smi = mock( StepMetaInterface.class );
     StepIOMeta ioMeta = mock( StepIOMeta.class );
     when( smi.getStepIOMeta() ).thenReturn( ioMeta );
-    doAnswer( new Answer<Object>() {
-      @Override public Object answer( InvocationOnMock invocation ) throws Throwable {
-        RowMetaInterface rmi = (RowMetaInterface) invocation.getArguments()[ 0 ];
-        rmi.clear();
-        rmi.addValueMeta( new ValueMetaString( overriddenValue ) );
-        return null;
-      }
+    doAnswer( (Answer<Object>) invocation -> {
+      RowMetaInterface rmi = (RowMetaInterface) invocation.getArguments()[ 0 ];
+      rmi.clear();
+      rmi.addValueMeta( new ValueMetaString( overriddenValue ) );
+      return null;
     } ).when( smi ).getFields(
       any( RowMetaInterface.class ), anyString(), any( RowMetaInterface[].class ), eq( nextStep ),
       any( VariableSpace.class ), any( Repository.class ), any( IMetaStore.class ) );
@@ -215,7 +199,7 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testContentChangeListener() throws Exception {
+  public void testContentChangeListener() {
     ContentChangedListener listener = mock( ContentChangedListener.class );
     transMeta.addContentChangedListener( listener );
 
@@ -237,7 +221,7 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testCompare() throws Exception {
+  public void testCompare() {
     TransMeta transMeta = new TransMeta( "aFile", "aName" );
     TransMeta transMeta2 = new TransMeta( "aFile", "aName" );
     assertEquals( 0, transMeta.compare( transMeta, transMeta2 ) );
@@ -287,14 +271,14 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testEquals() throws Exception {
+  public void testEquals() {
     TransMeta transMeta = new TransMeta( "1", "2" );
-    assertFalse( transMeta.equals( "somethingelse" ) );
-    assertTrue( transMeta.equals( new TransMeta( "1", "2" ) ) );
+    assertNotEquals( "somethingelse", transMeta );
+    assertEquals( transMeta, new TransMeta( "1", "2" ) );
   }
 
   @Test
-  public void testTransHops() throws Exception {
+  public void testTransHops() {
     TransMeta transMeta = new TransMeta( "transFile", "myTrans" );
     StepMeta step1 = new StepMeta( "name1", null );
     StepMeta step2 = new StepMeta( "name2", null );
@@ -315,7 +299,7 @@ public class TransMetaTest {
     assertEquals( hopMeta3, transMeta.findTransHopFrom( step3 ) );
     assertEquals( hopMeta2, transMeta.findTransHop( hopMeta2 ) );
     assertEquals( hopMeta1, transMeta.findTransHop( step1, step2 ) );
-    assertEquals( null, transMeta.findTransHop( step3, step4, false ) );
+    assertNull( transMeta.findTransHop( step3, step4, false ) );
     assertEquals( hopMeta3, transMeta.findTransHop( step3, step4, true ) );
     assertEquals( hopMeta2, transMeta.findTransHopTo( step3 ) );
     transMeta.removeTransHop( 0 );
@@ -330,7 +314,7 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testGetAllTransHops() throws Exception {
+  public void testGetAllTransHops() {
     TransMeta transMeta = new TransMeta( "transFile", "myTrans" );
     StepMeta step1 = new StepMeta( "name1", null );
     StepMeta step2 = new StepMeta( "name2", null );
@@ -366,7 +350,7 @@ public class TransMetaTest {
     dgm2.setFieldType( new String[] {
       ValueMetaFactory.getValueMetaName( ValueMetaInterface.TYPE_STRING ) } );
     List<List<String>> dgm2Data = new ArrayList<>();
-    dgm2Data.add( asList( "Some Informational Data" ) );
+    dgm2Data.add( List.of( "Some Informational Data" ) );
     dgm2.setDataLines( dgm2Data );
 
     StepMeta dg1 = new StepMeta( "input1", dgm1 );
@@ -390,7 +374,7 @@ public class TransMetaTest {
     transMeta.addTransHop( hop1 );
     transMeta.addTransHop( hop2 );
 
-    RowMetaInterface row = null;
+    RowMetaInterface row;
     row = transMeta.getPrevInfoFields( udjc );
     assertNotNull( row );
     assertEquals( 1, row.size() );
@@ -464,7 +448,7 @@ public class TransMetaTest {
     String directory = "/home/admin";
     Node jobNode = Mockito.mock( Node.class );
     NodeList nodeList = new NodeList() {
-      ArrayList<Node> nodes = new ArrayList<>();
+      final ArrayList<Node> nodes = new ArrayList<>();
 
       {
 
@@ -681,7 +665,7 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testHasLoop_simpleLoop() throws Exception {
+  public void testHasLoop_simpleLoop() {
     //main->2->3->main
     TransMeta transMetaSpy = spy( transMeta );
     StepMeta stepMetaMain = createStepMeta( "mainStep" );
@@ -706,7 +690,7 @@ public class TransMetaTest {
   }
 
   @Test
-  public void testHasLoop_loopInPrevSteps() throws Exception {
+  public void testHasLoop_loopInPrevSteps() {
     //main->2->3->4->3
     TransMeta transMetaSpy = spy( transMeta );
     StepMeta stepMetaMain = createStepMeta( "mainStep" );
@@ -760,7 +744,7 @@ public class TransMetaTest {
     StepMeta prevStep1 = testStep( "prevStep1", emptyList(), asList( "field1", "field2" ) );
     StepMeta prevStep2 = testStep( "prevStep2", emptyList(), asList( "field3", "field4", "field5" ) );
 
-    StepMeta someStep = testStep( "step", asList( "prevStep1" ), asList( "outputField" ) );
+    StepMeta someStep = testStep( "step", List.of( "prevStep1" ), List.of( "outputField" ) );
 
     StepMeta after = new StepMeta( "after", new DummyTransMeta() );
 
@@ -806,7 +790,7 @@ public class TransMetaTest {
     RowMeta rowMetaWithFields = new RowMeta();
     StepIOMeta stepIOMeta = mock( StepIOMeta.class );
     when( stepIOMeta.getInfoStepnames() ).thenReturn( infoStepnames.toArray( new String[ 0 ] ) );
-    fieldNames.stream()
+    fieldNames
       .forEach( field -> rowMetaWithFields.addValueMeta( new ValueMetaString( field ) ) );
     StepMetaInterface newSmi = spy( smi );
     when( newSmi.getStepIOMeta() ).thenReturn( stepIOMeta );

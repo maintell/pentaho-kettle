@@ -1,28 +1,20 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.constant;
 
 import java.math.BigDecimal;
+import java.net.InetAddress;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +84,7 @@ public class Constant extends BaseStep implements StepInterface {
           String stringValue = meta.getValue()[i];
 
           // If the value is empty: consider it to be NULL.
-          if ( stringValue == null || stringValue.length() == 0 ) {
+          if ( stringValue == null || stringValue.isEmpty() ) {
             rowData[i] = null;
 
             if ( value.getType() == ValueMetaInterface.TYPE_NONE ) {
@@ -108,16 +100,16 @@ public class Constant extends BaseStep implements StepInterface {
                   if ( meta.getFieldFormat()[i] != null
                     || meta.getDecimal()[i] != null || meta.getGroup()[i] != null
                     || meta.getCurrency()[i] != null ) {
-                    if ( meta.getFieldFormat()[i] != null && meta.getFieldFormat()[i].length() >= 1 ) {
+                    if ( meta.getFieldFormat()[i] != null && !meta.getFieldFormat()[ i ].isEmpty() ) {
                       data.df.applyPattern( meta.getFieldFormat()[i] );
                     }
-                    if ( meta.getDecimal()[i] != null && meta.getDecimal()[i].length() >= 1 ) {
+                    if ( meta.getDecimal()[i] != null && !meta.getDecimal()[ i ].isEmpty() ) {
                       data.dfs.setDecimalSeparator( meta.getDecimal()[i].charAt( 0 ) );
                     }
-                    if ( meta.getGroup()[i] != null && meta.getGroup()[i].length() >= 1 ) {
+                    if ( meta.getGroup()[i] != null && !meta.getGroup()[ i ].isEmpty() ) {
                       data.dfs.setGroupingSeparator( meta.getGroup()[i].charAt( 0 ) );
                     }
-                    if ( meta.getCurrency()[i] != null && meta.getCurrency()[i].length() >= 1 ) {
+                    if ( meta.getCurrency()[i] != null && !meta.getCurrency()[ i ].isEmpty() ) {
                       data.dfs.setCurrencySymbol( meta.getCurrency()[i] );
                     }
 
@@ -195,6 +187,18 @@ public class Constant extends BaseStep implements StepInterface {
                   String message =
                     BaseMessages.getString(
                       PKG, "Constant.BuildRow.Error.Parsing.Timestamp", value.getName(), stringValue, e
+                        .toString() );
+                  remarks.add( new CheckResult( CheckResultInterface.TYPE_RESULT_ERROR, message, null ) );
+                }
+                break;
+
+              case ValueMetaInterface.TYPE_INET:
+                try {
+                  rowData[i] = InetAddress.getByName( stringValue );
+                } catch ( Exception e ) {
+                  String message =
+                    BaseMessages.getString(
+                      PKG, "Constant.BuildRow.Error.Parsing.InternetAddress", value.getName(), stringValue, e
                         .toString() );
                   remarks.add( new CheckResult( CheckResultInterface.TYPE_RESULT_ERROR, message, null ) );
                 }

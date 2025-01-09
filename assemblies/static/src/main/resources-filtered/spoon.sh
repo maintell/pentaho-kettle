@@ -1,26 +1,16 @@
 #!/bin/sh
+# ******************************************************************************
+#
+# Pentaho
+#
+# Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
+#
+# Use of this software is governed by the Business Source License included
+# in the LICENSE.TXT file.
+#
+# Change Date: 2029-07-20
+# ******************************************************************************
 
-# *****************************************************************************
-#
-# Pentaho Data Integration
-#
-# Copyright (C) 2005 - ${copyright.year} by Hitachi Vantara : http://www.hitachivantara.com
-#
-# *****************************************************************************
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with
-# the License. You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# *****************************************************************************
 
 # **************************************************
 # ** Set these to the location of your mozilla
@@ -89,13 +79,13 @@ case `uname -s` in
 				LIBPATH=$CURRENTDIR/../libswt/aix64/
 				;;
 
-			*)	
+			*)
 				echo "I'm sorry, this AIX platform [$ARCH] is not yet supported!"
 				exit
 				;;
 		esac
 		;;
-	SunOS) 
+	SunOS)
 	ARCH=`uname -m`
 		case $ARCH in
 
@@ -103,7 +93,7 @@ case `uname -s` in
 				LIBPATH=$CURRENTDIR/../libswt/solaris-x86/
 				;;
 
-			*)	
+			*)
 				LIBPATH=$CURRENTDIR/../libswt/solaris/
 				;;
 		esac
@@ -136,7 +126,7 @@ case `uname -s` in
 			LIBPATH=$CURRENTDIR/../libswt/osx/
 			;;
 
-		*)	
+		*)
 			echo "I'm sorry, this Mac platform [$ARCH] is not yet supported!"
 			echo "Please try starting using 'Data Integration 32-bit' or"
 			echo "'Data Integration 64-bit' as appropriate."
@@ -187,7 +177,7 @@ case `uname -s` in
 				LIBPATH=$CURRENTDIR/../libswt/linux/ppc64/
 				;;
 
-			*)	
+			*)
 				echo "I'm sorry, this Linux platform [$ARCH] is not yet supported!"
 				exit
 				;;
@@ -215,14 +205,14 @@ case `uname -s` in
 				exit
 				;;
 
-			*)	
+			*)
 				echo "I'm sorry, this FreeBSD platform [$ARCH] is not yet supported!"
 				exit
 				;;
 		esac
 		;;
 
-	HP-UX) 
+	HP-UX)
 		LIBPATH=$CURRENTDIR/../libswt/hpux/
 		;;
 	CYGWIN*)
@@ -241,21 +231,29 @@ export LIBPATH
 # **************************************************
 # ** Setup Karaf endorsed libraries directory     **
 # **************************************************
-JAVA_ENDORSED_DIRS=""
 JAVA_LOCALE_COMPAT=""
 JAVA_ADD_OPENS=""
-if $($_PENTAHO_JAVA -version 2>&1 | grep "version \"1\.8\..*" > /dev/null ) 
-then
-	if [ ! -z "$_PENTAHO_JAVA_HOME" ]; then
-		JAVA_ENDORSED_DIRS="${_PENTAHO_JAVA_HOME}/jre/lib/endorsed:${_PENTAHO_JAVA_HOME}/lib/endorsed:"
-	fi
-	JAVA_ENDORSED_DIRS="${JAVA_ENDORSED_DIRS}${BASEDIR}/system/karaf/lib/endorsed"
-	JAVA_ENDORSED_DIRS="-Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}
-else
 # required for Java 11 date/time formatting backwards compatibility
-  JAVA_LOCALE_COMPAT="-Djava.locale.providers=COMPAT,SPI"
-  JAVA_ADD_OPENS="--add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.jar=ALL-UNNAMED"
-fi
+JAVA_LOCALE_COMPAT="-Djava.locale.providers=COMPAT,SPI"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.net.www.protocol.jar=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.lang=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.io=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.net=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.security=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.util=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.net.www.protocol.file=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.reflect.misc=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.management/javax.management=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.management/javax.management.openmbean=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.math=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.base/java.nio=ALL-UNNAMED"
+JAVA_ADD_OPENS="$JAVA_ADD_OPENS --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED"
 
 # ******************************************************************
 # ** Set java runtime options                                     **
@@ -267,7 +265,7 @@ if [ -z "$PENTAHO_DI_JAVA_OPTIONS" ]; then
     PENTAHO_DI_JAVA_OPTIONS="-Xms1024m -Xmx2048m"
 fi
 
-OPT="$OPT $PENTAHO_DI_JAVA_OPTIONS -Djava.library.path=$LIBPATH $JAVA_ENDORSED_DIRS $JAVA_LOCALE_COMPAT -DKETTLE_HOME=$KETTLE_HOME -DKETTLE_REPOSITORY=$KETTLE_REPOSITORY -DKETTLE_USER=$KETTLE_USER -DKETTLE_PASSWORD=$KETTLE_PASSWORD -DKETTLE_PLUGIN_PACKAGES=$KETTLE_PLUGIN_PACKAGES -DKETTLE_LOG_SIZE_LIMIT=$KETTLE_LOG_SIZE_LIMIT -DKETTLE_JNDI_ROOT=$KETTLE_JNDI_ROOT"
+OPT="$OPT $PENTAHO_DI_JAVA_OPTIONS -Djava.library.path=$LIBPATH $JAVA_LOCALE_COMPAT -DKETTLE_HOME=$KETTLE_HOME -DKETTLE_REPOSITORY=$KETTLE_REPOSITORY -DKETTLE_USER=$KETTLE_USER -DKETTLE_PASSWORD=$KETTLE_PASSWORD -DKETTLE_PLUGIN_PACKAGES=$KETTLE_PLUGIN_PACKAGES -DKETTLE_LOG_SIZE_LIMIT=$KETTLE_LOG_SIZE_LIMIT -DKETTLE_JNDI_ROOT=$KETTLE_JNDI_ROOT"
 
 # optional line for attaching a debugger
 # OPT="$OPT -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"

@@ -1,24 +1,15 @@
-/*******************************************************************************
+/*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.textfileoutput;
 
@@ -207,7 +198,8 @@ public class TextFileOutput extends BaseStep implements StepInterface {
           data.getFileStreamsCollection().add( filename, fileStreams );
 
           if ( log.isDetailed() ) {
-            logDetailed( "Opened new file with name [" + KettleVFS.getFriendlyURI( filename ) + "]" );
+            logDetailed( "Opened new file with name [" + KettleVFS.getInstance( getTransMeta().getBowl() )
+                         .getFriendlyURI( filename ) + "]" );
           }
         } else if ( fileStreams.getBufferedOutputStream() == null ) { // File was previously opened and now needs to be reopened.
           int maxOpenFiles = getMaxOpenFiles();
@@ -227,7 +219,7 @@ public class TextFileOutput extends BaseStep implements StepInterface {
         }
       } catch ( Exception e ) {
         if ( !( e instanceof KettleException ) ) {
-          throw new KettleException( "Error opening new file : " + e.toString() );
+          throw new KettleException( "Error opening new file : " + e.toString(), e );
         } else {
           throw (KettleException) e;
         }
@@ -828,10 +820,12 @@ public class TextFileOutput extends BaseStep implements StepInterface {
         } catch ( Exception e ) {
           if ( getParentVariableSpace() == null ) {
             logError( "Couldn't open file "
-                + KettleVFS.getFriendlyURI( meta.getFileName() ) + "." + meta.getExtension(), e );
+                + KettleVFS.getInstance( getTransMeta().getBowl() )
+                      .getFriendlyURI( meta.getFileName() ) + "." + meta.getExtension(), e );
           } else {
             logError( "Couldn't open file "
-                + KettleVFS.getFriendlyURI( getParentVariableSpace().environmentSubstitute( meta.getFileName() ) )
+                + KettleVFS.getInstance( getTransMeta().getBowl() )
+                      .getFriendlyURI( getParentVariableSpace().environmentSubstitute( meta.getFileName() ) )
                 + "." + getParentVariableSpace().environmentSubstitute( meta.getExtension() ), e );
           }
           setErrors( 1L );
@@ -1005,7 +999,8 @@ public class TextFileOutput extends BaseStep implements StepInterface {
           }
         } else {
           throw new KettleException( BaseMessages.getString( PKG, "TextFileOutput.Log.ParentFolderNotExistCreateIt",
-              KettleVFS.getFriendlyURI( parentfolder ), KettleVFS.getFriendlyURI( filename ) ) );
+            KettleVFS.getFriendlyURI( parentfolder ),
+            KettleVFS.getInstance( getTransMeta().getBowl() ).getFriendlyURI( filename ) ) );
         }
       }
     } finally {
@@ -1059,15 +1054,15 @@ public class TextFileOutput extends BaseStep implements StepInterface {
   }
 
   protected FileObject getFileObject( String vfsFilename ) throws KettleFileException {
-    return KettleVFS.getFileObject( vfsFilename );
+    return KettleVFS.getInstance( getTransMeta().getBowl() ).getFileObject( vfsFilename );
   }
 
   protected FileObject getFileObject( String vfsFilename, VariableSpace space ) throws KettleFileException {
-    return KettleVFS.getFileObject( vfsFilename, space );
+    return KettleVFS.getInstance( getTransMeta().getBowl() ).getFileObject( vfsFilename, space );
   }
 
   protected OutputStream getOutputStream( String vfsFilename, VariableSpace space, boolean append ) throws KettleFileException {
-    return KettleVFS.getOutputStream( vfsFilename, space, append );
+    return KettleVFS.getInstance( getTransMeta().getBowl() ).getOutputStream( vfsFilename, space, append );
   }
 
 }

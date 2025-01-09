@@ -23,14 +23,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>pentaho-streaming-jms-plugin</artifactId>
-  <version>9.6.0.0-SNAPSHOT</version>
+  <version>10.3.0.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
 
   <parent>
     <groupId>org.pentaho.di.plugins</groupId>
     <artifactId>pentaho-streaming-impls</artifactId>
-    <version>9.6.0.0-SNAPSHOT</version>
+    <version>10.3.0.0-SNAPSHOT</version>
   </parent>
 
 
@@ -39,10 +39,11 @@
 
 
   <properties>
-    <ibmmq.version>9.0.4.0</ibmmq.version>
+    <ibmmq.version>9.4.0.0</ibmmq.version>
     <jms.version>2.0.1</jms.version>
-    <pdi.version>9.6.0.0-SNAPSHOT</pdi.version>
-    <artemis.version>2.5.0</artemis.version>
+    <pdi.version>10.3.0.0-SNAPSHOT</pdi.version>
+    <artemis.version>2.33.0</artemis.version>
+    <io-netty.version>4.1.108.Final</io-netty.version>
   </properties>
 
   <dependencies>
@@ -94,6 +95,11 @@
       <artifactId>artemis-jms-client-osgi</artifactId>
       <version>${artemis.version}</version>
       <exclusions>
+        <!--latest artemis bundles slf4j-->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
         <exclusion>
           <!--use org.jms instead-->
           <groupId>org.apache.geronimo.specs</groupId>
@@ -114,8 +120,52 @@
           <groupId>io.netty</groupId>
           <artifactId>netty-transport-native-epoll</artifactId>
         </exclusion>
+
+        <!-- removing transitive io.netty dependency version 107 with security vulnerabilities -->
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-codec-http</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-codec</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-handler</artifactId>
+        </exclusion>
+        <!-- Excluding Bouncy castle version 1.77 -->
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk18on</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcpkix-jdk18on</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcutil-jdk18on</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
+    <!-- pulling newer version of io-netty version 108 -->
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-http</artifactId>
+      <version>${io-netty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+      <version>${io-netty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler</artifactId>
+      <version>${io-netty.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.glassfish</groupId>
       <artifactId>javax.json</artifactId>
@@ -129,12 +179,12 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-transport-native-kqueue</artifactId>
-      <version>4.1.22.Final</version>
+      <version>${io-netty.version}</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-transport-native-epoll</artifactId>
-      <version>4.1.22.Final</version>
+      <version>${io-netty.version}</version>
     </dependency>
 
     <dependency>
@@ -146,8 +196,8 @@
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>${mockito-all.version}</version>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

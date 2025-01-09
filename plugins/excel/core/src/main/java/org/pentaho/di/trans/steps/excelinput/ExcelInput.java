@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelinput;
 
@@ -58,6 +49,7 @@ import org.pentaho.di.trans.step.errorhandling.CompositeFileErrorHandler;
 import org.pentaho.di.trans.step.errorhandling.FileErrorHandler;
 import org.pentaho.di.trans.step.errorhandling.FileErrorHandlerContentLineNumber;
 import org.pentaho.di.trans.step.errorhandling.FileErrorHandlerMissingFiles;
+import org.pentaho.di.trans.steps.utils.CommonExcelUtils;
 
 /**
  * This class reads data from one or more Microsoft Excel files.
@@ -76,7 +68,7 @@ public class ExcelInput extends BaseStep implements StepInterface {
   public ExcelInput( StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
                      Trans trans ) {
     super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
-    setZipBombConfiguration();
+    CommonExcelUtils.setZipBombConfiguration();
   }
 
   /**
@@ -728,48 +720,7 @@ public class ExcelInput extends BaseStep implements StepInterface {
     }
   }
 
-  /**
-   * This method is responsible for setting the configuration values that control how the ZipSecureFile class behaves
-   * when trying to detect zipbombs (check PDI-17586 for more details).
-   */
-  protected void setZipBombConfiguration() {
 
-    // The minimum allowed ratio between de- and inflated bytes to detect a zipbomb.
-    String minInflateRatioVariable =
-      EnvUtil
-        .getSystemProperty( Const.KETTLE_ZIP_MIN_INFLATE_RATIO, Const.KETTLE_ZIP_MIN_INFLATE_RATIO_DEFAULT_STRING );
-    double minInflateRatio;
-    try {
-      minInflateRatio = Const.checkXlsxZipBomb() ? Double.parseDouble( minInflateRatioVariable )
-              : Const.KETTLE_ZIP_NEGATIVE_MIN_INFLATE;
-    } catch ( NullPointerException | NumberFormatException e ) {
-      minInflateRatio = Const.KETTLE_ZIP_MIN_INFLATE_RATIO_DEFAULT;
-    }
-    ZipSecureFile.setMinInflateRatio( minInflateRatio );
-
-    // The maximum file size of a single zip entry.
-    String maxEntrySizeVariable =
-      EnvUtil.getSystemProperty( Const.KETTLE_ZIP_MAX_ENTRY_SIZE, Const.KETTLE_ZIP_MAX_ENTRY_SIZE_DEFAULT_STRING );
-    long maxEntrySize;
-    try {
-      maxEntrySize = Long.parseLong( maxEntrySizeVariable );
-    } catch ( NullPointerException | NumberFormatException e ) {
-      maxEntrySize = Const.KETTLE_ZIP_MAX_ENTRY_SIZE_DEFAULT;
-    }
-    ZipSecureFile.setMaxEntrySize( maxEntrySize );
-
-    // The maximum number of characters of text that are extracted before an exception is thrown during extracting
-    // text from documents.
-    String maxTextSizeVariable =
-      EnvUtil.getSystemProperty( Const.KETTLE_ZIP_MAX_TEXT_SIZE, Const.KETTLE_ZIP_MAX_TEXT_SIZE_DEFAULT_STRING );
-    long maxTextSize;
-    try {
-      maxTextSize = Long.parseLong( maxTextSizeVariable );
-    } catch ( NullPointerException | NumberFormatException e ) {
-      maxTextSize = Const.KETTLE_ZIP_MAX_TEXT_SIZE_DEFAULT;
-    }
-    ZipSecureFile.setMaxTextSize( maxTextSize );
-  }
 
   public boolean init( StepMetaInterface smi, StepDataInterface sdi ) {
     meta = (ExcelInputMeta) smi;

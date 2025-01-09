@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.memgroupby;
 
@@ -26,7 +17,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -351,7 +342,7 @@ public class MemoryGroupByAggregationTest {
     // Spy on step, regrettable but we need to easily inject rows
     MemoryGroupBy step = spy( new MemoryGroupBy( stepMeta, data, 0, transMeta, mock( Trans.class ) ) );
     step.copyVariablesFrom( variables );
-    doNothing().when( step ).putRow( (RowMetaInterface) any(), (Object[]) any() );
+    doNothing().when( step ).putRow( any(), any() );
     doNothing().when( step ).setOutputDone();
 
     // Process rows
@@ -360,7 +351,7 @@ public class MemoryGroupByAggregationTest {
       doReturn( row ).when( step ).getRow();
       assertThat( step.processRow( meta, data ), is( true ) );
     }
-    verify( step, never() ).putRow( (RowMetaInterface) any(), (Object[]) any() );
+    verify( step, never() ).putRow( any(), any() );
 
     // Mark stop
     doReturn( null ).when( step ).getRow();
@@ -393,11 +384,11 @@ public class MemoryGroupByAggregationTest {
 
     return FluentIterable.from( ContiguousSet.create( rows, DiscreteDomain.integers() ) )
       .transform( Functions.forMap( data.rowMap(), ImmutableMap.<Integer, Optional<Object>>of() ) )
-      .transform( new Function<Map<Integer, Optional<Object>>, Object[]>() {
+      .transform( new Function<>() {
         @Override public Object[] apply( Map<Integer, Optional<Object>> input ) {
-          Object[] row = new Object[rowMeta.size()];
+          Object[] row = new Object[ rowMeta.size() ];
           for ( Map.Entry<Integer, Optional<Object>> entry : input.entrySet() ) {
-            row[entry.getKey()] = entry.getValue().orNull();
+            row[ entry.getKey() ] = entry.getValue().orNull();
           }
           return row;
         }

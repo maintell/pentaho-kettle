@@ -1,56 +1,22 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.jsoninput;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
-import static org.pentaho.di.core.util.Assert.assertNotNull;
-import static org.pentaho.di.core.util.Assert.assertNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.jayway.jsonpath.InvalidPathException;
 import junit.framework.ComparisonFailure;
-
 import net.minidev.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs2.FileObject;
@@ -60,10 +26,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.internal.util.reflection.Whitebox;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.KettleClientEnvironment;
 import org.pentaho.di.core.RowSet;
+import org.pentaho.di.core.bowl.Bowl;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleFileException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -85,6 +51,30 @@ import org.pentaho.di.trans.step.StepErrorMeta;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.steps.jsoninput.reader.FastJsonReader;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.pentaho.di.core.util.Assert.assertNotNull;
+import static org.pentaho.di.core.util.Assert.assertNull;
 
 public class JsonInputTest {
 
@@ -1221,10 +1211,10 @@ public class JsonInputTest {
       jsonInput =
         createJsonInput( "json", inputMeta, variables, new Object[] { getSampleJson() } );
 
-      JsonInputData data = (JsonInputData) Whitebox.getInternalState( jsonInput, "data" );
-      FastJsonReader reader = (FastJsonReader) Whitebox.getInternalState( data, "reader" );
+      JsonInputData data = (JsonInputData) ReflectionTestUtils.getField( jsonInput, "data" );
+      FastJsonReader reader = (FastJsonReader) ReflectionTestUtils.getField( data, "reader" );
       RowSet rowset = reader.parse( new ByteArrayInputStream( getSampleJson().getBytes() ) );
-      List results = (List) Whitebox.getInternalState( rowset, "results" );
+      List results = (List) ReflectionTestUtils.getField( rowset, "results" );
       JSONArray jsonResult = (JSONArray) results.get( 0 );
 
       assertEquals( 1, jsonResult.size() );
@@ -1266,7 +1256,7 @@ public class JsonInputTest {
   protected JsonInputMeta createFileListMeta( final List<FileObject> files ) {
     JsonInputMeta meta = new JsonInputMeta() {
       @Override
-      public FileInputList getFileInputList( VariableSpace space ) {
+      public FileInputList getFileInputList( Bowl bowl, VariableSpace space ) {
         return new FileInputList() {
           @Override
           public List<FileObject> getFiles() {

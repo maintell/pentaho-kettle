@@ -1,31 +1,17 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
 
-package org.pentaho.di.trans.steps.jobexecutor;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+package org.pentaho.di.trans.steps.jobexecutor;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,13 +33,19 @@ import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
 import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
 import org.pentaho.metastore.api.IMetaStore;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.spy;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * <p>
@@ -83,11 +75,11 @@ public class JobExecutorMetaTest {
             "executionExitStatusField" );
 
     // executionResultTargetStepMeta -? (see for switch case meta)
-    Map<String, String> getterMap = new HashMap<String, String>();
-    Map<String, String> setterMap = new HashMap<String, String>();
-    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    Map<String, String> getterMap = new HashMap<>();
+    Map<String, String> setterMap = new HashMap<>();
+    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<>();
 
-    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<>();
     loadSaveTester =
         new LoadSaveTester( JobExecutorMeta.class, attributes, getterMap, setterMap, attrValidatorMap, typeValidatorMap );
   }
@@ -98,7 +90,7 @@ public class JobExecutorMetaTest {
   }
 
   @Test
-  public void testRemoveHopFrom() throws Exception {
+  public void testRemoveHopFrom() {
     JobExecutorMeta jobExecutorMeta = new JobExecutorMeta();
     jobExecutorMeta.setExecutionResultTargetStepMeta( new StepMeta() );
     jobExecutorMeta.setResultRowsTargetStepMeta( new StepMeta() );
@@ -119,9 +111,9 @@ public class JobExecutorMetaTest {
     String testName = "test";
 
     doReturn( jobMeta ).when( jobExecutorMeta ).loadJobMetaProxy( any( JobExecutorMeta.class ),
-            any( Repository.class ), any( VariableSpace.class ) );
-    when( jobMeta.exportResources( any( JobMeta.class ), any( Map.class ), any( ResourceNamingInterface.class ),
-            any( Repository.class ), any( IMetaStore.class ) ) ).thenReturn( testName );
+            nullable( Repository.class ), nullable( VariableSpace.class ) );
+    when( jobMeta.exportResources( any( JobMeta.class ), nullable( Map.class ), nullable( ResourceNamingInterface.class ),
+      nullable( Repository.class ), nullable( IMetaStore.class ) ) ).thenReturn( testName );
 
     jobExecutorMeta.exportResources( null, null, null, null, null );
 
@@ -146,7 +138,7 @@ public class JobExecutorMetaTest {
     meta.setVariable( param3, childValue3 );
 
     Mockito.doReturn( meta ).when( repository )
-      .loadJob( Mockito.eq( "test.kjb" ), Mockito.anyObject(), Mockito.anyObject(), Mockito.anyObject() );
+      .loadJob( Mockito.eq( "test.kjb" ), Mockito.any(), Mockito.any(), Mockito.any() );
 
     VariableSpace parentSpace = new Variables();
     parentSpace.setVariable( param1, parentValue1 );
@@ -161,7 +153,7 @@ public class JobExecutorMetaTest {
 
     jobExecutorMeta.getParameters().setInheritingAllVariables( false );
     jobMeta = JobExecutorMeta.loadJobMeta( jobExecutorMeta, repository, parentSpace );
-    Assert.assertEquals( null, jobMeta.getVariable( param1 ) );
+    assertNull( jobMeta.getVariable( param1 ) );
     Assert.assertEquals( parentValue2, jobMeta.getVariable( param2 ) );
     Assert.assertEquals( childValue3, jobMeta.getVariable( param3 ) );
 

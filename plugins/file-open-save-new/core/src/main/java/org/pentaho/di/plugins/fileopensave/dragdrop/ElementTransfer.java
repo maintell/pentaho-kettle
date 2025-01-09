@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.plugins.fileopensave.dragdrop;
 
 import org.eclipse.swt.dnd.ByteArrayTransfer;
@@ -125,16 +116,12 @@ public class ElementTransfer extends ByteArrayTransfer {
      * (String) Complete path to entity and identifier.
      * (String) provider
      * (String) repositoryName
-     * (String) domain
-     * (String) connection
      */
     String name = dataIn.readUTF();
     EntityType entityType = EntityType.fromValue( dataIn.readInt() );
     String path = dataIn.readUTF();
     String provider = dataIn.readUTF();
     String repositoryName = dataIn.readUTF();
-    String domain = dataIn.readUTF();
-    String connection = dataIn.readUTF();
     // This handles the fact the repository files do not store their extension on the end of the name.  I guess we
     // corrupt our data in the name of cosmetics.  Anyway it will break everything downstream if we don't fix it.
     if ( entityType == EntityType.REPOSITORY_FILE && ( path.endsWith( ".ktr" ) || path.endsWith( ".kjb" ) )
@@ -142,7 +129,7 @@ public class ElementTransfer extends ByteArrayTransfer {
 
       name += path.substring( path.length() - 4 );
     }
-    return new Element( name, entityType, path, provider, repositoryName, domain, connection );
+    return new Element( name, entityType, path, provider, repositoryName );
   }
 
   protected byte[] toByteArray( Element[] elements ) {
@@ -190,7 +177,5 @@ public class ElementTransfer extends ByteArrayTransfer {
     dataOut.writeUTF( element.getPath() );
     dataOut.writeUTF( element.getProvider() );
     dataOut.writeUTF( element.getRepositoryName() == null ? "" : element.getRepositoryName() );
-    dataOut.writeUTF( element.getDomain() == null ? "" : element.getDomain() );
-    dataOut.writeUTF( element.getConnection() == null ? "" : element.getConnection() );
   }
 }

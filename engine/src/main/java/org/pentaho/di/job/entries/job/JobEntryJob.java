@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.job;
 
@@ -731,7 +722,8 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
       List<RowMetaAndData> rows = new ArrayList<RowMetaAndData>( result.getRows() );
 
       while ( ( first && !execPerRow )
-        || ( execPerRow && rows != null && iteration < rows.size() && result.getNrErrors() == 0 ) ) {
+        || ( execPerRow && !rows.isEmpty() && iteration < rows.size() && result.getNrErrors() == 0 )
+        || ( execPerRow && rows.isEmpty() && iteration <= rows.size() && shouldConsiderOldBehaviourForEveryInputRow() ) ) {
 
         first = false;
         // Clear the result rows of the result
@@ -1233,8 +1225,40 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
       result.setResult( true );
     }
 
-    setLoggingObjectInUse( false );
     return result;
+  }
+
+  private boolean shouldConsiderOldBehaviourForEveryInputRow( ) {
+    boolean showWarnings = calculateExecuteForEveryRowKettleProperty( Const.KETTLE_COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW, Const.COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW );
+    boolean shouldExecuteWithZeroRows = calculateExecuteForEveryRowKettleProperty( Const.KETTLE_COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT, Const.COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT );
+
+    if ( showWarnings ) {
+      if ( shouldExecuteWithZeroRows ) {
+        log.logBasic(
+          "WARN Detected \"Execute for every row\" but no rows were detected, applying desired behavior, to execute. In case this is not desired behavior, please read property KETTLE_COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT." );
+      } else {
+        log.logBasic(
+          "WARN Detected \"Execute for every row\" but no rows were detected, applying default behavior, not to execute. In case this is not desired behavior, please read property KETTLE_COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT." );
+      }
+    }
+
+    return shouldExecuteWithZeroRows;
+  }
+
+  private boolean calculateExecuteForEveryRowKettleProperty( String kettleCompatabilityProperty, String compatibilityProperty ) {
+    String kValue = System.getProperty( kettleCompatabilityProperty );
+
+    if ( !Utils.isEmpty( kValue ) ) {
+      return "Y".equalsIgnoreCase( kValue );
+    }
+
+    String cValue = System.getProperty( compatibilityProperty );
+    if ( !Utils.isEmpty( cValue ) ) {
+      log.logError( compatibilityProperty + " property is deprecated, please use " + kettleCompatabilityProperty
+        + " and remove the old one." );
+    }
+
+    return "Y".equalsIgnoreCase( cValue );
   }
 
   private boolean createParentFolder( String filename ) {
@@ -1384,11 +1408,7 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
   @Deprecated
   public JobMeta getJobMeta( Repository rep, VariableSpace space ) throws KettleException {
     parentJobMeta.getMetaFileCache( ); //Get the cache from the parent or create it
-    if ( rep != null ) {
-      return getJobMeta( rep, rep.getMetaStore(), space );
-    } else {
-      return getJobMeta( rep, getMetaStore(), space );
-    }
+    return getJobMeta( rep, getMetaStore(), space );
   }
 
   protected JobMeta getJobMetaFromRepository( Repository rep, CurrentDirectoryResolver r, String transPath, VariableSpace tmpSpace ) throws KettleException {
@@ -1730,6 +1750,19 @@ public class JobEntryJob extends JobEntryBase implements Cloneable, JobEntryInte
     }
     if ( parentJobMeta !=  null ) {
       parentJobMeta.addCurrentDirectoryChangedListener( this.dirListener );
+    }
+  }
+
+  @Override public void callBeforeLog() {
+    if ( parentJob != null ) {
+      parentJob.callBeforeLog();
+    }
+  }
+
+  @Override
+  public void callAfterLog() {
+    if ( parentJob != null ) {
+      parentJob.callAfterLog();
     }
   }
 

@@ -1,41 +1,25 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.rest;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
-import com.sun.jersey.api.uri.UriComponent;
-import com.sun.jersey.client.apache4.config.ApacheHttpClient4Config;
-import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
+import org.glassfish.jersey.client.RequestEntityProcessing;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.uri.UriComponent;
 import org.json.simple.JSONObject;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.encryption.Encr;
@@ -50,16 +34,21 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.util.HttpClientManager;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.ext.MessageBodyWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -86,14 +75,23 @@ public class Rest extends BaseStep implements StepInterface {
     super( stepMeta, stepDataInterface, copyNr, transMeta, trans );
   }
 
-  /* for unit test*/
-  MultivaluedMapImpl createMultivalueMap( String paramName, String paramValue ) {
-    MultivaluedMapImpl queryParams = new MultivaluedMapImpl();
-    queryParams.add( paramName, UriComponent.encode( paramValue, UriComponent.Type.QUERY_PARAM ) );
-    return queryParams;
+  protected Object[] callRest( Object[] rowData ) throws KettleException {
+
+    Client client = null;
+    try {
+      client = getClient( rowData );
+      WebTarget webResource = buildRequest( client, rowData );
+      return invokeRequest( webResource, rowData );
+    } catch ( Exception e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.CanNotReadURL", data.realUrl ), e );
+    } finally {
+      if ( client != null ) {
+        client.close();
+      }
+    }
   }
 
-  protected Object[] callRest( Object[] rowData ) throws KettleException {
+  protected Client getClient( Object[] rowData ) throws KettleException {
     // get dynamic url ?
     if ( meta.isUrlInField() ) {
       data.realUrl = data.inputRowMeta.getString( rowData, data.indexOfUrlField );
@@ -105,245 +103,266 @@ public class Rest extends BaseStep implements StepInterface {
         throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.MethodMissing" ) );
       }
     }
-    WebResource webResource = null;
     Client client = null;
+    if ( isDetailed() ) {
+      logDetailed( BaseMessages.getString( PKG, "Rest.Log.ConnectingToURL", data.realUrl ) );
+    }
+    //      // Register a custom StringMessageBodyWriter to solve PDI-17423
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+    clientBuilder
+      .withConfig( data.config )
+      .property( HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true );
+    if ( meta.isIgnoreSsl() || !Utils.isEmpty( data.trustStoreFile ) ) {
+      clientBuilder.sslContext( data.sslContext );
+      clientBuilder.hostnameVerifier( ( s1, s2 ) -> true );
+    }
+    client = clientBuilder.build();
+    if ( data.basicAuthentication != null ) {
+      client.register( data.basicAuthentication );
+    }
+    return client;
+  }
+
+  protected WebTarget buildRequest( Client client, Object[] rowData ) throws KettleException {
+    WebTarget webResource = null;
+    // create a WebResource object, which encapsulates a web resource for the client
+    webResource = client.target( data.realUrl );
+
+    if ( data.useMatrixParams ) {
+      // Add matrix parameters
+      UriBuilder builder = webResource.getUriBuilder();
+      for ( int i = 0; i < data.nrMatrixParams; i++ ) {
+        String value = data.inputRowMeta.getString( rowData, data.indexOfMatrixParamFields[ i ] );
+        if ( isDebug() ) {
+          logDebug(
+              BaseMessages.getString( PKG, "Rest.Log.matrixParameterValue", data.matrixParamNames[ i ], value ) );
+        }
+        builder = builder.matrixParam( data.matrixParamNames[ i ],
+                                       UriComponent.encode( value, UriComponent.Type.QUERY_PARAM_SPACE_ENCODED ) );
+      }
+      webResource = client.target( builder.build() );
+    }
+
+    if ( data.useParams ) {
+      // Add query parameters
+      for ( int i = 0; i < data.nrParams; i++ ) {
+        String value = data.inputRowMeta.getString( rowData, data.indexOfParamFields[ i ] );
+        if ( isDebug() ) {
+          logDebug( BaseMessages.getString( PKG, "Rest.Log.queryParameterValue", data.paramNames[ i ], value ) );
+        }
+        webResource = webResource.queryParam( data.paramNames[ i ],
+          UriComponent.encode( value, UriComponent.Type.QUERY_PARAM_SPACE_ENCODED ) );
+      }
+    }
+    if ( isDebug() ) {
+      logDebug( BaseMessages.getString( PKG, "Rest.Log.ConnectingToURL", webResource.getUri() ) );
+    }
+    return webResource;
+  }
+
+  private Object[] invokeRequest( WebTarget webResource, Object[] rowData ) throws KettleException {
     Object[] newRow = null;
     if ( rowData != null ) {
       newRow = rowData.clone();
     }
-    try {
-      if ( isDetailed() ) {
-        logDetailed( BaseMessages.getString( PKG, "Rest.Log.ConnectingToURL", data.realUrl ) );
-      }
-      // Register a custom StringMessageBodyWriter to solve PDI-17423
-      MessageBodyWriter<String> stringMessageBodyWriter = new StringMessageBodyWriter();
-      data.config.getSingletons().add( stringMessageBodyWriter );
-      // create an instance of the com.sun.jersey.api.client.Client class
-      client = Client.create( data.config );
-      if ( data.basicAuthentication != null ) {
-        client.addFilter( data.basicAuthentication );
-      }
-      // create a WebResource object, which encapsulates a web resource for the client
-      webResource = client.resource( data.realUrl );
 
-      // used for calculating the responseTime
-      long startTime = System.currentTimeMillis();
+    // used for calculating the responseTime
+    long startTime = System.currentTimeMillis();
 
-      if ( data.useMatrixParams ) {
-        // Add matrix parameters
-        UriBuilder builder = webResource.getUriBuilder();
-        for ( int i = 0; i < data.nrMatrixParams; i++ ) {
-          String value = data.inputRowMeta.getString( rowData, data.indexOfMatrixParamFields[ i ] );
-          if ( isDebug() ) {
-            logDebug(
-              BaseMessages.getString( PKG, "Rest.Log.matrixParameterValue", data.matrixParamNames[ i ], value ) );
-          }
-          builder = builder.matrixParam( data.matrixParamNames[ i ],
-            UriComponent.encode( value, UriComponent.Type.QUERY_PARAM ) );
+    Invocation.Builder invocationBuilder = webResource.request();
+
+    String contentType = null; // media type override, if not null
+    if ( data.useHeaders ) {
+      // Add headers
+      for ( int i = 0; i < data.nrheader; i++ ) {
+        String value = data.inputRowMeta.getString( rowData, data.indexOfHeaderFields[ i ] );
+
+        // unsure if an already set header will be returned to builder
+        invocationBuilder.header( data.headerNames[ i ], value );
+        if ( "Content-Type".equals( data.headerNames[ i ] ) ) {
+          contentType = value;
         }
-        webResource = client.resource( builder.build() );
-      }
-
-      if ( data.useParams ) {
-        // Add query parameters
-        for ( int i = 0; i < data.nrParams; i++ ) {
-          String value = data.inputRowMeta.getString( rowData, data.indexOfParamFields[ i ] );
-          if ( isDebug() ) {
-            logDebug( BaseMessages.getString( PKG, "Rest.Log.queryParameterValue", data.paramNames[ i ], value ) );
-          }
-          webResource = webResource.queryParams( createMultivalueMap( data.paramNames[ i ], value ) );
-        }
-      }
-      if ( isDebug() ) {
-        logDebug( BaseMessages.getString( PKG, "Rest.Log.ConnectingToURL", webResource.getURI() ) );
-      }
-      WebResource.Builder builder = webResource.getRequestBuilder();
-      String contentType = null; // media type override, if not null
-      if ( data.useHeaders ) {
-        // Add headers
-        for ( int i = 0; i < data.nrheader; i++ ) {
-          String value = data.inputRowMeta.getString( rowData, data.indexOfHeaderFields[ i ] );
-
-          // unsure if an already set header will be returned to builder
-          builder = builder.header( data.headerNames[ i ], value );
-          if ( "Content-Type".equals( data.headerNames[ i ] ) ) {
-            contentType = value;
-          }
-          if ( isDebug() ) {
-            logDebug( BaseMessages.getString( PKG, "Rest.Log.HeaderValue", data.headerNames[ i ], value ) );
-          }
-        }
-      }
-
-      ClientResponse response = null;
-      String entityString = null;
-      if ( data.useBody ) {
-        // Set Http request entity
-        entityString = Const.NVL( data.inputRowMeta.getString( rowData, data.indexOfBodyField ), null );
         if ( isDebug() ) {
-          logDebug( BaseMessages.getString( PKG, "Rest.Log.BodyValue", entityString ) );
+          logDebug( BaseMessages.getString( PKG, "Rest.Log.HeaderValue", data.headerNames[ i ], value ) );
         }
       }
-      try {
-        if ( data.method.equals( RestMeta.HTTP_METHOD_GET ) ) {
-          response = builder.get( ClientResponse.class );
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_POST ) ) {
-          if ( null != contentType ) {
-            response = builder.type( contentType ).post( ClientResponse.class, entityString );
-          } else {
-            response = builder.type( data.mediaType ).post( ClientResponse.class, entityString );
-          }
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_PUT ) ) {
-          if ( null != contentType ) {
-            response = builder.type( contentType ).put( ClientResponse.class, entityString );
-          } else {
-            response = builder.type( data.mediaType ).put( ClientResponse.class, entityString );
-          }
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_DELETE ) ) {
-          response = builder.delete( ClientResponse.class );
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_HEAD ) ) {
-          response = builder.head();
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_OPTIONS ) ) {
-          response = builder.options( ClientResponse.class );
-        } else if ( data.method.equals( RestMeta.HTTP_METHOD_PATCH ) ) {
-          if ( null != contentType ) {
-            response =
-              builder.type( contentType ).method( RestMeta.HTTP_METHOD_PATCH, ClientResponse.class, entityString );
-          } else {
-            response = builder.type( data.mediaType ).method( RestMeta.HTTP_METHOD_PATCH, ClientResponse.class,
-              entityString );
-          }
-        } else {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.UnknownMethod", data.method ) );
-        }
-      } catch ( UniformInterfaceException u ) {
-        response = u.getResponse();
-      }
-      // Get response time
-      long responseTime = System.currentTimeMillis() - startTime;
-      if ( isDetailed() ) {
-        logDetailed(
-          BaseMessages.getString( PKG, "Rest.Log.ResponseTime", String.valueOf( responseTime ), data.realUrl ) );
-      }
+    }
 
-      // Get status
-      int status = response.getStatus();
-      // Display status code
+    Response response;
+    String entityString = "";
+    if ( data.useBody ) {
+      // Set Http request entity
+      entityString = Const.NVL( data.inputRowMeta.getString( rowData, data.indexOfBodyField ), "" );
       if ( isDebug() ) {
-        logDebug( BaseMessages.getString( PKG, "Rest.Log.ResponseCode", "" + status ) );
+        logDebug( BaseMessages.getString( PKG, "Rest.Log.BodyValue", entityString ) );
       }
-
-      // Get Response
-      String body;
-      String headerString = null;
-      try {
-        body = response.getEntity( String.class );
-      } catch ( UniformInterfaceException ex ) {
-        body = "";
-      }
-      // get Header
-      MultivaluedMap<String, String> headers = searchForHeaders( response );
-      JSONObject json = new JSONObject();
-      for ( java.util.Map.Entry<String, List<String>> entry : headers.entrySet() ) {
-        String name = entry.getKey();
-        List<String> value = entry.getValue();
-        if ( value.size() > 1 ) {
-          json.put( name, value );
+    }
+    boolean debug = true;
+    try {
+      if ( data.method.equals( RestMeta.HTTP_METHOD_GET ) ) {
+        response = invocationBuilder.get( Response.class );
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_POST ) ) {
+        if ( null != contentType ) {
+          response = invocationBuilder.post( Entity.entity( entityString, contentType ) );
         } else {
-          json.put( name, value.get( 0 ) );
+          //            response = builder.type( data.mediaType ).post( ClientResponse.class, entityString );
+          response = invocationBuilder.post( Entity.entity( entityString, data.mediaType ) );
         }
-      }
-      headerString = json.toJSONString();
-      // for output
-      int returnFieldsOffset = data.inputRowMeta.size();
-      // add response to output
-      if ( !Utils.isEmpty( data.resultFieldName ) ) {
-        newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, body );
-        returnFieldsOffset++;
-      }
-
-      // add status to output
-      if ( !Utils.isEmpty( data.resultCodeFieldName ) ) {
-        newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, new Long( status ) );
-        returnFieldsOffset++;
-      }
-
-      // add response time to output
-      if ( !Utils.isEmpty( data.resultResponseFieldName ) ) {
-        newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, new Long( responseTime ) );
-        returnFieldsOffset++;
-      }
-      // add response header to output
-      if ( !Utils.isEmpty( data.resultHeaderFieldName ) ) {
-        newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, headerString );
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_PUT ) ) {
+        if ( null != contentType ) {
+          response = invocationBuilder.put( Entity.entity( entityString, contentType ) );
+        } else {
+          response = invocationBuilder.put( Entity.entity( entityString, data.mediaType ) );
+        }
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_DELETE ) ) {
+        response = invocationBuilder.delete();
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_HEAD ) ) {
+        response = invocationBuilder.head();
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_OPTIONS ) ) {
+        response = invocationBuilder.options();
+      } else if ( data.method.equals( RestMeta.HTTP_METHOD_PATCH ) ) {
+        if ( null != contentType ) {
+          response =
+            invocationBuilder.method(
+                RestMeta.HTTP_METHOD_PATCH, Entity.entity( entityString, contentType ) );
+        } else {
+          response =
+            invocationBuilder.method(
+                RestMeta.HTTP_METHOD_PATCH, Entity.entity( entityString, data.mediaType ) );
+        }
+      } else {
+        throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.UnknownMethod", data.method ) );
       }
     } catch ( Exception e ) {
-      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.CanNotReadURL", data.realUrl ), e );
-    } finally {
-      if ( webResource != null ) {
-        webResource = null;
+      throw new KettleException( "Request could not be processed", e );
+    }
+    // Get response time
+    long responseTime = System.currentTimeMillis() - startTime;
+    if ( isDetailed() ) {
+      logDetailed(
+          BaseMessages.getString( PKG, "Rest.Log.ResponseTime", String.valueOf( responseTime ), data.realUrl ) );
+    }
+
+    // Get status
+    int status = response.getStatus();
+    // Display status code
+    if ( isDebug() ) {
+      logDebug( BaseMessages.getString( PKG, "Rest.Log.ResponseCode", "" + status ) );
+    }
+
+    // Get Response
+    String body;
+    String headerString = null;
+    try {
+      body = response.readEntity( String.class );
+    } catch ( Exception ex ) {
+      body = "";
+    }
+    // get Header
+    MultivaluedMap<String, Object> headers = searchForHeaders( response );
+    JSONObject json = new JSONObject();
+    for ( java.util.Map.Entry<String, List<Object>> entry : headers.entrySet() ) {
+      String name = entry.getKey();
+      List<Object> value = entry.getValue();
+      if ( value.size() > 1 ) {
+        json.put( name, value );
+      } else {
+        json.put( name, value.get( 0 ) );
       }
-      if ( client != null ) {
-        client.destroy();
-      }
+    }
+    headerString = json.toJSONString();
+    // for output
+    int returnFieldsOffset = data.inputRowMeta.size();
+    // add response to output
+    if ( !Utils.isEmpty( data.resultFieldName ) ) {
+      newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, body );
+      returnFieldsOffset++;
+    }
+
+    // add status to output
+    if ( !Utils.isEmpty( data.resultCodeFieldName ) ) {
+      newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, new Long( status ) );
+      returnFieldsOffset++;
+    }
+
+    // add response time to output
+    if ( !Utils.isEmpty( data.resultResponseFieldName ) ) {
+      newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, new Long( responseTime ) );
+      returnFieldsOffset++;
+    }
+    // add response header to output
+    if ( !Utils.isEmpty( data.resultHeaderFieldName ) ) {
+      newRow = RowDataUtil.addValueData( newRow, returnFieldsOffset, headerString );
     }
     return newRow;
   }
 
   private void setConfig() throws KettleException {
     if ( data.config == null ) {
-      // Use ApacheHttpClient for supporting proxy authentication.
-      data.config = new DefaultApacheHttpClient4Config();
+      data.config = new ClientConfig();
+      data.config.connectorProvider( new ApacheConnectorProvider() );
+      data.config.property( ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED );
       if ( !Utils.isEmpty( data.realProxyHost ) ) {
         // PROXY CONFIGURATION
-        data.config.getProperties()
-          .put( ApacheHttpClient4Config.PROPERTY_PROXY_URI, "http://" + data.realProxyHost + ":" + data.realProxyPort );
+        data.config.property( ClientProperties.PROXY_URI, "http://" + data.realProxyHost + ":" + data.realProxyPort );
         if ( !Utils.isEmpty( data.realHttpLogin ) && !Utils.isEmpty( data.realHttpPassword ) ) {
-          AuthScope authScope = new AuthScope( data.realProxyHost, data.realProxyPort );
-          UsernamePasswordCredentials credentials =
-            new UsernamePasswordCredentials( data.realHttpLogin, data.realHttpPassword );
-          CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-          credentialsProvider.setCredentials( authScope, credentials );
-          data.config.getProperties().put( ApacheHttpClient4Config.PROPERTY_CREDENTIALS_PROVIDER, credentialsProvider );
+          data.config.property( ClientProperties.PROXY_USERNAME, data.realHttpLogin );
+          data.config.property( ClientProperties.PROXY_PASSWORD, data.realHttpPassword );
         }
       } else {
         if ( !Utils.isEmpty( data.realHttpLogin ) ) {
           // Basic authentication
-          data.basicAuthentication = new HTTPBasicAuthFilter( data.realHttpLogin, data.realHttpPassword );
+          data.basicAuthentication =
+            HttpAuthenticationFeature.basicBuilder()
+              .credentials( data.realHttpLogin, data.realHttpPassword )
+              .build();
         }
-      }
-      if ( meta.isPreemptive() ) {
-        data.config.getProperties().put( ApacheHttpClient4Config.PROPERTY_PREEMPTIVE_BASIC_AUTHENTICATION, true );
       }
       // SSL TRUST STORE CONFIGURATION
-      if ( !Utils.isEmpty( data.trustStoreFile ) ) {
-        try {
-          SSLContext ctx = getSslContext( data.trustStoreFile, data.trustStorePassword );
-          HostnameVerifier hv = new HostnameVerifier() {
-            public boolean verify( String hostname, SSLSession session ) {
-              if ( isDebug() ) {
-                logDebug( "Warning: URL Host: " + hostname + " vs. " + session.getPeerHost() );
-              }
-              return true;
-            }
-          };
-          data.config.getProperties().put( HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, new HTTPSProperties( hv, ctx ) );
-        } catch ( NoSuchAlgorithmException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.NoSuchAlgorithm" ), e );
-        } catch ( KeyStoreException | UnrecoverableKeyException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.KeyStoreException" ), e );
-        } catch ( CertificateException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.CertificateException" ), e );
-        } catch ( FileNotFoundException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.FileNotFound", data.trustStoreFile ), e );
-        } catch ( IOException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.IOException" ), e );
-        } catch ( KeyManagementException e ) {
-          throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.KeyManagementException" ), e );
-        }
+      if ( !Utils.isEmpty( data.trustStoreFile ) && !meta.isIgnoreSsl() ) {
+        setTrustStoreFile();
       }
-    }
+      if ( meta.isIgnoreSsl() ) {
+        setTrustAll();
+      }
 
+    }
+  }
+
+  private void setTrustAll() throws KettleException {
+    try {
+      SSLContext ctx = HttpClientManager.getTrustAllSslContext();
+
+      data.sslContext = ctx;
+    } catch ( NoSuchAlgorithmException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.NoSuchAlgorithm" ), e );
+    } catch ( KeyManagementException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.KeyManagementException" ), e );
+    }
+  }
+
+  private void setTrustStoreFile() throws KettleException {
+    try ( FileInputStream trustFileStream = new FileInputStream( data.trustStoreFile ) ) {
+
+      SSLContext ctx =
+        HttpClientManager.getSslContextWithTrustStoreFile(
+          trustFileStream, data.trustStorePassword );
+
+      data.sslContext = ctx;
+    } catch ( NoSuchAlgorithmException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.NoSuchAlgorithm" ), e );
+    } catch ( KeyStoreException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.KeyStoreException" ), e );
+    } catch ( CertificateException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.CertificateException" ), e );
+    } catch ( FileNotFoundException e ) {
+      throw new KettleException(
+        BaseMessages.getString( PKG, "Rest.Error.FileNotFound", data.trustStoreFile ), e );
+    } catch ( IOException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.IOException" ), e );
+    } catch ( KeyManagementException e ) {
+      throw new KettleException( BaseMessages.getString( PKG, "Rest.Error.KeyManagementException" ), e );
+    }
   }
 
   protected SSLContext getSslContext( String trustFile, String trustStorePassword )
@@ -378,7 +397,7 @@ public class Rest extends BaseStep implements StepInterface {
     }
   }
 
-  protected MultivaluedMap<String, String> searchForHeaders( ClientResponse response ) {
+  protected MultivaluedMap<String, Object> searchForHeaders( Response response ) {
     return response.getHeaders();
   }
 
@@ -451,7 +470,9 @@ public class Rest extends BaseStep implements StepInterface {
         }
         data.useHeaders = true;
       }
-      if ( RestMeta.isActiveParameters( meta.getMethod() ) ) {
+
+      String substitutedMethod = environmentSubstitute( meta.getMethod() );
+      if ( RestMeta.isActiveParameters( substitutedMethod ) ) {
         // Parameters
         int nrparams = meta.getParameterField() == null ? 0 : meta.getParameterField().length;
         if ( nrparams > 0 ) {
@@ -492,7 +513,7 @@ public class Rest extends BaseStep implements StepInterface {
       }
 
       // Do we need to set body
-      if ( RestMeta.isActiveBody( meta.getMethod() ) ) {
+      if ( RestMeta.isActiveBody( substitutedMethod ) ) {
         String field = environmentSubstitute( meta.getBodyField() );
         if ( !Utils.isEmpty( field ) ) {
           data.indexOfBodyField = data.inputRowMeta.indexOfValue( field );

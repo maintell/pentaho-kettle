@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.fileinput.text;
 
@@ -61,12 +52,15 @@ public class TextFileInputReader implements IBaseFileInputReader {
 
   protected long lineNumberInFile;
 
+  protected long linesWritten;
+
   public TextFileInputReader( IBaseFileInputStepControl step, TextFileInputMeta meta, TextFileInputData data,
       FileObject file, LogChannelInterface log ) throws Exception {
     this.step = step;
     this.meta = meta;
     this.data = data;
     this.log = log;
+    this.linesWritten = step.getLinesWritten();
 
     CompressionProvider provider =
         CompressionProviderFactory.getInstance().getCompressionProviderByName( meta.content.fileCompression );
@@ -210,7 +204,7 @@ public class TextFileInputReader implements IBaseFileInputReader {
           // Read a normal line on a page of data.
           data.pageLinesRead++;
           lineInFile++;
-          long useNumber = meta.content.rowNumberByFile ? lineInFile : step.getLinesWritten() + 1;
+          long useNumber = meta.content.rowNumberByFile ? lineInFile : linesWritten + 1;
           r =
               TextFileInputUtils.convertLineToRow( log, textLine, meta, data.currentPassThruFieldsRow,
                   data.nrPassThruFields, data.outputRowMeta, data.convertRowMeta, data.filename, useNumber,
@@ -299,7 +293,7 @@ public class TextFileInputReader implements IBaseFileInputReader {
           if ( data.filePlayList.isProcessingNeeded( textLine.file, textLine.lineNumber,
               AbstractFileErrorHandler.NO_PARTS ) ) {
             lineInFile++;
-            long useNumber = meta.content.rowNumberByFile ? lineInFile : step.getLinesWritten() + 1;
+            long useNumber = meta.content.rowNumberByFile ? lineInFile : linesWritten + 1;
             r =
                 TextFileInputUtils.convertLineToRow( log, textLine, meta, data.currentPassThruFieldsRow,
                     data.nrPassThruFields, data.outputRowMeta, data.convertRowMeta, data.filename, useNumber,
@@ -348,6 +342,7 @@ public class TextFileInputReader implements IBaseFileInputReader {
         log.logRowlevel( "Putting row: " + data.outputRowMeta.getString( r ) );
       }
       step.putRow( data.outputRowMeta, r );
+      linesWritten++;
 
       if ( step.getLinesInput() >= meta.content.rowLimit && meta.content.rowLimit > 0 ) {
         close();

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.row.value;
 
@@ -93,9 +84,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -568,34 +560,34 @@ public class ValueMetaBaseTest {
   @Test
   public void testCompareIntegers() throws KettleValueException {
     ValueMetaBase intMeta = new ValueMetaBase( "int", ValueMetaInterface.TYPE_INTEGER );
-    Long int1 = new Long( 6223372036854775804L );
-    Long int2 = new Long( -6223372036854775804L );
+    Long int1 =  6223372036854775804L;
+    Long int2 = -6223372036854775804L;
     assertEquals( 1, intMeta.compare( int1, int2 ) );
     assertEquals( -1, intMeta.compare( int2, int1 ) );
     assertEquals( 0, intMeta.compare( int1, int1 ) );
     assertEquals( 0, intMeta.compare( int2, int2 ) );
 
-    int1 = new Long( 9223372036854775804L );
-    int2 = new Long( -9223372036854775804L );
+    int1 = 9223372036854775804L;
+    int2 = -9223372036854775804L;
     assertEquals( 1, intMeta.compare( int1, int2 ) );
     assertEquals( -1, intMeta.compare( int2, int1 ) );
     assertEquals( 0, intMeta.compare( int1, int1 ) );
     assertEquals( 0, intMeta.compare( int2, int2 ) );
 
-    int1 = new Long( 6223372036854775804L );
-    int2 = new Long( -9223372036854775804L );
+    int1 = 6223372036854775804L;
+    int2 = -9223372036854775804L;
     assertEquals( 1, intMeta.compare( int1, int2 ) );
     assertEquals( -1, intMeta.compare( int2, int1 ) );
     assertEquals( 0, intMeta.compare( int1, int1 ) );
 
-    int1 = new Long( 9223372036854775804L );
-    int2 = new Long( -6223372036854775804L );
+    int1 = 9223372036854775804L;
+    int2 = -6223372036854775804L;
     assertEquals( 1, intMeta.compare( int1, int2 ) );
     assertEquals( -1, intMeta.compare( int2, int1 ) );
     assertEquals( 0, intMeta.compare( int1, int1 ) );
 
     int1 = null;
-    int2 = new Long( 6223372036854775804L );
+    int2 = 6223372036854775804L;
     assertEquals( -1, intMeta.compare( int1, int2 ) );
     intMeta.setSortedDescending( true );
     assertEquals( 1, intMeta.compare( int1, int2 ) );
@@ -605,9 +597,9 @@ public class ValueMetaBaseTest {
   @Test
   public void testCompareIntegerToDouble() throws KettleValueException {
     ValueMetaBase intMeta = new ValueMetaBase( "int", ValueMetaInterface.TYPE_INTEGER );
-    Long int1 = new Long( 2L );
+    Long int1 = 2L;
     ValueMetaBase numberMeta = new ValueMetaBase( "number", ValueMetaInterface.TYPE_NUMBER );
-    Double double2 = new Double( 1.5 );
+    Double double2 = 1.5D;
     assertEquals( 1, intMeta.compare( int1, numberMeta, double2 ) );
   }
 
@@ -838,7 +830,7 @@ public class ValueMetaBaseTest {
     valueMetaInteger.setType( 5 ); // Integer
     valueMetaInteger.setStorageType( 1 ); // STORAGE_TYPE_BINARY_STRING
 
-    assertEquals( "2", valueMetaInteger.getCompatibleString( new Long( 2 ) ) ); //BACKLOG-15750
+    assertEquals( "2", valueMetaInteger.getCompatibleString( 2L )  ); //BACKLOG-15750
   }
 
   @Test
