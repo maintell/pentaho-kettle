@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.step.jms;
 
@@ -27,7 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.trans.SubtransExecutor;
 
 import javax.jms.Destination;
@@ -45,10 +36,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith ( MockitoJUnitRunner.class )
+@RunWith ( MockitoJUnitRunner.StrictStubs.class )
 public class JmsStreamSourceTest {
 
   @Mock private JmsContext context;
@@ -63,7 +55,7 @@ public class JmsStreamSourceTest {
 
   @Before
   public void before() throws JMSException {
-    when( subtransExecutor.getPrefetchCount() ).thenReturn( 1000 );
+    lenient().when( subtransExecutor.getPrefetchCount() ).thenReturn( 1000 );
     when( consumerStep.getSubtransExecutor() ).thenReturn( subtransExecutor );
     source = new JmsStreamSource( consumerStep, delegate, 0 );
     when( delegate.getJmsContext() ).thenReturn( context );

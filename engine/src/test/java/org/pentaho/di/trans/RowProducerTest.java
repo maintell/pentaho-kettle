@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans;
 
 import org.junit.Before;
@@ -27,13 +18,15 @@ import org.pentaho.di.core.RowSet;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.trans.step.StepInterface;
 
+//import java.util.concurrent.TimeUnit;
+
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,7 +54,7 @@ public class RowProducerTest {
   }
 
   @Test
-  public void testPutRow2Arg() throws Exception {
+  public void testPutRow2Arg() {
     when( rowSet.putRowWait( any( RowMetaInterface.class ), any( Object[].class ), anyLong(), any( TimeUnit.class ) ) )
       .thenReturn( true );
     rowProducer.putRow( rowMeta, rowData );
@@ -70,7 +63,7 @@ public class RowProducerTest {
   }
 
   @Test
-  public void testPutRow3Arg() throws Exception {
+  public void testPutRow3Arg() {
     when( rowSet.putRowWait( any( RowMetaInterface.class ), any( Object[].class ), anyLong(), any( TimeUnit.class ) ) )
       .thenReturn( true );
 
@@ -79,19 +72,19 @@ public class RowProducerTest {
   }
 
   @Test
-  public void testPutRowWait() throws Exception {
+  public void testPutRowWait() {
     rowProducer.putRowWait( rowMeta, rowData, 1, TimeUnit.MILLISECONDS );
     verify( rowSet, times( 1 ) ).putRowWait( rowMeta, rowData, 1, TimeUnit.MILLISECONDS );
   }
 
   @Test
-  public void testFinished() throws Exception {
+  public void testFinished() {
     rowProducer.finished();
     verify( rowSet, times( 1 ) ).setDone();
   }
 
   @Test
-  public void testGetSetRowSet() throws Exception {
+  public void testGetSetRowSet() {
     assertEquals( rowSet, rowProducer.getRowSet() );
     rowProducer.setRowSet( null );
     assertNull( rowProducer.getRowSet() );
@@ -101,7 +94,7 @@ public class RowProducerTest {
   }
 
   @Test
-  public void testGetSetStepInterface() throws Exception {
+  public void testGetSetStepInterface() {
     assertEquals( stepInterface, rowProducer.getStepInterface() );
     rowProducer.setStepInterface( null );
     assertNull( rowProducer.getStepInterface() );

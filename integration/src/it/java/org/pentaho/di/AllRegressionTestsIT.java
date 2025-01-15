@@ -1,24 +1,15 @@
 /*! ******************************************************************************
-*
-* Pentaho Data Integration
-*
-* Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
-*
-*******************************************************************************
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with
-* the License. You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************************/
+ *
+ * Pentaho
+ *
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
+ *
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
+ *
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di;
 
@@ -26,7 +17,6 @@ import junit.framework.JUnit4TestAdapter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.pentaho.di.core.database.ConnectionPoolUtilIntegrationIT;
 import org.pentaho.di.core.database.DatabaseIT;
 import org.pentaho.di.core.parameters.ParameterSimpleTransIT;
 import org.pentaho.di.core.util.StringEvaluatorIT;
@@ -40,7 +30,6 @@ import org.pentaho.di.trans.steps.csvinput.CsvInput1IT;
 import org.pentaho.di.trans.steps.csvinput.CsvInput2IT;
 import org.pentaho.di.trans.steps.detectlastrow.DetectLastRowStepIT;
 import org.pentaho.di.trans.steps.filterrows.FilterRowsIT;
-//import org.pentaho.di.trans.steps.getxmldata.GetXMLDataTest;
 import org.pentaho.di.trans.steps.gpload.GPLoadIT;
 import org.pentaho.di.trans.steps.injector.InjectorIT;
 import org.pentaho.di.trans.steps.nullif.NullIfIT;
@@ -76,7 +65,7 @@ public class AllRegressionTestsIT {
     suite.addTestSuite( ParameterSimpleTransIT.class );
 //    suite.addTestSuite( ValueDataUtilTest.class );
     suite.addTest( new JUnit4TestAdapter( DatabaseIT.class ) );
-    suite.addTest( new JUnit4TestAdapter( ConnectionPoolUtilIntegrationIT.class ) );
+//    suite.addTest( new JUnit4TestAdapter( ConnectionPoolUtilIntegrationIT.class ) );
     suite.addTestSuite( HopIT.class );
     suite.addTestSuite( InjectorIT.class );
     suite.addTestSuite( RowGeneratorIT.class );

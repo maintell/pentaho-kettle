@@ -1,25 +1,16 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -165,14 +156,6 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
   public static final int TYPE_DATABASE_AS400 = 3;
 
   /**
-   * Connection to an Microsoft Access database
-   *
-   * @deprecated
-   */
-  @Deprecated
-  public static final int TYPE_DATABASE_ACCESS = 4;
-
-  /**
    * Connection to a Microsoft SQL Server database
    *
    * @deprecated
@@ -227,14 +210,6 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
    */
   @Deprecated
   public static final int TYPE_DATABASE_GUPTA = 11;
-
-  /**
-   * Connection to a DBase III/IV/V database through JDBC
-   *
-   * @deprecated
-   */
-  @Deprecated
-  public static final int TYPE_DATABASE_DBASE = 12;
 
   /**
    * Connection to a FireBird database
@@ -349,14 +324,6 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
   public static final int TYPE_DATABASE_SQLITE = 26;
 
   /**
-   * Connection to an Apache Derby database
-   *
-   * @deprecated
-   */
-  @Deprecated
-  public static final int TYPE_DATABASE_DERBY = 27;
-
-  /**
    * Connection to a BMC Remedy Action Request System
    *
    * @deprecated
@@ -443,6 +410,7 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
 
   /**
    * Connect to the database using ODBC.
+   * @deprecated
    */
   public static final int TYPE_ACCESS_ODBC = 1;
 
@@ -464,13 +432,13 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
   /**
    * Short description of the access type, used in XML and the repository.
    */
-  public static final String[] dbAccessTypeCode = { "Native", "ODBC", "OCI", "Plugin", "JNDI", ",", };
+  public static final String[] dbAccessTypeCode = { "Native", "ODBC (deprecated)", "OCI", "Plugin", "JNDI", ",", };
 
   /**
    * Longer description for user interactions.
    */
   public static final String[] dbAccessTypeDesc = {
-    "Native (JDBC)", "ODBC", "OCI", "Plugin specific access method", "JNDI", "Custom", };
+    "Native (JDBC)", "ODBC (deprecated)", "OCI", "Plugin specific access method", "JNDI", "Custom", };
 
   /**
    * Use this length in a String value to indicate that you want to use a CLOB in stead of a normal text field.
@@ -758,8 +726,6 @@ public class DatabaseMeta extends SharedObjectBase implements Cloneable, XMLInte
    * Return the type of database access. One of
    * <p>
    * TYPE_ACCESS_NATIVE
-   * <p>
-   * TYPE_ACCESS_ODBC
    * <p>
    * TYPE_ACCESS_OCI
    * <p>

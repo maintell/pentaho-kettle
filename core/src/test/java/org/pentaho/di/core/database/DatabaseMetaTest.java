@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -59,8 +50,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -409,9 +400,9 @@ public class DatabaseMetaTest {
     DatabaseMeta dbmeta = new DatabaseMeta( "rs", "Redshift", "JDBC", "amazon-host", "stuff", "5432", "jerry", null );
     Properties props = dbmeta.getAttributes();
     props.setProperty( RedshiftDatabaseMeta.JDBC_AUTH_METHOD, RedshiftDatabaseMeta.STANDARD_CREDENTIALS );
-    props.setProperty( RedshiftDatabaseMeta.IAM_ACCESS_KEY_ID, "key" );
+    props.setProperty( RedshiftDatabaseMeta.IAM_ACCESS_KEY_ID, Encr.encryptPassword( "key" ) );
     props.setProperty( RedshiftDatabaseMeta.IAM_SECRET_ACCESS_KEY, Encr.encryptPassword( "secret" ) );
-    props.setProperty( RedshiftDatabaseMeta.IAM_SESSION_TOKEN, "token" );
+    props.setProperty( RedshiftDatabaseMeta.IAM_SESSION_TOKEN, Encr.encryptPassword( "token" ) );
     assertFalse( dbmeta.getURL().contains( "AccessKeyID" ) );
     assertFalse( dbmeta.getURL().contains( "secret" ) );
     assertFalse( dbmeta.getURL().startsWith( "jdbc:redshift:iam:" ) );

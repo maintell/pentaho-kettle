@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.repository.filerep;
 
@@ -54,6 +45,7 @@ import org.pentaho.di.core.vfs.KettleVFS;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.core.xml.XMLInterface;
 import org.pentaho.di.job.JobMeta;
+import org.pentaho.di.metastore.MetaStoreConst;
 import org.pentaho.di.partition.PartitionSchema;
 import org.pentaho.di.repository.AbstractRepository;
 import org.pentaho.di.repository.IRepositoryExporter;
@@ -952,7 +944,7 @@ public class KettleFileRepository extends AbstractRepository {
     jobMeta.setObjectId( new StringObjectId( calcObjectId( repdir, jobname, EXT_JOB ) ) );
 
     jobMeta.setRepository( this );
-    jobMeta.setMetaStore( getMetaStore() );
+    jobMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() );
 
     readDatabases( jobMeta, true );
     jobMeta.clearChanged();
@@ -1109,7 +1101,7 @@ public class KettleFileRepository extends AbstractRepository {
     String filename = calcDirectoryName( repdir ) + transname + ".ktr";
     TransMeta transMeta = new TransMeta( filename, this, setInternalVariables );
     transMeta.setRepository( this );
-    transMeta.setMetaStore( getMetaStore() );
+    transMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() );
     transMeta.setFilename( null );
     transMeta.setName( transname );
     transMeta.setObjectId( new StringObjectId( calcObjectId( repdir, transname, EXT_TRANSFORMATION ) ) );
@@ -1561,7 +1553,7 @@ public class KettleFileRepository extends AbstractRepository {
   }
 
   @Override
-  public XmlMetaStore getMetaStore() {
+  public XmlMetaStore getRepositoryMetaStore() {
     return metaStore;
   }
 

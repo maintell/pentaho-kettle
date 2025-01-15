@@ -1,28 +1,20 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job;
 
+import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
@@ -113,7 +105,8 @@ import java.util.Set;
  * @since 11-08-2003
  */
 public class JobMeta extends AbstractMeta
-    implements Cloneable, Comparable<JobMeta>, XMLInterface, ResourceExportInterface, RepositoryElementInterface {
+    implements Cloneable, Comparable<JobMeta>, XMLInterface, ResourceExportInterface, RepositoryElementInterface,
+    LoggingObjectInterface {
 
   private static Class<?> PKG = JobMeta.class; // for i18n purposes, needed by Translator2!!
 
@@ -622,11 +615,10 @@ public class JobMeta extends AbstractMeta
     // Save the database connections...
     for ( int i = 0; i < nrDatabases(); i++ ) {
       DatabaseMeta dbMeta = getDatabase( i );
-      if ( props != null && props.areOnlyUsedConnectionsSavedToXML() ) {
-        if ( usedDatabaseMetas.contains( dbMeta ) ) {
-          retval.append( dbMeta.getXML() );
-        }
-      } else {
+      //PDI-20078 - If props == null, it means transformation is running on the slave server. For the
+      // method areOnlyUsedConnectionsSavedToXMLInServer to return false, the "STRING_ONLY_USED_DB_TO_XML"
+      // needs to have "N" in the server startup script file
+      if ( usedDatabaseMetas.contains( dbMeta ) || ( props != null && !props.areOnlyUsedConnectionsSavedToXML() ) || ( props == null && !areOnlyUsedConnectionsSavedToXMLInServer() ) ) {
         retval.append( dbMeta.getXML() );
       }
     }
@@ -678,6 +670,12 @@ public class JobMeta extends AbstractMeta
     retval.append( XMLHandler.closeTag( XML_TAG ) ).append( Const.CR );
 
     return XMLFormatter.format( retval.toString() );
+  }
+
+
+  public boolean areOnlyUsedConnectionsSavedToXMLInServer() {
+    String show = System.getProperty( Const.STRING_ONLY_USED_DB_TO_XML, "Y" );
+    return "Y".equalsIgnoreCase( show ); // Default: save only used connections
   }
 
   /**
@@ -973,6 +971,9 @@ public class JobMeta extends AbstractMeta
             .logError( BaseMessages.getString( PKG, "JobMeta.ErrorReadingSharedObjects.Message", e.toString() ) );
         LogChannel.GENERAL.logError( Const.getStackTracker( e ) );
       }
+
+      // Call the extension point after the shared objects are loaded
+      ExtensionPointHandler.callExtensionPoint( log, KettleExtensionPoint.JobSharedObjectsLoaded.id, this );
 
       // Load the database connections, slave servers, cluster schemas & partition schemas into this object.
       //
@@ -2181,7 +2182,7 @@ public class JobMeta extends AbstractMeta
         // if ( includePasswords )
         // {
         if ( meta.getPassword() != null ) {
-          stringList.add( new StringSearchResult( meta.getPassword(), meta, this,
+          stringList.add( new StringSearchResult( Strings.repeat("*", meta.getPassword().length()), meta, this,
               BaseMessages.getString( PKG, "JobMeta.SearchMetadata.DatabasePassword" ) ) );
           // }
         }

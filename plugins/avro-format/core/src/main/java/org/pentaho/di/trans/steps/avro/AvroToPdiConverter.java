@@ -1,26 +1,19 @@
-/*******************************************************************************
+/*! ******************************************************************************
  *
- * Pentaho Big Data
+ * Pentaho
  *
- * Copyright (C) 2022-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.avro;
 
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.pentaho.di.trans.steps.avro.input.IAvroInputField;
 import org.pentaho.di.trans.steps.avro.input.AvroInputField;
 import org.pentaho.di.trans.steps.avro.input.PentahoAvroInputFormat;
@@ -29,8 +22,6 @@ import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.util.Utf8;
-import org.codehaus.jackson.node.NullNode;
-import org.codehaus.jackson.node.TextNode;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaBase;
 
@@ -120,7 +111,7 @@ public class AvroToPdiConverter {
         case STRING:
           if ( avroData instanceof GenericData.EnumSymbol ) {
             pentahoData = ( (GenericData.EnumSymbol) avroData ).toString();
-          } else if ( avroData instanceof TextNode ) {
+          } else if ( avroData instanceof TextNode) {
             pentahoData = convertToPentahoType( pentahoType, ( (TextNode) avroData ).asText(), avroInputField );
           } else {
             pentahoData = convertToPentahoType( pentahoType, (String) avroData, avroInputField );

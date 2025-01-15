@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.repository.repositoryexplorer.controllers;
 
@@ -41,7 +32,15 @@ import org.pentaho.ui.xul.containers.XulTree;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 /**
  * @author Andrey Khayrutdinov
@@ -212,7 +211,7 @@ public class ConnectionsControllerTest {
   }
 
   private void assertSaveWasNotInvoked() throws KettleException {
-    verify( repository, never() ).save( any( DatabaseMeta.class ), anyString(), any( ProgressMonitorListener.class ) );
+    verify( repository, never() ).save( any(), anyString(), any() );
   }
 
   private void assertShowedAlreadyExistsMessage() throws KettleException {
@@ -223,7 +222,7 @@ public class ConnectionsControllerTest {
 
   private void assertRepositorySavedDb() throws KettleException {
     // repository.save() was invoked
-    verify( repository ).save( any( DatabaseMeta.class ), anyString(), any( ProgressMonitorListener.class ) );
+    verify( repository ).save( any(), anyString(), any() );
   }
 
   @Test

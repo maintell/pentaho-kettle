@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.base;
 
@@ -49,8 +40,8 @@ import org.pentaho.di.repository.RepositoryDirectoryInterface;
 import org.pentaho.di.repository.RepositoryMeta;
 import org.pentaho.di.repository.RepositoryOperation;
 import org.pentaho.metastore.api.exceptions.MetaStoreException;
-import org.pentaho.metastore.stores.delegate.DelegatingMetaStore;
 import org.pentaho.di.version.BuildVersion;
+import org.pentaho.metastore.api.IMetaStore;
 
 public abstract class AbstractBaseCommandExecutor {
 
@@ -60,20 +51,13 @@ public abstract class AbstractBaseCommandExecutor {
 
   private LogChannelInterface log;
   private Class<?> pkgClazz;
-  DelegatingMetaStore metaStore;
+  IMetaStore metaStore = MetaStoreConst.getDefaultMetastore();
 
   private Result result = new Result();
 
   protected Result exitWithStatus( final int exitStatus ) {
     getResult().setExitStatus( exitStatus );
     return getResult();
-  }
-
-  public DelegatingMetaStore createDefaultMetastore() throws MetaStoreException {
-    DelegatingMetaStore metaStore = new DelegatingMetaStore();
-    metaStore.addMetaStore( MetaStoreConst.openLocalPentahoMetaStore() );
-    metaStore.setActiveMetaStoreName( metaStore.getName() );
-    return metaStore;
   }
 
   protected void logDebug( final String messageKey ) {
@@ -302,11 +286,11 @@ public abstract class AbstractBaseCommandExecutor {
     this.pkgClazz = pkgClazz;
   }
 
-  public DelegatingMetaStore getMetaStore() {
+  public IMetaStore getMetaStore() {
     return metaStore;
   }
 
-  public void setMetaStore( DelegatingMetaStore metaStore ) {
+  public void setMetaStore( IMetaStore metaStore ) {
     this.metaStore = metaStore;
   }
 

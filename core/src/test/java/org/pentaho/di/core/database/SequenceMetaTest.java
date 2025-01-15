@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -54,8 +45,6 @@ public class SequenceMetaTest {
 
     DatabaseInterface[] doNotSupport = new DatabaseInterface[] {
       new CacheDatabaseMeta(),
-      new DbaseDatabaseMeta(),
-      new DerbyDatabaseMeta(),
       new Exasol4DatabaseMeta(),
       new ExtenDBDatabaseMeta(),
       new ExtenDBDatabaseMeta(),
@@ -70,7 +59,6 @@ public class SequenceMetaTest {
       new InterbaseDatabaseMeta(),
       new LucidDBDatabaseMeta(),
       new MondrianNativeDatabaseMeta(),
-      new MSAccessDatabaseMeta(),
       new MySQLDatabaseMeta(),
       new MariaDBDatabaseMeta(),
       new NeoviewDatabaseMeta(),
@@ -220,14 +208,6 @@ public class SequenceMetaTest {
     assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
     assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
 
-    databaseInterface = new DbaseDatabaseMeta();
-    assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
-    assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
-
-    databaseInterface = new DerbyDatabaseMeta();
-    assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
-    assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
-
     databaseInterface = new ExtenDBDatabaseMeta();
     assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
     assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
@@ -261,10 +241,6 @@ public class SequenceMetaTest {
     assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
 
     databaseInterface = new LucidDBDatabaseMeta();
-    assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
-    assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
-
-    databaseInterface = new MSAccessDatabaseMeta();
     assertEquals( "", databaseInterface.getSQLNextSequenceValue( sequenceName ) );
     assertEquals( "", databaseInterface.getSQLCurrentSequenceValue( sequenceName ) );
 

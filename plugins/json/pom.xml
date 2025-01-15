@@ -6,11 +6,11 @@
   <parent>
     <groupId>org.pentaho.di.plugins</groupId>
     <artifactId>pdi-plugins</artifactId>
-    <version>9.6.0.0-SNAPSHOT</version>
+    <version>10.3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>json</artifactId>
-  <version>9.6.0.0-SNAPSHOT</version>
+  <version>10.3.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>PDI Json Plugin</name>
@@ -32,7 +32,6 @@
 
   <properties>
     <json-path.version>2.5.0</json-path.version>
-    <json-smart.version>2.3</json-smart.version>
     <minidev-asm.version>1.0.2</minidev-asm.version>
   </properties>
 

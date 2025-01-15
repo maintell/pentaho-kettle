@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.mappinginput;
 
@@ -29,7 +20,6 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LoggingObjectInterface;
 import org.pentaho.di.trans.step.StepErrorMeta;
 import org.pentaho.di.trans.step.StepInterface;
-import org.pentaho.di.trans.steps.mapping.MappingValueRename;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
 import org.pentaho.di.trans.steps.validator.Validator;
 import org.pentaho.di.trans.steps.validator.ValidatorData;
@@ -39,7 +29,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,14 +37,14 @@ import static org.mockito.Mockito.when;
  * User: Dzmitry Stsiapanau Date: 12/24/13 Time: 12:45 PM
  */
 public class MappingInputTest {
-  private String stepName = "MAPPING INPUT";
+  private final String stepName = "MAPPING INPUT";
   private StepMockHelper<MappingInputMeta, MappingInputData> stepMockHelper;
   private volatile boolean processRowEnded;
 
   @Before
   public void setUp() throws Exception {
     stepMockHelper =
-      new StepMockHelper<MappingInputMeta, MappingInputData>( stepName, MappingInputMeta.class,
+      new StepMockHelper<>( stepName, MappingInputMeta.class,
         MappingInputData.class );
     when( stepMockHelper.logChannelInterfaceFactory.create( any(), any( LoggingObjectInterface.class ) ) ).thenReturn(
       stepMockHelper.logChannelInterface );
@@ -68,7 +58,7 @@ public class MappingInputTest {
   }
 
   @Test
-  public void testSetConnectorSteps() throws Exception {
+  public void testSetConnectorSteps() {
 
     when( stepMockHelper.transMeta.getSizeRowset() ).thenReturn( 1 );
     MappingInputData mappingInputData = new MappingInputData();
@@ -86,7 +76,7 @@ public class MappingInputTest {
     when( stepMockHelper.stepMeta.getStepErrorMeta() ).thenReturn( stepErrorMeta );
 
     StepInterface[] si = new StepInterface[] { previousStep };
-    mappingInput.setConnectorSteps( si, Collections.<MappingValueRename>emptyList(), stepName );
+    mappingInput.setConnectorSteps( si, Collections.emptyList(), stepName );
     assertEquals( previousStep.getOutputRowSets().size(), 0 );
 
   }
@@ -103,28 +93,25 @@ public class MappingInputTest {
       final int junitMaxTimeOut = 40000;
       mappingInput.setTimeOut( timeOut );
       final MappingInputTest mit = this;
-      final Thread processRow = new Thread( new Runnable() {
-        @Override
-        public void run() {
-          try {
-            mappingInput.processRow( stepMockHelper.initStepMetaInterface, mappingInputData );
-            mit.setProcessRowEnded( true );
-          } catch ( KettleException e ) {
-            mit.setProcessRowEnded( true );
-          }
+      final Thread processRow = new Thread( () -> {
+        try {
+          mappingInput.processRow( stepMockHelper.initStepMetaInterface, mappingInputData );
+          mit.setProcessRowEnded( true );
+        } catch ( KettleException e ) {
+          mit.setProcessRowEnded( true );
         }
       } );
       processRow.start();
       boolean exception = false;
       try {
-        mappingInput.setConnectorSteps( null, Collections.<MappingValueRename>emptyList(), "" );
+        mappingInput.setConnectorSteps( null, Collections.emptyList(), "" );
       } catch ( IllegalArgumentException ex1 ) {
         try {
           mappingInput.setConnectorSteps( new StepInterface[ 0 ], null, "" );
         } catch ( IllegalArgumentException ex3 ) {
           try {
             mappingInput.setConnectorSteps( new StepInterface[] { mock( StepInterface.class ) },
-              Collections.<MappingValueRename>emptyList(), null );
+              Collections.emptyList(), null );
           } catch ( IllegalArgumentException ignored ) {
             exception = true;
           }

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.core.database;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -39,24 +30,19 @@ import org.pentaho.di.core.row.value.ValueMetaTimestamp;
 
 public class FirebirdDatabaseMetaTest {
 
-  private FirebirdDatabaseMeta nativeMeta, odbcMeta;
+  private FirebirdDatabaseMeta nativeMeta;
 
   @Before
   public void setupBefore() {
     nativeMeta = new FirebirdDatabaseMeta();
     nativeMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_NATIVE );
-    odbcMeta = new FirebirdDatabaseMeta();
-    odbcMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
   }
 
   @Test
   public void testSettings() throws Exception {
-    assertArrayEquals( new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI },
+    assertArrayEquals( new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI },
         nativeMeta.getAccessTypeList() );
     assertEquals( 3050, nativeMeta.getDefaultDatabasePort() );
-    assertEquals( -1, odbcMeta.getDefaultDatabasePort() );
-    assertEquals( "sun.jdbc.odbc.JdbcOdbcDriver", odbcMeta.getDriverClass() );
-    assertEquals( "jdbc:odbc:FOO", odbcMeta.getURL(  "IGNORED", "IGNORED", "FOO" ) );
 
     assertEquals( "&", nativeMeta.getExtraOptionSeparator() );
     assertEquals( "?", nativeMeta.getExtraOptionIndicator() );
@@ -153,10 +139,6 @@ public class FirebirdDatabaseMetaTest {
         nativeMeta.getModifyColumnStatement( "FOO", new ValueMetaTimestamp( "BAR" ), "", false, "", false ) );
 
     assertEquals( "DELETE FROM FOO", nativeMeta.getTruncateTableStatement( "FOO" ) );
-
-    odbcMeta.setUsername( "FOO" );
-    assertEquals( "SELECT RDB$PROCEDURE_NAME FROM RDB$PROCEDURES "
-      + "WHERE RDB$OWNER_NAME = 'FOO' ", odbcMeta.getSQLListOfProcedures( "NOTUSED" ) );
   }
 
   @Test
@@ -171,11 +153,6 @@ public class FirebirdDatabaseMetaTest {
         nativeMeta.getFieldDefinition( new ValueMetaDate( "FOO" ), "", "", false, false, false ) );
     assertEquals( "CHAR(1)",
         nativeMeta.getFieldDefinition( new ValueMetaBoolean( "FOO" ), "", "", false, false, false ) );
-
-    odbcMeta.setSupportsBooleanDataType( true );
-    assertEquals( "BIT",
-        odbcMeta.getFieldDefinition( new ValueMetaBoolean( "FOO" ), "", "", false, false, false ) );
-    odbcMeta.setSupportsBooleanDataType( false );
 
     assertEquals( "BIGINT NOT NULL PRIMARY KEY",
         nativeMeta.getFieldDefinition( new ValueMetaNumber( "FOO" ), "FOO", "", false, false, false ) );

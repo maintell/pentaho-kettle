@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.core.database;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -54,28 +45,23 @@ import org.pentaho.di.core.row.value.ValueMetaTimestamp;
 
 public class NeoviewDatabaseMetaTest {
 
-  private NeoviewDatabaseMeta nativeMeta, odbcMeta;
+  private NeoviewDatabaseMeta nativeMeta;
 
   @Before
   public void setupBefore() {
     nativeMeta = new NeoviewDatabaseMeta();
     nativeMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_NATIVE );
-    odbcMeta = new NeoviewDatabaseMeta();
-    odbcMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
   }
 
   @Test
   public void testSettings() throws Exception {
-    assertArrayEquals( new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI },
+    assertArrayEquals( new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI },
         nativeMeta.getAccessTypeList() );
     assertEquals( 18650, nativeMeta.getDefaultDatabasePort() );
-    assertEquals( -1, odbcMeta.getDefaultDatabasePort() );
     assertFalse( nativeMeta.supportsAutoInc() );
     assertEquals( 0, nativeMeta.getNotFoundTK( true ) );
     assertEquals( 0, nativeMeta.getNotFoundTK( false ) );
     assertEquals( "com.hp.t4jdbc.HPT4Driver", nativeMeta.getDriverClass() );
-    assertEquals( "sun.jdbc.odbc.JdbcOdbcDriver", odbcMeta.getDriverClass() );
-    assertEquals( "jdbc:odbc:FOO", odbcMeta.getURL(  "IGNORED", "IGNORED", "FOO" ) );
     assertEquals( "jdbc:hpt4jdbc://FOO:BAR/:schema=WIBBLE", nativeMeta.getURL( "FOO", "BAR", "WIBBLE" ) );
     assertEquals( "jdbc:hpt4jdbc://FOO:BAR/:schema=WIBBLE", nativeMeta.getURL( "FOO", "BAR", "schema=WIBBLE" ) );
     assertEquals( "jdbc:hpt4jdbc://FOO:BAR/::catalog=abc:serverDataSource=foo:schema=wibble", nativeMeta.getURL( "FOO", "BAR", ":catalog=abc:serverDataSource=foo:schema=wibble" ) ); // also pretty sure this is broken (two colons before catalog

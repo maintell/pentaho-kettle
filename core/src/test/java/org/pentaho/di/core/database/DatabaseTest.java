@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -31,11 +22,12 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.AdditionalMatchers.or;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.AdditionalMatchers.aryEq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -51,13 +43,16 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Types;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -633,7 +628,9 @@ public class DatabaseTest {
 
   private Connection mockConnection( DatabaseMetaData dbMetaData ) throws SQLException {
     Connection conn = mock( Connection.class );
+    MockDriver.conn = conn;
     when( conn.getMetaData() ).thenReturn( dbMetaData );
+    when( conn.isValid( anyInt() ) ).thenReturn( true );
     return conn;
   }
 
@@ -689,9 +686,7 @@ public class DatabaseTest {
 
   @Test
   public void testNormalConnect_WhenTheProviderDoesNotReturnDataSourceWithPool() throws Exception {
-    Driver driver = mock( Driver.class );
-    when( driver.acceptsURL( or( anyString(), eq( null ) ) ) ).thenReturn( true );
-    when( driver.connect( or( anyString(), eq( null ) ), any( Properties.class ) ) ).thenReturn( conn );
+    Driver driver = new MockDriver();
     DriverManager.registerDriver( driver );
 
     when( meta.isUsingConnectionPool() ).thenReturn( true );
@@ -718,9 +713,7 @@ public class DatabaseTest {
 
   @Test
   public void testNormalConnectWhenDatasourceNeedsUpdate() throws Exception {
-    Driver driver = mock( Driver.class );
-    when( driver.acceptsURL( or( anyString(), eq( null ) ) ) ).thenReturn( true );
-    when( driver.connect( or( anyString(), eq( null ) ), any( Properties.class ) ) ).thenReturn( conn );
+    Driver driver = new MockDriver();
     DriverManager.registerDriver( driver );
 
     Properties prop = mock( Properties.class );
@@ -754,9 +747,7 @@ public class DatabaseTest {
 
   @Test
   public void testNormalConnectWhenDatasourceDontNeedsUpdate() throws Exception {
-    Driver driver = mock( Driver.class );
-    when( driver.acceptsURL( or( anyString(), eq( null ) ) ) ).thenReturn( true );
-    when( driver.connect( or( anyString(), eq( null ) ), any( Properties.class ) ) ).thenReturn( conn );
+    Driver driver = new MockDriver();
     DriverManager.registerDriver( driver );
 
     when( meta.isUsingConnectionPool() ).thenReturn( true );
@@ -963,5 +954,40 @@ public class DatabaseTest {
     verify( db, times( 1 ) ).getTableFieldsMetaByDbMeta( any(), any() );
   }
 
+  public static class MockDriver implements Driver {
+    public static Connection conn;
+
+    public MockDriver() {
+
+    }
+
+    @Override public Connection connect( String url, Properties info ) throws SQLException {
+      return conn;
+    }
+
+    @Override public boolean acceptsURL( String url ) throws SQLException {
+      return true;
+    }
+
+    @Override public DriverPropertyInfo[] getPropertyInfo( String url, Properties info ) throws SQLException {
+      return new DriverPropertyInfo[ 0 ];
+    }
+
+    @Override public int getMajorVersion() {
+      return 0;
+    }
+
+    @Override public int getMinorVersion() {
+      return 0;
+    }
+
+    @Override public boolean jdbcCompliant() {
+      return true;
+    }
+
+    @Override public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+      return null;
+    }
+  }
 
 }

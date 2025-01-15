@@ -1,25 +1,16 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.textfileinput;
 
@@ -30,6 +21,7 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.vfs2.FileObject;
+import org.pentaho.di.core.bowl.Bowl;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
@@ -1591,14 +1583,14 @@ public class TextFileInputMeta extends BaseStepMeta implements StepMetaInterface
   }
 
   @Override
-  public String[] getFilePaths( VariableSpace space ) {
+  public String[] getFilePaths( Bowl bowl, VariableSpace space ) {
     return FileInputList.createFilePathList(
-      space, fileName, fileMask, excludeFileMask, fileRequired, includeSubFolderBoolean() );
+      bowl, space, fileName, fileMask, excludeFileMask, fileRequired, includeSubFolderBoolean() );
   }
 
-  public FileInputList getTextFileList( VariableSpace space ) {
+  public FileInputList getTextFileList( Bowl bowl, VariableSpace space ) {
     return FileInputList.createFileList(
-      space, fileName, fileMask, excludeFileMask, fileRequired, includeSubFolderBoolean() );
+      bowl, space, fileName, fileMask, excludeFileMask, fileRequired, includeSubFolderBoolean() );
   }
 
   private boolean[] includeSubFolderBoolean() {
@@ -1636,7 +1628,7 @@ public class TextFileInputMeta extends BaseStepMeta implements StepMetaInterface
       remarks.add( cr );
     }
 
-    FileInputList textFileList = getTextFileList( transMeta );
+    FileInputList textFileList = getTextFileList( transMeta.getBowl(), transMeta );
     if ( textFileList.nrOfFiles() == 0 ) {
       if ( !isAcceptingFilenames() ) {
         cr =

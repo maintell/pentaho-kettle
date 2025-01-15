@@ -1,33 +1,22 @@
-/*
- * *****************************************************************************
+/*! ******************************************************************************
  *
- *  Pentaho Data Integration
+ * Pentaho
  *
- *  Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *  *******************************************************************************
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
- *  this file except in compliance with the License. You may obtain a copy of the
- *  License at
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- * *****************************************************************************
- *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.engine.configuration.impl.extension;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.pentaho.di.ExecutionConfiguration;
 import org.pentaho.di.base.AbstractMeta;
 import org.pentaho.di.core.attributes.metastore.EmbeddedMetaStore;
+import org.pentaho.di.core.bowl.Bowl;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.extension.ExtensionPoint;
 import org.pentaho.di.core.extension.ExtensionPointInterface;
@@ -41,6 +30,9 @@ import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.trans.TransMeta;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.function.Function;
+
 /**
  * Created by bmorrise on 3/16/17.
  */
@@ -49,8 +41,9 @@ import org.pentaho.di.trans.TransMeta;
 public class RunConfigurationRunExtensionPoint implements ExtensionPointInterface {
 
   private static Class<?> PKG = RunConfigurationRunExtensionPoint.class;
-
-  private RunConfigurationManager runConfigurationManager = RunConfigurationManager.getInstance();
+  // basically exists for testing.
+  private Function<Bowl, RunConfigurationManager> rcmProvider = bowl ->
+    RunConfigurationManager.getInstance( bowl );
 
   @Override public void callExtensionPoint( LogChannelInterface logChannelInterface, Object o ) throws KettleException {
     ExecutionConfiguration executionConfiguration = (ExecutionConfiguration) ( (Object[]) o )[ 0 ];
@@ -59,6 +52,7 @@ public class RunConfigurationRunExtensionPoint implements ExtensionPointInterfac
     Repository repository = (Repository) ( (Object[]) o )[ 3 ];
     EmbeddedMetaStore embeddedMetaStore = meta.getEmbeddedMetaStore();
 
+    RunConfigurationManager runConfigurationManager = rcmProvider.apply( meta.getBowl() );
     RunConfiguration runConfiguration =
       runConfigurationManager.load( executionConfiguration.getRunConfiguration() );
 
@@ -87,7 +81,7 @@ public class RunConfigurationRunExtensionPoint implements ExtensionPointInterfac
   }
 
   @VisibleForTesting
-  void setRunConfigurationManager( RunConfigurationManager runConfigurationManager ) {
-    this.runConfigurationManager = runConfigurationManager;
+  void setRunConfigurationManagerProvider ( Function<Bowl, RunConfigurationManager> provider ) {
+    this.rcmProvider = provider;
   }
 }

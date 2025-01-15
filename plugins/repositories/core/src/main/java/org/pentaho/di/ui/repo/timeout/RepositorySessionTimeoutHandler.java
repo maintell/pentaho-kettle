@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.repo.timeout;
 
@@ -30,6 +21,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ClassUtils;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.metastore.MetaStoreConst;
 import org.pentaho.di.repository.IRepositoryService;
 import org.pentaho.di.repository.ReconnectableRepository;
 import org.pentaho.di.ui.repo.controller.RepositoryConnectController;
@@ -71,7 +63,7 @@ public class RepositorySessionTimeoutHandler implements InvocationHandler {
       }
       Object result = method.invoke( repository, args );
       if ( CONNECT_METHOD_NAME.equals( methodName ) ) {
-        IMetaStore metaStore = repository.getMetaStore();
+        IMetaStore metaStore = MetaStoreConst.getDefaultMetastore();
         metaStoreInstance = wrapMetastoreWithTimeoutHandler( metaStore, sessionTimeoutHandler );
       }
       return result;

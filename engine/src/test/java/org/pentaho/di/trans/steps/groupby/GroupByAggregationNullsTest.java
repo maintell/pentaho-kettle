@@ -1,28 +1,19 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.groupby;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import junit.framework.Assert;
 
@@ -53,7 +44,7 @@ public class GroupByAggregationNullsTest {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    mockHelper = new StepMockHelper<GroupByMeta, GroupByData>( "Group By", GroupByMeta.class, GroupByData.class );
+    mockHelper = new StepMockHelper<>( "Group By", GroupByMeta.class, GroupByData.class );
     when( mockHelper.logChannelInterfaceFactory.create( any(), any( LoggingObjectInterface.class ) ) ).thenReturn(
         mockHelper.logChannelInterface );
     when( mockHelper.trans.isRunning() ).thenReturn( true );
@@ -83,9 +74,9 @@ public class GroupByAggregationNullsTest {
 
   /**
    * PDI-10250 - "Group by" step - Minimum aggregation doesn't work
-   * 
+   * <p>
    * KETTLE_AGGREGATION_MIN_NULL_IS_VALUED
-   * 
+   * <p>
    * Set this variable to Y to set the minimum to NULL if NULL is within an aggregate. Otherwise by default NULL is
    * ignored by the MIN aggregate and MIN is set to the minimum value that is not NULL. See also the variable
    * KETTLE_AGGREGATION_ALL_NULLS_ARE_ZERO.
@@ -147,7 +138,7 @@ public class GroupByAggregationNullsTest {
     data.agg[0] = null;
     step.setAllNullsAreZero( true );
     Object[] row = step.getAggregateResult();
-    Assert.assertEquals( "Returns 0 if aggregation is null", new Long( 0 ), row[0] );
+    Assert.assertEquals( "Returns 0 if aggregation is null", 0L, row[0] );
   }
 
   @Test

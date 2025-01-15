@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.repository;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -41,7 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.test.util.XXEUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXParseException;
@@ -55,8 +46,8 @@ public class RepositoryExportSaxParserTest {
   private static final File TEMP_DIR_WITH_REP_FILE = new File( BASE_TEMP_DIR, DIR_WITH_SPECIFIC_CHARS );
 
   private RepositoryExportSaxParser repExpSAXParser;
-  private RepositoryImportFeedbackInterface repImpPgDlg = mock( RepositoryImportFeedbackInterface.class );
-  private RepositoryImporter repImpMock = mock( RepositoryImporter.class );
+  private final RepositoryImportFeedbackInterface repImpPgDlg = mock( RepositoryImportFeedbackInterface.class );
+  private final RepositoryImporter repImpMock = mock( RepositoryImporter.class );
 
   @Mock private Attributes attributes;
 
@@ -75,7 +66,7 @@ public class RepositoryExportSaxParserTest {
   }
 
   @Test
-  public void startElementIncludesAttributes() throws Exception {
+  public void startElementIncludesAttributes() {
     repExpSAXParser = new RepositoryExportSaxParser( "nofile", null );
 
     when( attributes.getLength() ).thenReturn( 2 );
@@ -90,7 +81,7 @@ public class RepositoryExportSaxParserTest {
   }
 
   @Test
-  public void startElementWithoutAttributes() throws Exception {
+  public void startElementWithoutAttributes() {
     repExpSAXParser = new RepositoryExportSaxParser( "nofile", null );
 
     repExpSAXParser.startElement( "uri", "", "tagName", null );
@@ -131,7 +122,7 @@ public class RepositoryExportSaxParserTest {
       if ( TEMP_DIR_WITH_REP_FILE.mkdir() ) {
         System.out.println( "CREATED: " + TEMP_DIR_WITH_REP_FILE.getCanonicalPath() );
       } else {
-        System.out.println( "NOT CREATED: " + TEMP_DIR_WITH_REP_FILE.toString() );
+        System.out.println( "NOT CREATED: " + TEMP_DIR_WITH_REP_FILE );
       }
     }
 
@@ -151,31 +142,20 @@ public class RepositoryExportSaxParserTest {
       destFile.createNewFile();
     }
 
-    FileChannel source = null;
-    FileChannel destination = null;
-
-    try {
-      source = new FileInputStream( sourceFile ).getChannel();
-      destination = new FileOutputStream( destFile ).getChannel();
+    try ( FileChannel source = new FileInputStream( sourceFile ).getChannel();
+          FileChannel destination = new FileOutputStream( destFile ).getChannel() ) {
       destination.transferFrom( source, 0, source.size() );
     } catch ( Exception e ) {
       e.printStackTrace();
-    } finally {
-      if ( source != null ) {
-        source.close();
-      }
-      if ( destination != null ) {
-        destination.close();
-      }
     }
   }
 
-  private static void cleanTempDir() throws IOException {
+  private static void cleanTempDir() {
 
     delete( TEMP_DIR_WITH_REP_FILE );
   }
 
-  private static void delete( File file ) throws IOException {
+  private static void delete( File file ) {
 
     if ( file.isDirectory() ) {
       if ( file.list().length == 0 ) {

@@ -1,25 +1,16 @@
 //CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.spoon.trans;
 
@@ -1894,6 +1885,7 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
    * Allows for magnifying to any percentage entered by the user...
    */
   private void readMagnification() {
+    float previousMagnification = magnification;
     String possibleText = zoomLabel.getText();
     possibleText = possibleText.replace( "%", "" );
 
@@ -1901,12 +1893,17 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
     try {
       possibleFloatMagnification = Float.parseFloat( possibleText ) / 100;
       magnification = possibleFloatMagnification;
+      if ( magnification < MIN_ZOOM || magnification > MAX_ZOOM ) {
+        magnification = previousMagnification;
+        log.logError( "Invalid zoom value: " + zoomLabel.getText() );
+        throw new IllegalArgumentException( );
+      }
       if ( zoomLabel.getText().indexOf( '%' ) < 0 ) {
         zoomLabel.setText( zoomLabel.getText().concat( "%" ) );
       }
     } catch ( Exception e ) {
       modalMessageDialog( getString( "TransGraph.Dialog.InvalidZoomMeasurement.Title" ),
-        getString( "TransGraph.Dialog.InvalidZoomMeasurement.Message", zoomLabel.getText() ),
+        getString( "TransGraph.Dialog.InvalidZoomMeasurement.Message", String.valueOf( (int) ( MIN_ZOOM * 100 ) ), String.valueOf( (int) MAX_ZOOM * 100 ) ),
         SWT.YES | SWT.ICON_ERROR );
     }
     redraw();
@@ -4146,7 +4143,6 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
       halting = true;
       trans.stopAll();
       log.logMinimal( BaseMessages.getString( PKG, "TransLog.Log.ProcessingOfTransformationStopped" ) );
-
       running = false;
       initialized = false;
       halted = false;
@@ -4392,7 +4388,6 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
     if ( trans != null ) {
       if ( trans.isFinished() && ( running || halted ) ) {
         log.logMinimal( BaseMessages.getString( PKG, "TransLog.Log.TransformationHasFinished" ) );
-
         running = false;
         initialized = false;
         halted = false;
@@ -4520,7 +4515,7 @@ public class TransGraph extends AbstractGraph implements XulEventHandler, Redraw
       } else {
         StepMetaInterface meta = stepMeta.getStepMetaInterface();
         if ( !Utils.isEmpty( meta.getReferencedObjectDescriptions() ) ) {
-          referencedMeta = meta.loadReferencedObject( index, spoon.rep, spoon.metaStore, transMeta );
+          referencedMeta = meta.loadReferencedObject( index, spoon.rep, spoon.getMetaStore(), transMeta );
         }
       }
       if ( referencedMeta == null ) {

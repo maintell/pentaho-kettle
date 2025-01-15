@@ -1,26 +1,15 @@
-/*
- * *****************************************************************************
+/*! ******************************************************************************
  *
- *  Pentaho Data Integration
+ * Pentaho
  *
- *  Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *  *******************************************************************************
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
- *  this file except in compliance with the License. You may obtain a copy of the
- *  License at
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- * *****************************************************************************
- *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.engine.configuration.impl;
 
@@ -28,14 +17,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.engine.configuration.api.RunConfiguration;
 import org.pentaho.di.engine.configuration.api.RunConfigurationProvider;
 import org.pentaho.di.engine.configuration.impl.pentaho.DefaultRunConfiguration;
 import org.pentaho.di.engine.configuration.impl.pentaho.DefaultRunConfigurationExecutor;
 import org.pentaho.di.engine.configuration.impl.pentaho.DefaultRunConfigurationProvider;
-import org.pentaho.metastore.api.IMetaStore;
-import org.pentaho.metastore.locator.api.MetastoreLocator;
 import org.pentaho.metastore.stores.memory.MemoryMetaStore;
 
 import java.util.ArrayList;
@@ -50,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by bmorrise on 3/15/17.
  */
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class RunConfigurationManagerTest {
 
   private RunConfigurationManager executionConfigurationManager;
@@ -59,10 +46,10 @@ public class RunConfigurationManagerTest {
   public void setup() throws Exception {
 
     MemoryMetaStore memoryMetaStore = new MemoryMetaStore();
-    MetastoreLocator metastoreLocator = createMetastoreLocator( memoryMetaStore );
+    CheckedMetaStoreSupplier metastoreSupplier = () -> memoryMetaStore;
 
     DefaultRunConfigurationProvider defaultRunConfigurationProvider =
-      new DefaultRunConfigurationProvider( metastoreLocator );
+      new DefaultRunConfigurationProvider( metastoreSupplier );
 
     List<RunConfigurationProvider> runConfigurationProviders = new ArrayList<>();
     executionConfigurationManager = new RunConfigurationManager( runConfigurationProviders );
@@ -149,9 +136,9 @@ public class RunConfigurationManagerTest {
   @Test
   public void testOrdering() {
     MemoryMetaStore memoryMetaStore = new MemoryMetaStore();
-    MetastoreLocator metastoreLocator = createMetastoreLocator( memoryMetaStore );
+    CheckedMetaStoreSupplier metastoreSupplier = () -> memoryMetaStore;
     DefaultRunConfigurationProvider defaultRunConfigurationProvider =
-      new DefaultRunConfigurationProvider( metastoreLocator );
+      new DefaultRunConfigurationProvider( metastoreSupplier );
 
     List<RunConfigurationProvider> runConfigurationProviders = new ArrayList<>();
 
@@ -191,29 +178,4 @@ public class RunConfigurationManagerTest {
     assertEquals( "z", names.get( 4 ) );
   }
 
-  private static MetastoreLocator createMetastoreLocator( IMetaStore memoryMetaStore ) {
-    return new MetastoreLocator() {
-
-      @Override
-      public IMetaStore getMetastore( String providerKey ) {
-        return memoryMetaStore;
-      }
-
-      @Override
-      public IMetaStore getMetastore() {
-        return memoryMetaStore;
-      }
-
-      @Override public String setEmbeddedMetastore( IMetaStore metastore ) {
-        return null;
-      }
-
-      @Override public void disposeMetastoreProvider( String providerKey ) {
-      }
-
-      @Override public IMetaStore getExplicitMetastore( String providerKey ) {
-        return null;
-      }
-    };
-  }
 }

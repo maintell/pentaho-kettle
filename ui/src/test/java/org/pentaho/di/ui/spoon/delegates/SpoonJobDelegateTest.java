@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2017-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.ui.spoon.delegates;
 
 
@@ -58,7 +49,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -107,6 +98,7 @@ public class SpoonJobDelegateTest {
 
     doReturn( jobMap ).when( delegate ).getJobList();
     doReturn( spoon ).when( delegate ).getSpoon();
+    doCallRealMethod().when( delegate ).isDefaultJobName( any() );
     jobLogTable = mock( JobLogTable.class );
   }
 
@@ -248,6 +240,17 @@ public class SpoonJobDelegateTest {
     assertNull( transMeta.getName() );
     assertEquals( Const.createFilename( directory, transname, "."
       + Const.STRING_TRANS_DEFAULT_EXT ), transMeta.getFilename() );
+  }
+
+  @Test
+  public void testDefaultJobName() {
+    assertTrue( delegate.isDefaultJobName( "Job" ) );
+    assertTrue( delegate.isDefaultJobName( "Job " ) );
+    assertTrue( delegate.isDefaultJobName( "Job 1" ) );
+    assertTrue( delegate.isDefaultJobName( "Job 2" ) );
+    assertFalse( delegate.isDefaultJobName( "Job1" ) );
+    assertFalse( delegate.isDefaultJobName( "Job  2" ) );
+    assertFalse( delegate.isDefaultJobName( "Job203" ) );
   }
 
   public interface PluginMockInterface extends ClassLoadingPluginInterface, PluginInterface {

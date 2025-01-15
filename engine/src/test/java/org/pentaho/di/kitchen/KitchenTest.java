@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.kitchen;
 
@@ -47,8 +38,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -189,7 +180,7 @@ public class KitchenTest {
     final String DUMMY_DIR_1 = "test-dir-1";
     final String DUMMY_DIR_2 = "test-dir-2";
 
-    when( mockRepository.getDirectoryNames( anyObject() ) ).thenReturn( new String[]{ DUMMY_DIR_1, DUMMY_DIR_2 } );
+    when( mockRepository.getDirectoryNames( any() ) ).thenReturn( new String[]{ DUMMY_DIR_1, DUMMY_DIR_2 } );
     when( mockRepository.loadRepositoryDirectoryTree() ).thenReturn( mockRepositoryDirectory );
 
     KitchenCommandExecutor testPanCommandExecutor = new KitchenCommandExecutorForTesting( mockRepository, mockRepositoryMeta, null );
@@ -237,7 +228,7 @@ public class KitchenTest {
     final String DUMMY_JOB_1 = "test-job-name-1";
     final String DUMMY_JOB_2 = "test-job-name-2";
 
-    when( mockRepository.getJobNames( anyObject(), anyBoolean() ) ).thenReturn( new String[]{ DUMMY_JOB_1, DUMMY_JOB_2 } );
+    when( mockRepository.getJobNames( any(), anyBoolean() ) ).thenReturn( new String[]{ DUMMY_JOB_1, DUMMY_JOB_2 } );
     when( mockRepository.loadRepositoryDirectoryTree() ).thenReturn( mockRepositoryDirectory );
 
     KitchenCommandExecutor testPanCommandExecutor = new KitchenCommandExecutorForTesting( mockRepository, mockRepositoryMeta,  null );

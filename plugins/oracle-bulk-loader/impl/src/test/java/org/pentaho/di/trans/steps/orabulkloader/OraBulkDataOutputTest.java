@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.orabulkloader;
 
 import org.apache.commons.vfs2.provider.local.LocalFile;
@@ -34,10 +25,10 @@ import org.pentaho.di.junit.rules.RestorePDIEngineEnvironment;
 
 import java.io.File;
 import java.io.IOException;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -93,7 +84,10 @@ public class OraBulkDataOutputTest {
 
   @Test
   public void testOpenFileException() {
-    doThrow( IOException.class ).when( oraBulkLoaderMeta ).getDataFile();
+    // Using thenAnswer() instead of thenThrow() as a workaround for new mockito exception behavior.
+    // getDataFile doesn't actually throw this, and the place that could actually throw this in
+    // OraBulkDataOutput.open() is difficult to mock
+    when( oraBulkLoaderMeta.getDataFile() ).thenAnswer( i -> { throw new IOException(); } );
     try {
       oraBulkDataOutput.open( space, sqlldrProcess );
       fail( "An IOException was supposed to be thrown, failing test" );

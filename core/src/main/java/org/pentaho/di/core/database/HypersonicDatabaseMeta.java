@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -36,7 +27,7 @@ import org.pentaho.di.core.row.ValueMetaInterface;
 public class HypersonicDatabaseMeta extends BaseDatabaseMeta implements DatabaseInterface {
   @Override
   public int[] getAccessTypeList() {
-    return new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI };
+    return new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI };
   }
 
   @Override
@@ -49,25 +40,17 @@ public class HypersonicDatabaseMeta extends BaseDatabaseMeta implements Database
 
   @Override
   public String getDriverClass() {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      return "sun.jdbc.odbc.JdbcOdbcDriver";
-    } else {
-      return "org.hsqldb.jdbcDriver";
-    }
+    return "org.hsqldb.jdbcDriver";
   }
 
   @Override
   public String getURL( String hostname, String port, String databaseName ) {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      return "jdbc:odbc:" + databaseName;
+    if ( ( Utils.isEmpty( port ) || "-1".equals( port ) ) && Utils.isEmpty( hostname ) ) {
+      // When no port is specified, or port is 0 support local/memory
+      // HSQLDB databases.
+      return "jdbc:hsqldb:" + databaseName;
     } else {
-      if ( ( Utils.isEmpty( port ) || "-1".equals( port ) ) && Utils.isEmpty( hostname ) ) {
-        // When no port is specified, or port is 0 support local/memory
-        // HSQLDB databases.
-        return "jdbc:hsqldb:" + databaseName;
-      } else {
-        return "jdbc:hsqldb:hsql://" + hostname + ":" + port + "/" + databaseName;
-      }
+      return "jdbc:hsqldb:hsql://" + hostname + ":" + port + "/" + databaseName;
     }
   }
 

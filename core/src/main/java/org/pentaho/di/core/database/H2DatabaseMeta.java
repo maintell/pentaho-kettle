@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -37,7 +28,7 @@ public class H2DatabaseMeta extends BaseDatabaseMeta implements DatabaseInterfac
   @Override
   public int[] getAccessTypeList() {
     return new int[] {
-      DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI };
+      DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI };
   }
 
   /**
@@ -50,12 +41,7 @@ public class H2DatabaseMeta extends BaseDatabaseMeta implements DatabaseInterfac
 
   @Override
   public String getDriverClass() {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_NATIVE ) {
-      return "org.h2.Driver";
-    } else {
-      return "sun.jdbc.odbc.JdbcOdbcDriver"; // always ODBC!
-    }
-
+    return "org.h2.Driver";
   }
 
   @Override
@@ -68,19 +54,15 @@ public class H2DatabaseMeta extends BaseDatabaseMeta implements DatabaseInterfac
 
   @Override
   public String getURL( String hostname, String port, String databaseName ) {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_NATIVE ) {
-      // If the database is an in-memory DB or if there is no valid port and hostname, go embedded
-      //
-      if ( ( databaseName != null && databaseName.startsWith( "mem:" ) )
-        || ( ( Utils.isEmpty( port ) || "-1".equals( port ) ) && Utils.isEmpty( hostname ) ) ) {
-        return "jdbc:h2:" + databaseName;
-      } else {
-        // Connect over TCP/IP
-        //
-        return "jdbc:h2:tcp://" + hostname + ":" + port + "/" + databaseName;
-      }
+    // If the database is an in-memory DB or if there is no valid port and hostname, go embedded
+    //
+    if ( ( databaseName != null && databaseName.startsWith( "mem:" ) )
+      || ( ( Utils.isEmpty( port ) || "-1".equals( port ) ) && Utils.isEmpty( hostname ) ) ) {
+      return "jdbc:h2:" + databaseName;
     } else {
-      return "jdbc:odbc:" + databaseName;
+      // Connect over TCP/IP
+      //
+      return "jdbc:h2:tcp://" + hostname + ":" + port + "/" + databaseName;
     }
   }
 

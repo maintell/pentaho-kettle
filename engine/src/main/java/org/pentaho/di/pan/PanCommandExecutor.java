@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.pan;
 
@@ -54,6 +45,7 @@ import org.pentaho.di.trans.step.RowAdapter;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.core.extension.ExtensionPointHandler;
 import org.pentaho.di.core.extension.KettleExtensionPoint;
+import org.pentaho.di.metastore.MetaStoreConst;
 import org.w3c.dom.Document;
 
 import java.io.File;
@@ -94,10 +86,9 @@ public class PanCommandExecutor extends AbstractBaseCommandExecutor {
     try {
 
       if ( getMetaStore() == null ) {
-        setMetaStore( createDefaultMetastore() );
+        setMetaStore( MetaStoreConst.getDefaultMetastore() );
       }
-
-      ConnectionManager.getInstance().setMetastoreSupplier( () -> getMetaStore() );
+      ConnectionManager.getInstance().setMetastoreSupplier( MetaStoreConst.getDefaultMetastoreSupplier() );
       logDebug( "Pan.Log.StartingToLookOptions" );
 
       // Read kettle transformation specified
@@ -239,7 +230,6 @@ public class PanCommandExecutor extends AbstractBaseCommandExecutor {
       int completionTimeSeconds = calculateAndPrintElapsedTime( start, stop, "Pan.Log.StartStop", "Pan.Log.ProcessingEndAfter",
               "Pan.Log.ProcessingEndAfterLong", "Pan.Log.ProcessingEndAfterLonger", "Pan.Log.ProcessingEndAfterLongest" );
       getResult().setElapsedTimeMillis( stop.getTime() - start.getTime() );
-
       if ( getResult().getNrErrors() == 0 ) {
 
         trans.printStats( completionTimeSeconds );
@@ -331,11 +321,6 @@ public class PanCommandExecutor extends AbstractBaseCommandExecutor {
 
     if ( directory == null ) {
       return null; // not much we can do here
-    }
-
-    // Add the IMetaStore of the repository to our delegation
-    if ( repository.getMetaStore() != null && getMetaStore() != null ) {
-      getMetaStore().addMetaStore( repository.getMetaStore() );
     }
 
     logDebug( "Pan.Log.LoadTransInfo" );

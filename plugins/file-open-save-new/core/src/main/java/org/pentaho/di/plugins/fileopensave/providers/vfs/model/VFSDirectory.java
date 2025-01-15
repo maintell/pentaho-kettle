@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2019-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.plugins.fileopensave.providers.vfs.model;
 
@@ -84,6 +75,11 @@ public class VFSDirectory extends VFSFile implements Directory {
   /**
    * Create a VFSDirectory.  Note that this creates an VFSDirectory object, it does not physically create the
    * directory.
+   * <p/>
+   * NOTE: logic for {@link #setRoot(String)} and {@link #setConnection(String)} is only used in
+   * {@link org.pentaho.di.plugins.fileopensave.dragdrop.ElementDragListener#dragSetData(org.eclipse.swt.dnd.DragSourceEvent)} for the
+   * scenario of "Recent Repository File".
+   *
    * @param parent The path to the parent folder
    * @param fileObject A VFSFileObject for the actual folder being created
    * @param connection The VFS connection associated with the directory

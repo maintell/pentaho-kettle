@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.streaming.common;
 
@@ -29,7 +20,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.ObjectLocationSpecificationMethod;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.exception.KettleException;
@@ -57,8 +48,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.contains;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -116,7 +107,7 @@ public class BaseStreamStepTest {
 
 
   @Test
-  public void testInitFilenameSubstitution() throws IOException, KettleException {
+  public void testInitFilenameSubstitution() throws IOException {
     // verifies that filename resolution uses the parents ${Internal.Entry.Current.Directory}.
     // Necessary since the Current.Directory may change when running non-locally.
     // Variables should all be set in variableizedStepMeta after init, with the caveat that
@@ -130,13 +121,11 @@ public class BaseStreamStepTest {
     }
 
     when( meta.getParentStepMeta() ).thenReturn( parentStepMeta );
-    when( metaWithVariables.getFileName() ).thenReturn( "noSuchFilename.ktr" );
     when( meta.withVariables( baseStreamStep ) ).thenReturn( metaWithVariables );
     baseStreamStep.getParentVariableSpace()
       .setVariable( "Internal.Entry.Current.Directory",
         testFile.getParentFile().getAbsolutePath() );
 
-    when( metaWithVariables.getSpecificationMethod() ).thenReturn( ObjectLocationSpecificationMethod.FILENAME );
     when( meta.getSpecificationMethod() ).thenReturn( ObjectLocationSpecificationMethod.FILENAME );
     when( meta.getFileName() ).thenReturn( "${Internal.Entry.Current.Directory}/" + testFile.getName() );
 
