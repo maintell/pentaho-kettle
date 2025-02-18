@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.core.row.value;
 
 import org.junit.Before;
@@ -40,8 +31,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
@@ -212,6 +203,21 @@ public class ValueMetaTimestampTest {
     ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
     Timestamp result = valueMetaTimestamp.convertIntegerToTimestamp( TIMESTAMP_AS_NANOSECONDS );
     assertEquals( TIMESTAMP_WITH_NANOSECONDS, result );
+  }
+
+  @Test
+  public void testConvertTimestampToInteger_DifferentTimeZone() throws KettleValueException {
+    System.setProperty( Const.KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE,
+            Const.KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE_NANOSECONDS );
+    ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
+    TimeZone.setDefault(TimeZone.getTimeZone("Etc/UTC"));
+    long result = valueMetaTimestamp.getInteger( TIMESTAMP_WITH_NANOSECONDS );
+    assertEquals( 1567312496123456789L, result );
+    System.setProperty( Const.KETTLE_TIMESTAMP_NUMBER_CONVERSION_MODE, "Something invalid!" );
+    valueMetaTimestamp = new ValueMetaTimestamp();
+    TimeZone.setDefault(TimeZone.getTimeZone("Etc/UTC"));
+    result = valueMetaTimestamp.getInteger( TIMESTAMP_WITH_NANOSECONDS );
+    assertEquals( 1567308896123L, result );
   }
 
   @Test

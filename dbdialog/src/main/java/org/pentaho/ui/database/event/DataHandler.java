@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.ui.database.event;
 
@@ -29,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -83,7 +75,6 @@ import static org.pentaho.di.core.database.AzureSqlDataBaseMeta.CLIENT_SECRET_KE
 import static org.pentaho.di.core.database.AzureSqlDataBaseMeta.CLIENT_ID;
 import static org.pentaho.di.core.database.AzureSqlDataBaseMeta.IS_ALWAYS_ENCRYPTION_ENABLED;
 import static org.pentaho.di.core.database.AzureSqlDataBaseMeta.SQL_AUTHENTICATION;
-import static org.pentaho.di.core.database.BaseDatabaseMeta.ATTRIBUTE_PREFIX_EXTRA_OPTION;
 import static org.pentaho.di.core.database.RedshiftDatabaseMeta.IAM_ACCESS_KEY_ID;
 import static org.pentaho.di.core.database.RedshiftDatabaseMeta.IAM_CREDENTIALS;
 import static org.pentaho.di.core.database.RedshiftDatabaseMeta.IAM_PROFILE_NAME;
@@ -112,11 +103,12 @@ public class DataHandler extends AbstractXulEventHandler {
   private static final String EXTRA_OPTION_WEB_APPLICATION_NAME = BaseDatabaseMeta.ATTRIBUTE_PREFIX_EXTRA_OPTION
     + "KettleThin.webappname";
   private static final String DEFAULT_WEB_APPLICATION_NAME = "pentaho";
-  private static final String SNOWFLAKE_TYPE = "SNOWFLAKEHV";
-  private static final String EXTRA_OPT_WAREHOUSE = ATTRIBUTE_PREFIX_EXTRA_OPTION + SNOWFLAKE_TYPE + "." + WAREHOUSE;
 
 
   private List<String> databaseDialects;
+
+  /** A database-specific handler */
+  private Optional<DbInfoHandler> extraHandler = Optional.empty();
 
   // The connectionMap allows us to keep track of the connection
   // type we are working with and the correlating database interface
@@ -148,6 +140,8 @@ public class DataHandler extends AbstractXulEventHandler {
   protected DatabaseMeta databaseMeta = null;
 
   protected DatabaseMeta cache = new DatabaseMeta();
+
+  protected Launch launch = new Launch();
 
   private XulDeck dialogDeck;
 
@@ -262,22 +256,22 @@ public class DataHandler extends AbstractXulEventHandler {
 
   protected XulTree poolParameterTree;
 
-  protected XulMenuList databaseDialectList;
+  protected XulMenuList<String> databaseDialectList;
 
   protected XulButton acceptButton;
   private XulButton cancelButton;
   private XulButton testButton;
   private XulLabel noticeLabel;
 
-  private XulMenuList jdbcAuthMethod;
+  private XulMenuList<?> jdbcAuthMethod;
   private XulTextbox iamAccessKeyId;
   private XulTextbox iamSecretKeyId;
   private XulTextbox iamSessionToken;
   private XulTextbox iamProfileName;
-  protected XulMenuList namedClusterList;
+  protected XulMenuList<String> namedClusterList;
 
   //Azure SQL DB Variables
-  private XulMenuList azureSqlDBJdbcAuthMethod;
+  private XulMenuList<?> azureSqlDBJdbcAuthMethod;
   private XulCheckbox azureSqlDBAlwaysEncryptionEnabled;
   private XulTextbox azureSqlDBClientSecretId;
   private XulTextbox azureSqlDBClientSecretKey;
@@ -290,6 +284,16 @@ public class DataHandler extends AbstractXulEventHandler {
     }
     Collections.sort( databaseDialects );
 
+  }
+
+  /** Set a handler to deal with database-specific save/load. */
+  public void setExtraHandler( DbInfoHandler handler ) {
+    this.extraHandler = Optional.of( handler );
+  }
+
+  /** @see #setExtraHandler(DbInfoHandler) */
+  public void clearExtraHandler() {
+    this.extraHandler = Optional.empty();
   }
 
   public void loadConnectionData() {
@@ -471,7 +475,7 @@ public class DataHandler extends AbstractXulEventHandler {
       return;
     }
 
-    Status status = Launch.openURL( url );
+    Status status = launch.openURL( url );
 
     if ( status.equals( Status.Failed ) ) {
       message = Messages.getString( "DataHandler.USER_UNABLE_TO_LAUNCH_BROWSER", url );
@@ -1436,13 +1440,13 @@ public class DataHandler extends AbstractXulEventHandler {
       meta.getAttributes().put( JDBC_AUTH_METHOD, jdbcAuthMethod.getValue() );
     }
     if ( iamAccessKeyId != null ) {
-      meta.getAttributes().put( IAM_ACCESS_KEY_ID, iamAccessKeyId.getValue() );
+      meta.getAttributes().put( IAM_ACCESS_KEY_ID, Encr.encryptPassword( iamAccessKeyId.getValue() ) );
     }
     if ( iamSecretKeyId != null ) {
       meta.getAttributes().put( IAM_SECRET_ACCESS_KEY, Encr.encryptPassword( iamSecretKeyId.getValue() ) );
     }
     if ( iamSessionToken != null ) {
-      meta.getAttributes().put( IAM_SESSION_TOKEN, iamSessionToken.getValue() );
+      meta.getAttributes().put( IAM_SESSION_TOKEN, Encr.encryptPassword( iamSessionToken.getValue() ) );
     }
     if ( iamProfileName != null ) {
       meta.getAttributes().put( IAM_PROFILE_NAME, iamProfileName.getValue() );
@@ -1456,6 +1460,8 @@ public class DataHandler extends AbstractXulEventHandler {
 
       meta.getDatabaseInterface().setNamedCluster( namedClusterList.getValue() );
     }
+
+    this.extraHandler.ifPresent( handler -> handler.saveConnectionSpecificInfo( meta ) );
   }
 
   protected void setConnectionSpecificInfo( DatabaseMeta meta ) {
@@ -1603,13 +1609,13 @@ public class DataHandler extends AbstractXulEventHandler {
       setAuthFieldsVisible();
     }
     if ( iamAccessKeyId != null ) {
-      iamAccessKeyId.setValue( meta.getAttributes().getProperty( IAM_ACCESS_KEY_ID ) );
+      iamAccessKeyId.setValue( Encr.decryptPassword( meta.getAttributes().getProperty( IAM_ACCESS_KEY_ID ) ) );
     }
     if ( iamSecretKeyId != null ) {
       iamSecretKeyId.setValue( Encr.decryptPassword( meta.getAttributes().getProperty( IAM_SECRET_ACCESS_KEY ) ) );
     }
     if ( iamSessionToken != null ) {
-      iamSessionToken.setValue( meta.getAttributes().getProperty( IAM_SESSION_TOKEN ) );
+      iamSessionToken.setValue( Encr.decryptPassword( meta.getAttributes().getProperty( IAM_SESSION_TOKEN ) ) );
     }
     if ( iamProfileName != null ) {
       iamProfileName.setValue( meta.getAttributes().getProperty( IAM_PROFILE_NAME ) );
@@ -1623,6 +1629,8 @@ public class DataHandler extends AbstractXulEventHandler {
         webAppName.setValue( meta.getDatabaseName() );
       }
     }
+
+    this.extraHandler.ifPresent( handler -> handler.loadConnectionSpecificInfo( meta ) );
   }
 
   protected void getControls() {

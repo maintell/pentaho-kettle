@@ -1,43 +1,51 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelwriter;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
+import static org.junit.Assert.assertEquals;
+
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.junit.rules.RestorePDIEngineEnvironment;
+import org.pentaho.di.repository.ObjectId;
+import org.pentaho.di.repository.Repository;
+import org.pentaho.di.trans.step.StepMetaInterface;
 import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
+import org.pentaho.di.trans.steps.loadsave.MemoryRepository;
 import org.pentaho.di.trans.steps.loadsave.validator.ArrayLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
+import org.pentaho.metastore.api.IMetaStore;
 
 public class ExcelWriterStepMetaTest {
   @ClassRule public static RestorePDIEngineEnvironment env = new RestorePDIEngineEnvironment();
@@ -55,7 +63,8 @@ public class ExcelWriterStepMetaTest {
       "appendLines", "add_to_result_filenames", "name", "extention", "do_not_open_newfile_init", "split", "add_date",
       "add_time", "SpecifyFormat", "date_time_format", "sheetname", "autosizecolums", "stream_data", "protect_sheet",
       "password", "protected_by", "splitevery", "if_file_exists", "if_sheet_exists", "enabled", "sheet_enabled",
-      "filename", "sheetname", "outputfields", "TemplateSheetHidden" );
+      "filename", "sheetname", "outputfields", "TemplateSheetHidden", "extend_data_validation", "retain_null_values",
+      "create_parent" );
 
     Map<String, String> getterMap = new HashMap<String, String>();
     getterMap.put( "header", "isHeaderEnabled" );
@@ -93,6 +102,9 @@ public class ExcelWriterStepMetaTest {
     getterMap.put( "filename", "getTemplateFileName" );
     getterMap.put( "sheetname", "getTemplateSheetName" );
     getterMap.put( "outputfields", "getOutputFields" );
+    getterMap.put( "extend_data_validation", "isExtendDataValidationRanges" );
+    getterMap.put( "retain_null_values", "isRetainNullValues" );
+    getterMap.put( "create_parent", "isCreateParentFolders" );
 
     Map<String, String> setterMap = new HashMap<String, String>();
     setterMap.put( "header", "setHeaderEnabled" );
@@ -130,6 +142,9 @@ public class ExcelWriterStepMetaTest {
     setterMap.put( "filename", "setTemplateFileName" );
     setterMap.put( "sheetname", "setTemplateSheetName" );
     setterMap.put( "outputfields", "setOutputFields" );
+    setterMap.put( "extend_data_validation", "setExtendDataValidationRanges" );
+    setterMap.put( "retain_null_values", "setRetainNullValues" );
+    setterMap.put( "create_parent", "setCreateParentFolders" );
 
     Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorTypeMap =
       new HashMap<String, FieldLoadSaveValidator<?>>();
@@ -176,5 +191,69 @@ public class ExcelWriterStepMetaTest {
       obj.setHyperlinkField( UUID.randomUUID().toString() );
       return obj;
     }
+  }
+
+  @Test
+  public void testSaveLoadStepMetaDeterministic() throws Exception {
+    // LoadSaveTester randomizes which booleans it tests
+    // non-defaults
+    checkSaveLoadDeterministic( meta -> {
+      meta.setAutoSizeColums( true );
+      meta.setExtendDataValidationRanges( true );
+      meta.setCreateParentFolders( true );
+      meta.setRetainNullValues( false );
+    } );
+    // defaults
+    checkSaveLoadDeterministic( meta -> {
+      meta.setAutoSizeColums( false );
+      meta.setExtendDataValidationRanges( false );
+      meta.setCreateParentFolders( false );
+      meta.setRetainNullValues( true );
+    } );
+  }
+
+  public void checkSaveLoadDeterministic( Consumer<ExcelWriterStepMeta> setters ) throws Exception {
+    final ExcelWriterStepMeta orig = new ExcelWriterStepMeta();
+    orig.setOutputFields( new ExcelWriterStepField[0] );
+
+    setters.accept( orig );
+
+    testXmlRoundtrip( orig, () -> new ExcelWriterStepMeta(), this::assertMetaEq );
+    testRepoRoundtrip( orig, () -> new ExcelWriterStepMeta(), this::assertMetaEq );
+  }
+
+  private <T extends StepMetaInterface> void testXmlRoundtrip( T orig, Supplier<T> ctor, BiConsumer<T, T> assertEq )
+    throws KettleException {
+    String xml = MessageFormat.format( "<step>{0}</step>", orig.getXML() );
+
+    Document document = XMLHandler.loadXMLString( xml.toString() );
+    Node step = XMLHandler.getSubNode( document, "step" );
+    IMetaStore metaStore = Mockito.mock( IMetaStore.class );
+    final T loaded = ctor.get();
+    loaded.loadXML( step, Collections.emptyList(), metaStore );
+
+    assertEq.accept( orig, loaded );
+  }
+
+  private <T extends StepMetaInterface> void testRepoRoundtrip( T orig, Supplier<T> ctor, BiConsumer<T, T> assertEq )
+    throws KettleException {
+
+    Repository repo = new MemoryRepository();
+    IMetaStore metaStore = Mockito.mock( IMetaStore.class );
+    final ObjectId transId = () -> "trans-ID", stepId = () -> "step-ID";
+    orig.saveRep( repo, metaStore, transId, stepId );
+    final T loaded = ctor.get();
+    loaded.readRep( repo, metaStore, stepId, Collections.emptyList() );
+
+    assertEq.accept( orig, loaded );
+  }
+
+  private void assertMetaEq( ExcelWriterStepMeta orig, ExcelWriterStepMeta loaded ) {
+    // add more fields as needed
+    assertEquals( "isRetainNullValues", orig.isRetainNullValues(), loaded.isRetainNullValues() );
+    assertEquals( "isExtendDataValidationRanges", orig.isExtendDataValidationRanges(),
+      loaded.isExtendDataValidationRanges() );
+    assertEquals( "isCreateParentFolders", orig.isCreateParentFolders(), loaded.isCreateParentFolders() );
+    assertEquals( "isAutoSizeColums", orig.isAutoSizeColums(), loaded.isAutoSizeColums() );
   }
 }

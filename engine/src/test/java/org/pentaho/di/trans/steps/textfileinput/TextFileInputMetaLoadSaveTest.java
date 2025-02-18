@@ -1,24 +1,15 @@
-/* ******************************************************************************
+/*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.textfileinput;
 
@@ -27,18 +18,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.pentaho.di.core.exception.KettlePluginException;
 import org.pentaho.di.core.logging.KettleLogStore;
-import org.pentaho.di.core.logging.KettleLoggingEvent;
 import org.pentaho.di.core.row.value.ValueMetaPluginType;
 import org.pentaho.di.junit.rules.RestorePDIEngineEnvironment;
 import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
 import org.pentaho.di.trans.steps.loadsave.validator.ArrayLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.TextFileInputFieldValidator;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,8 +42,6 @@ import static org.junit.Assert.assertTrue;
    * @deprecated replaced by implementation in the ...steps.fileinput.text package
  */
 @Deprecated
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
 public class TextFileInputMetaLoadSaveTest {
   @ClassRule public static RestorePDIEngineEnvironment env = new RestorePDIEngineEnvironment();
 
@@ -130,7 +115,7 @@ public class TextFileInputMetaLoadSaveTest {
     List<String> xmlAttributes = Collections.emptyList();
     List<String> repoAttributes = Collections.emptyList();
 
-    Map<String, String> getters = new HashMap<String, String>(  );
+    Map<String, String> getters = new HashMap<>();
     getters.put( "header", "hasHeader" );
     getters.put( "footer", "hasFooter" );
     getters.put( "noEmptyLines", "noEmptyLines" );
@@ -147,7 +132,7 @@ public class TextFileInputMetaLoadSaveTest {
     getters.put( "extensionFieldName", "getExtensionField" );
     getters.put( "sizeFieldName", "getSizeField" );
 
-    Map<String, String> setters = new HashMap<String, String>(  );
+    Map<String, String> setters = new HashMap<>();
     setters.put( "fileName", "setFileNameForTest" );
     setters.put( "errorFilesExtension", "setErrorLineFilesExtension" );
     setters.put( "isaddresult", "setAddResultFile" );
@@ -162,15 +147,17 @@ public class TextFileInputMetaLoadSaveTest {
 
     Map<String, FieldLoadSaveValidator<?>> attributeValidators = Collections.emptyMap();
 
-    Map<String, FieldLoadSaveValidator<?>> typeValidators = new HashMap<String, FieldLoadSaveValidator<?>>(  );
-    typeValidators.put( TextFileFilter[].class.getCanonicalName(), new ArrayLoadSaveValidator<TextFileFilter>( new TextFileFilterValidator() ) );
-    typeValidators.put( TextFileInputField[].class.getCanonicalName(), new ArrayLoadSaveValidator<TextFileInputField>( new TextFileInputFieldValidator() ) );
+    Map<String, FieldLoadSaveValidator<?>> typeValidators = new HashMap<>();
+    typeValidators.put( TextFileFilter[].class.getCanonicalName(),
+      new ArrayLoadSaveValidator<>( new TextFileFilterValidator() ) );
+    typeValidators.put( TextFileInputField[].class.getCanonicalName(),
+      new ArrayLoadSaveValidator<>( new TextFileInputFieldValidator() ) );
 
     assertTrue( !commonAttributes.isEmpty() || !( xmlAttributes.isEmpty() || repoAttributes.isEmpty() ) );
 
     tester =
-        new LoadSaveTester<TextFileInputMeta>( TextFileInputMeta.class, commonAttributes, xmlAttributes,
-            repoAttributes, getters, setters, attributeValidators, typeValidators );
+      new LoadSaveTester<>( TextFileInputMeta.class, commonAttributes, xmlAttributes,
+        repoAttributes, getters, setters, attributeValidators, typeValidators );
   }
 
   @Test

@@ -13,7 +13,6 @@
     <root>plugins/star-modeler/src</root>
     <root>plugins/market/src</root>
     <root>plugins/kettle-palo-plugin/src</root>
-    <root>plugins/kettle-openerp-plugin/src</root>
     <root>plugins/kettle-hl7-plugin/src</root>
 
   </source-directories>
@@ -30,6 +29,7 @@
     <locale> <code>de_DE</code> <language>German</language> <country>Germany</country> </locale>
     <locale> <code>es_ES</code> <language>Spanish</language> <country>Spain</country> </locale>
     <locale> <code>zh_CN</code> <language>Simplified Chinese</language> <country>China</country> </locale>
+    <locale> <code>zh_TW</code> <language>Traditional Chinese</language> <country>China</country> </locale>
     <locale> <code>nl_NL</code> <language>Dutch</language> <country>The Netherlands</country> </locale>
     <locale> <code>pt_BR</code> <language>Portuguese</language> <country>Brazil</country> </locale>
     <locale> <code>pt_PT</code> <language>Portuguese</language> <country>Portugal</country> </locale>

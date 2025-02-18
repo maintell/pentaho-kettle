@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.datagrid;
 
@@ -27,7 +18,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -37,19 +27,15 @@ import org.pentaho.di.trans.TransTestingUtil;
 import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.steps.StepMockUtil;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.util.List;
 
 import java.util.Arrays;
+import java.util.List;
+
 import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Khayrutdinov
  */
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
 public class DataGrid_EmptyStringVsNull_Test {
   private StepMockHelper<DataGridMeta, StepDataInterface> helper;
 
@@ -107,7 +93,7 @@ public class DataGrid_EmptyStringVsNull_Test {
     List<List<String>> dataRows = Arrays.asList(
       Arrays.asList( " ", " ", " ", " ", " " ),
       Arrays.asList( "", "", "", "", "" ),
-      Arrays.asList( (String) null, null, null, null, null )
+      Arrays.asList( null, null, null, null, null )
     );
     meta.setDataLines( dataRows );
 

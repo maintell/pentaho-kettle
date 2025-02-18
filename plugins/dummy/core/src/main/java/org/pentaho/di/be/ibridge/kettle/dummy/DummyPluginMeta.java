@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.be.ibridge.kettle.dummy;
 
@@ -43,14 +34,14 @@ import java.util.*;
  * Created on 02-jun-2003
  *
  */
-
-@Step( id = "DummyStep",
-      image = "ui/images/deprecated.svg",
-      i18nPackageName = "be.ibridge.kettle.dummy",
-      name = "DummyPlugin.Step.Name",
-      description = "DummyPlugin.Step.Description",
-      categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Deprecated",
-      suggestion = "DummyPlugin.Step.SuggestedStep" )
+// BACKLOG-38582 Remove specific deprecated steps and job entries from PDI, Please uncomment to enable plugin if needed.
+//@Step( id = "DummyStep",
+//      image = "ui/images/deprecated.svg",
+//      i18nPackageName = "be.ibridge.kettle.dummy",
+//      name = "DummyPlugin.Step.Name",
+//      description = "DummyPlugin.Step.Description",
+//      categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Deprecated",
+//      suggestion = "DummyPlugin.Step.SuggestedStep" )
 public class DummyPluginMeta extends BaseStepMeta implements StepMetaInterface {
   private ValueMetaAndData value;
 

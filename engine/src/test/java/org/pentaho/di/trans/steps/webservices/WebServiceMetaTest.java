@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.webservices;
 
@@ -54,13 +45,13 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.argThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 public class WebServiceMetaTest {
   @ClassRule public static RestorePDIEngineEnvironment env = new RestorePDIEngineEnvironment();
@@ -151,8 +142,7 @@ public class WebServiceMetaTest {
 
     WebServiceMeta webServiceMeta = new WebServiceMeta(  rep, metastore, id_step, Collections.singletonList( dbMeta )  );
 
-    String expectedXml = ""
-      + "    <wsURL/>\n"
+    String expectedXml = "    <wsURL/>\n"
       + "    <wsOperation>GetCurrentExchangeRate</wsOperation>\n"
       + "    <wsOperationRequest>opRequest</wsOperationRequest>\n"
       + "    <wsOperationNamespace>opNamespace</wsOperationNamespace>\n"
@@ -273,7 +263,7 @@ public class WebServiceMetaTest {
   }
 
   private Matcher<ValueMetaInterface> matchValueMetaString( final String fieldName ) {
-    return new BaseMatcher<ValueMetaInterface>() {
+    return new BaseMatcher<>() {
       @Override public boolean matches( Object item ) {
         return fieldName.equals( ( (ValueMetaString) item ).getName() );
       }
@@ -285,7 +275,7 @@ public class WebServiceMetaTest {
   }
 
   @Test
-  public void testCheck() throws Exception {
+  public void testCheck() {
     WebServiceMeta webServiceMeta = new WebServiceMeta();
     TransMeta transMeta = mock( TransMeta.class );
     StepMeta stepMeta = mock( StepMeta.class );

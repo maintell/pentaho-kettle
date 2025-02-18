@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelinput;
 
@@ -27,8 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.pentaho.di.core.exception.KettleException;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -37,8 +27,6 @@ import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.ClonableStepAnalyzerTest;
 import org.pentaho.di.trans.steps.MetaverseTestUtils;
-import org.pentaho.di.trans.steps.excelinput.ExcelInput;
-import org.pentaho.di.trans.steps.excelinput.ExcelInputMeta;
 import org.pentaho.dictionary.DictionaryConst;
 import org.pentaho.metaverse.api.IComponentDescriptor;
 import org.pentaho.metaverse.api.INamespace;
@@ -50,12 +38,17 @@ import org.pentaho.metaverse.api.model.IExternalResourceInfo;
 import java.util.Collection;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   private ExcelInputStepAnalyzer analyzer;
@@ -73,7 +66,7 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   @Before
   public void setUp() throws Exception {
-    when( mockNamespace.getParentNamespace() ).thenReturn( mockNamespace );
+    lenient().when( mockNamespace.getParentNamespace() ).thenReturn( mockNamespace );
     descriptor = new MetaverseComponentDescriptor( "test", DictionaryConst.NODE_TYPE_TRANS_STEP, mockNamespace );
     analyzer = spy( new ExcelInputStepAnalyzer() );
     analyzer.setDescriptor( descriptor );
@@ -84,9 +77,9 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   @Test
   public void testGetUsedFields_fileNameFromField() throws Exception {
-    when( meta.isAcceptingFilenames() ).thenReturn( true );
-    when( meta.getAcceptingField() ).thenReturn( "filename" );
-    when( meta.getAcceptingStepName() ).thenReturn( "previousStep" );
+    lenient().when( meta.isAcceptingFilenames() ).thenReturn( true );
+    lenient().when( meta.getAcceptingField() ).thenReturn( "filename" );
+    lenient().when( meta.getAcceptingStepName() ).thenReturn( "previousStep" );
     Set<StepField> usedFields = analyzer.getUsedFields( meta );
     assertNotNull( usedFields );
     assertEquals( 1, usedFields.size() );
@@ -97,9 +90,9 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   @Test
   public void testGetUsedFields_isNotAcceptingFilenames() throws Exception {
-    when( meta.isAcceptingFilenames() ).thenReturn( false );
-    when( meta.getAcceptingField() ).thenReturn( "filename" );
-    when( meta.getAcceptingStepName() ).thenReturn( "previousStep" );
+    lenient().when( meta.isAcceptingFilenames() ).thenReturn( false );
+    lenient().when( meta.getAcceptingField() ).thenReturn( "filename" );
+    lenient().when( meta.getAcceptingStepName() ).thenReturn( "previousStep" );
     Set<StepField> usedFields = analyzer.getUsedFields( meta );
     assertNotNull( usedFields );
     assertEquals( 0, usedFields.size() );
@@ -107,9 +100,9 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   @Test
   public void testGetUsedFields_isAcceptingFilenamesButNoStepName() throws Exception {
-    when( meta.isAcceptingFilenames() ).thenReturn( true );
-    when( meta.getAcceptingField() ).thenReturn( "filename" );
-    when( meta.getAcceptingStepName() ).thenReturn( null );
+    lenient().when( meta.isAcceptingFilenames() ).thenReturn( true );
+    lenient().when( meta.getAcceptingField() ).thenReturn( "filename" );
+    lenient().when( meta.getAcceptingStepName() ).thenReturn( null );
     Set<StepField> usedFields = analyzer.getUsedFields( meta );
     assertNotNull( usedFields );
     assertEquals( 0, usedFields.size() );
@@ -150,7 +143,7 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
     when( meta.getParentStepMeta() ).thenReturn( spyMeta );
     when( spyMeta.getParentTransMeta() ).thenReturn( transMeta );
-    when( meta.getFileName() ).thenReturn( null );
+    lenient().when( meta.getFileName() ).thenReturn( null );
     when( meta.isAcceptingFilenames() ).thenReturn( false );
     String[] filePaths = { "/path/to/file1", "/another/path/to/file2" };
     when( meta.getFilePaths( Mockito.any( VariableSpace.class ) ) ).thenReturn( filePaths );
@@ -166,7 +159,7 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
     assertTrue( consumer.isDataDriven( meta ) );
     assertTrue( consumer.getResourcesFromMeta( meta ).isEmpty() );
-    when( rmi.getString( Mockito.any( Object[].class ), Mockito.anyString(), Mockito.anyString() ) )
+    when( rmi.getString( Mockito.any( Object[].class ), Mockito.any(), Mockito.any() ) )
       .thenReturn( "/path/to/row/file" );
     when( excelInput.getStepMetaInterface() ).thenReturn( meta );
 
@@ -178,8 +171,8 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
   @Test
   public void resourcesFromRowGotSuccessfullyWhenExceptionThrown() throws Exception {
     when( excelInput.getStepMetaInterface() ).thenReturn( meta );
-    when( rmi.getString( Mockito.any( Object[].class ), Mockito.anyString(), Mockito.anyString() ) )
-      .thenThrow( KettleException.class );
+    when( rmi.getString( Mockito.any( Object[].class ), Mockito.any(), Mockito.any() ) )
+      .thenThrow( KettleValueException.class );
 
     Collection<IExternalResourceInfo> resources = consumer.getResourcesFromRow( excelInput, rmi, ROW );
 
@@ -193,7 +186,7 @@ public class ExcelInputStepAnalyzerTest extends ClonableStepAnalyzerTest {
     when( excelInput.getStepMetaInterface() ).thenReturn( null );
     when( excelInput.getStepMeta() ).thenReturn( mockedStepMeta );
     when( mockedStepMeta.getStepMetaInterface() ).thenReturn( new ExcelInputMeta() );
-    when( rmi.getString( Mockito.any( Object[].class ), Mockito.anyString(), Mockito.anyString() ) )
+    when( rmi.getString( Mockito.any( Object[].class ), Mockito.any(), Mockito.any() ) )
       .thenReturn( "/path/to/row/file" );
 
     Collection<IExternalResourceInfo> resources = consumer.getResourcesFromRow( excelInput, rmi, ROW );

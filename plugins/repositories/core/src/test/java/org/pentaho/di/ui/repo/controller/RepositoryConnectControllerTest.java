@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.repo.controller;
 
@@ -29,7 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
@@ -57,7 +48,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -129,7 +120,6 @@ public class RepositoryConnectControllerTest {
 
     when( repositoryMeta.getId() ).thenReturn( ID );
     when( repositoryMeta.getName() ).thenReturn( PLUGIN_NAME );
-    when( repositoryMeta.getDescription() ).thenReturn( PLUGIN_DESCRIPTION );
   }
 
   @Test
@@ -170,7 +160,6 @@ public class RepositoryConnectControllerTest {
 
     assertEquals( null, result );
 
-    when( repository.test() ).thenReturn( true );
     doThrow( new KettleException( "forced exception" ) ).when( repositoriesMeta ).writeData();
 
     result = controller.createRepository( id, items );
@@ -207,8 +196,6 @@ public class RepositoryConnectControllerTest {
     int index = 1;
     when( repositoriesMeta.findRepository( REPOSITORY_NAME ) ).thenReturn( repositoryMeta );
     when( repositoriesMeta.indexOfRepository( repositoryMeta ) ).thenReturn( index );
-    when( repositoriesMeta.getRepository( index ) ).thenReturn( repositoryMeta );
-
     boolean result = controller.deleteRepository( REPOSITORY_NAME );
 
     assertEquals( true, result );
@@ -218,10 +205,6 @@ public class RepositoryConnectControllerTest {
 
   @Test
   public void testSetDefaultRepository() {
-    int index = 1;
-    when( repositoriesMeta.findRepository( REPOSITORY_NAME ) ).thenReturn( repositoryMeta );
-    when( repositoriesMeta.indexOfRepository( repositoryMeta ) ).thenReturn( index );
-
     boolean result = controller.setDefaultRepository( REPOSITORY_NAME );
     assertEquals( true, result );
   }
@@ -299,9 +282,7 @@ public class RepositoryConnectControllerTest {
     RepositoryMeta before = new TestRepositoryMeta( ID, "name1", PLUGIN_DESCRIPTION, "same" );
 
     doReturn( repository ).when( pluginRegistry ).loadClass( RepositoryPluginType.class, ID, Repository.class );
-
-    when( repositoriesMeta.nrRepositories() ).thenReturn( 1 );
-    when( repositoriesMeta.findRepository( anyString() ) ).thenReturn( before );
+    when( repositoriesMeta.findRepository( nullable( String.class ) ) ).thenReturn( before );
 
     controller.setConnectedRepository( before );
     controller.setCurrentRepository( before );

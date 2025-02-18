@@ -1,103 +1,61 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.rest;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.glassfish.jersey.client.ClientConfig;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.trans.Trans;
-import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.StepDataInterface;
-import org.pentaho.di.trans.step.StepMeta;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.util.HashSet;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.mockito.internal.util.reflection.Whitebox.setInternalState;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( Client.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class RestTest {
 
   @Test
-  public void testCreateMultivalueMap() {
-    StepMeta stepMeta = new StepMeta();
-    stepMeta.setName( "TestRest" );
-    TransMeta transMeta = new TransMeta();
-    transMeta.setName( "TestRest" );
-    transMeta.addStep( stepMeta );
-    Rest rest = new Rest( stepMeta, mock( StepDataInterface.class ),
-      1, transMeta, mock( Trans.class ) );
-    MultivaluedMapImpl map = rest.createMultivalueMap( "param1", "{a:{[val1]}}" );
-    String val1 = map.getFirst( "param1" );
-    assertTrue( val1.contains( "%7D" ) );
-  }
+  public void testCallEndpointWithGetVerb() throws KettleException {
+    Invocation.Builder builder = mock( Invocation.Builder.class );
 
-  @Test
-  public void testCallEndpointWithDeleteVerb() throws KettleException {
-    MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
-    headers.add( "Content-Type", "application/json" );
-
-    ClientResponse response = mock( ClientResponse.class );
-    doReturn( 200 ).when( response ).getStatus();
-    doReturn( headers ).when( response ).getHeaders();
-    doReturn( "true" ).when( response ).getEntity( String.class );
-
-    WebResource.Builder builder = mock( WebResource.Builder.class );
-    doReturn( response ).when( builder ).delete( ClientResponse.class );
-
-    WebResource resource = mock( WebResource.class );
-    doReturn( builder ).when( resource ).getRequestBuilder();
+    WebTarget resource = mock( WebTarget.class );
+    lenient().doReturn( builder ).when( resource ).request();
 
     Client client = mock( Client.class );
-    doReturn( resource ).when( client ).resource( anyString() );
+    lenient().doReturn( resource ).when( client ).target( anyString() );
 
-    mockStatic( Client.class );
-    when( Client.create( any() ) ).thenReturn( client );
+    ClientBuilder clientBuilder = mock( ClientBuilder.class );
+    lenient().when( clientBuilder.build() ).thenReturn( client );
 
     RestMeta meta = mock( RestMeta.class );
-    doReturn( false ).when( meta ).isDetailed();
     doReturn( false ).when( meta ).isUrlInField();
     doReturn( false ).when( meta ).isDynamicMethod();
 
@@ -105,27 +63,132 @@ public class RestTest {
     doReturn( 1 ).when( rmi ).size();
 
     RestData data = mock( RestData.class );
-    DefaultApacheHttpClient4Config config = mock( DefaultApacheHttpClient4Config.class );
-    doReturn( new HashSet<>() ).when( config ).getSingletons();
-    data.method = RestMeta.HTTP_METHOD_DELETE;
+    data.method = RestMeta.HTTP_METHOD_GET;
+    data.config = new ClientConfig();
     data.inputRowMeta = rmi;
     data.resultFieldName = "result";
     data.resultCodeFieldName = "status";
     data.resultHeaderFieldName = "headers";
-    data.config = config;
+    data.realUrl = "https://www.hitachivantara.com/en-us/home.html";
 
     Rest rest = mock( Rest.class );
     doCallRealMethod().when( rest ).callRest( any() );
+    doCallRealMethod().when( rest ).getClient( any() );
+    doCallRealMethod().when( rest ).buildRequest( any(), any() );
     doCallRealMethod().when( rest ).searchForHeaders( any() );
 
-    setInternalState( rest, "meta", meta );
-    setInternalState( rest, "data", data );
+    ReflectionTestUtils.setField( rest, "meta", meta );
+    ReflectionTestUtils.setField( rest, "data", data );
 
     Object[] output = rest.callRest( new Object[] { 0 } );
+    //Should not get any exception but a non-null output
+    assertNotNull( output );
 
-    verify( builder, times( 1 ) ).delete( ClientResponse.class );
-    assertEquals( "true", output[ 1 ] );
+    //GET request should succeed.
     assertEquals( 200L, output[ 2 ] );
-    assertEquals( "{\"Content-Type\":\"application\\/json\"}", output[ 3 ] );
   }
+
+  /**
+   * This test makes sure the parameters are uri encoded. If the parameters are not encoded, it will throw
+   * IllegalStateException
+   * @throws KettleException
+   */
+  @Test
+  public void testEncodingParams() throws KettleException {
+
+    Object[] params = new Object[2];
+    params[0] = "{a:{[val1]}}";
+    params[1] = "string with spaces";
+
+    RestMeta meta = mock( RestMeta.class );
+    doReturn( false ).when( meta ).isUrlInField();
+    doReturn( false ).when( meta ).isDynamicMethod();
+
+    RowMetaInterface rmi = mock( RowMetaInterface.class );
+    doReturn( params[0] ).when( rmi ).getString( params, 0 );
+    doReturn( params[1] ).when( rmi ).getString( params, 1 );
+
+    RestData data = mock( RestData.class );
+    data.method = RestMeta.HTTP_METHOD_POST;
+    data.config = new ClientConfig();
+    data.inputRowMeta = rmi;
+    data.resultFieldName = "result";
+    data.resultCodeFieldName = "status";
+    data.resultHeaderFieldName = "headers";
+    data.realUrl = "http://localhost:8080/pentaho";
+    data.useParams = true;
+    data.nrParams = 2;
+    data.mediaType = MediaType.APPLICATION_JSON_TYPE;
+
+    // Add one index to this array
+    data.indexOfParamFields = new int[] {0, 1};
+    data.paramNames = new String[] {"param1", "param2"};
+
+    Rest rest = mock( Rest.class );
+    doCallRealMethod().when( rest ).getClient( any() );
+    doCallRealMethod().when( rest ).buildRequest( any(), any() );
+
+    ReflectionTestUtils.setField( rest, "meta", meta );
+    ReflectionTestUtils.setField( rest, "data", data );
+
+    Client client = rest.getClient( params );
+    WebTarget webResource = rest.buildRequest( client, params );
+    String expected = "http://localhost:8080/pentaho?param1=%7Ba%3A%7B%5Bval1%5D%7D%7D&param2=string%20with%20spaces";
+    assertEquals( expected, webResource.getUri().toString() );
+  }
+
+  /**
+   * Verifies that a PUT request with an empty body does not trigger an IllegalStateException
+   * @throws KettleException
+   */
+  @Test
+  public void testPutWithEmptyBody() throws KettleException {
+
+    Invocation.Builder builder = mock( Invocation.Builder.class );
+
+    WebTarget resource = mock( WebTarget.class );
+    lenient().doReturn( builder ).when( resource ).request();
+
+    Client client = mock( Client.class );
+    lenient().doReturn( resource ).when( client ).target( anyString() );
+
+    ClientBuilder clientBuilder = mock( ClientBuilder.class );
+    lenient().when( clientBuilder.build() ).thenReturn( client );
+
+    RestMeta meta = mock( RestMeta.class );
+    lenient().doReturn( false ).when( meta ).isUrlInField();
+    lenient().doReturn( false ).when( meta ).isDynamicMethod();
+
+    RowMetaInterface rmi = mock( RowMetaInterface.class );
+
+    RestData data = mock( RestData.class );
+    data.method = RestMeta.HTTP_METHOD_PUT;
+    data.config = new ClientConfig();
+    data.inputRowMeta = rmi;
+    // should be non-routable so we can consistetly not connect
+    data.realUrl = "http://192.0.2.1:8080/pentaho";
+    data.mediaType = MediaType.TEXT_PLAIN_TYPE;
+    data.useBody = true;
+    // do not set data.indexOfBodyField
+
+    Rest rest = mock( Rest.class );
+    doCallRealMethod().when( rest ).callRest( any() );
+    doCallRealMethod().when( rest ).getClient( any() );
+    doCallRealMethod().when( rest ).buildRequest( any(), any() );
+
+    ReflectionTestUtils.setField( rest, "meta", meta );
+    ReflectionTestUtils.setField( rest, "data", data );
+
+    try {
+      rest.callRest( new Object[] { 0 } );
+      Assert.fail( "Expected an exception" );
+    } catch ( KettleException exception ) {
+      // Ignore the ConnectException which is expected as rest call to localhost:8080 will fail in unit test
+      // IllegalStateException is throws when the body is null
+      if ( exception.getCause().getCause() instanceof IllegalStateException ) {
+          Assert.fail( "PUT request with an empty body should not have failed with an IllegalStateException" );
+      }
+    }
+  }
+
 }

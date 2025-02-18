@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.columnsexist;
 
@@ -147,7 +138,7 @@ public class JobEntryColumnsExistTest {
   @Test
   public void jobSuccess() throws KettleException {
     doReturn( db ).when( jobEntry ).getNewDatabaseFromMeta();
-    doNothing().when( db ).connect( anyString(), anyString() );
+    doNothing().when( db ).connect( any(), any() );
     doReturn( true ).when( db ).checkColumnExists( anyString(), anyString(), anyString() );
     doReturn( true ).when( db ).checkTableExists( anyString(), anyString() );
     final Result result = jobEntry.execute( new Result(), 0 );

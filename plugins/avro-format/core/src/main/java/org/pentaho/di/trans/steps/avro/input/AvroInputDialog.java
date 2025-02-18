@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.avro.input;
 
 import org.pentaho.di.trans.steps.avro.BaseAvroStepDialog;
@@ -73,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @PluginDialog( id = "AvroInputNew", image = "AI.svg", pluginType = PluginDialog.PluginType.STEP,
-        documentationUrl = "Products/Avro_Input" )
+        documentationUrl = "mk-95pdia003/pdi-transformation-steps/avro-input" )
 public class AvroInputDialog extends BaseAvroStepDialog {
   private static final Class<?> PKG = AvroInputMeta.class;
 

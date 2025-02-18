@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelinput.poi;
 
@@ -33,12 +24,15 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.pentaho.di.core.Const;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.spreadsheet.KSheet;
 import org.pentaho.di.core.spreadsheet.KWorkbook;
+import org.pentaho.di.core.util.EnvUtil;
 import org.pentaho.di.core.vfs.KettleVFS;
+import org.apache.poi.xssf.usermodel.XSSFWorkbookFactory;
 
 public class PoiWorkbook implements KWorkbook {
 
@@ -73,14 +67,18 @@ public class PoiWorkbook implements KWorkbook {
         } catch ( Exception ofe ) {
           try {
             opcpkg = OPCPackage.open( excelFile );
-            workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create( opcpkg );
+            workbook = XSSFWorkbookFactory.createWorkbook( opcpkg );
           } catch ( Exception ex ) {
             workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create( excelFile, password );
           }
         }
       } else {
-        internalIS = KettleVFS.getInputStream( filename );
-        workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create( internalIS, password );
+          //default value for maximum allowed size we are maintaining 150MB  150 * 1024 * 1024
+          int maxSize = Const.toInt( EnvUtil.getSystemProperty( Const.POI_BYTE_ARRAY_MAX_SIZE ), 157286400 );
+          // Increase the maximum allowed size
+          org.apache.poi.util.IOUtils.setByteArrayMaxOverride( maxSize );
+          internalIS = KettleVFS.getInputStream( filename );
+          workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create( internalIS, password );
       }
     } catch ( EncryptedDocumentException e ) {
       log.logError( "Unable to open spreadsheet.  If the spreadsheet is password protected please double check the password is correct." );

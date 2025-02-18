@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.elasticsearchbulk;
 
@@ -58,12 +49,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
-@Step( id = "ElasticSearchBulk", i18nPackageName = "org.pentaho.di.trans.steps.elasticsearch",
-        name = "ElasticSearchBulk.TypeLongDesc.ElasticSearchBulk",
-        description = "ElasticSearchBulk.TypeTooltipDesc.ElasticSearchBulk",
-        categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Deprecated", image = "ui/images/deprecated.svg",
-        documentationUrl = "Products/ElasticSearch_Bulk_Insert_(deprecated)" )
+// BACKLOG-38582 Remove specific deprecated steps and job entries from PDI, Please uncomment to enable plugin if needed.
+//@Step( id = "ElasticSearchBulk", i18nPackageName = "org.pentaho.di.trans.steps.elasticsearch",
+//        name = "ElasticSearchBulk.TypeLongDesc.ElasticSearchBulk",
+//        description = "ElasticSearchBulk.TypeTooltipDesc.ElasticSearchBulk",
+//        categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Deprecated", image = "ui/images/deprecated.svg",
+//        documentationUrl = "mk-95pdia003/pdi-transformation-steps/elasticsearch-bulk-insert-deprecated" )
 @InjectionSupported( localizationPrefix = "ElasticSearchBulk.Injection." )
 public class ElasticSearchBulkMeta extends BaseStepMeta implements StepMetaInterface {
 

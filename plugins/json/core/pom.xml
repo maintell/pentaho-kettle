@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.pentaho.di.plugins</groupId>
     <artifactId>json</artifactId>
-    <version>9.6.0.0-SNAPSHOT</version>
+    <version>10.3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>kettle-json-plugin-core</artifactId>
@@ -15,13 +15,12 @@
   <name>PDI Json Plugin Core</name>
 
   <properties>
-    <pdi.version>9.6.0.0-SNAPSHOT</pdi.version>
-    <pentaho-metaverse.version>9.6.0.0-SNAPSHOT</pentaho-metaverse.version>
-    <platform.version>9.6.0.0-SNAPSHOT</platform.version>
+    <pdi.version>10.3.0.0-SNAPSHOT</pdi.version>
+    <pentaho-metaverse.version>10.3.0.0-SNAPSHOT</pentaho-metaverse.version>
+    <platform.version>10.3.0.0-SNAPSHOT</platform.version>
     <commons-lang.version>2.6</commons-lang.version>
     <encoder.version>1.2</encoder.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
-    <mockito-all.version>1.9.5</mockito-all.version>
     <build.revision>${project.version}</build.revision>
     <timestamp>${maven.build.timestamp}</timestamp>
     <build.description>${project.description}</build.description>
@@ -131,10 +130,12 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+      <version>${fasterxml-jackson.non-osgi.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
+      <version>${fasterxml-jackson.non-osgi.version}</version>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
@@ -159,8 +160,8 @@
     <!-- test dependencies -->
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>${mockito-all.version}</version>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -207,15 +208,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-core</artifactId>
-      <version>${dependency.org.powermock.version}</version>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
     <!-- neccessary -->
     <dependency>
       <groupId>org.osgi</groupId>
-      <artifactId>org.osgi.core</artifactId>
+      <artifactId>osgi.core</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

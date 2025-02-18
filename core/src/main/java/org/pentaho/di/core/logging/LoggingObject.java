@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.logging;
 
@@ -47,9 +38,6 @@ public class LoggingObject implements LoggingObjectInterface {
 
   private LoggingObjectInterface parent;
 
-  private LoggingObjectInterface loggingObject;
-
-  private boolean loggingObjectInUse;
   private Date registrationDate;
 
   private boolean gatheringMetrics;
@@ -61,7 +49,6 @@ public class LoggingObject implements LoggingObjectInterface {
     } else {
       grabObjectInformation( object );
     }
-    loggingObjectInUse = false;
   }
 
   @Override
@@ -157,7 +144,6 @@ public class LoggingObject implements LoggingObjectInterface {
     containerObjectId = loggingObject.getContainerObjectId();
     forcingSeparateLogging = loggingObject.isForcingSeparateLogging();
     gatheringMetrics = loggingObject.isGatheringMetrics();
-    this.loggingObject = loggingObject;
 
     if ( loggingObject.getParent() != null ) {
       getParentLoggingObject( loggingObject.getParent() );
@@ -169,17 +155,8 @@ public class LoggingObject implements LoggingObjectInterface {
   private void grabObjectInformation( Object object ) {
     objectType = LoggingObjectType.GENERAL;
     objectName = object.toString(); // name of class or name of object..
+
     parent = null;
-    loggingObject = null;
-  }
-
-  @Override
-  public boolean isLoggingObjectInUse() {
-    return loggingObject == null ? loggingObjectInUse : loggingObject.isLoggingObjectInUse() || loggingObjectInUse;
-  }
-
-  public void setLoggingObjectInUse( boolean loggingObjectInUse ) {
-    this.loggingObjectInUse = loggingObjectInUse;
   }
 
   private void getParentLoggingObject( Object parentObject ) {

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.s3csvinput;
 
@@ -81,7 +72,7 @@ import org.w3c.dom.Node;
 
 @Step( id = "S3CSVINPUT", image = "S3I.svg", i18nPackageName = "org.pentaho.di.trans.steps.s3csvinput",
     name = "S3CsvInput.Step.Name", description = "S3CsvInput.Step.Description", categoryDescription = "Input",
-    documentationUrl = "Products/S3_CSV_Input" )
+    documentationUrl = "mk-95pdia003/pdi-transformation-steps/s3-csv-input" )
 @InjectionSupported( localizationPrefix = "S3CsvInput.Injection.", groups = { "INPUT_FIELDS" } )
 public class S3CsvInputMeta extends BaseStepMeta implements StepMetaInterface, InputFileMetaInterface {
 

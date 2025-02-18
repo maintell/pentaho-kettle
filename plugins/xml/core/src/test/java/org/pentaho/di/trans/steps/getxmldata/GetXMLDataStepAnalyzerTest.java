@@ -1,22 +1,15 @@
-/*
- * ******************************************************************************
+/*! ******************************************************************************
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Pentaho
  *
- * ******************************************************************************
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.getxmldata;
 
@@ -26,7 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
@@ -57,13 +50,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by mburgess on 4/24/15.
  */
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class GetXMLDataStepAnalyzerTest {
 
   @ClassRule public static RestorePDIEngineEnvironment env = new RestorePDIEngineEnvironment();
@@ -173,7 +177,7 @@ public class GetXMLDataStepAnalyzerTest {
     when( meta.getInputFields() ).thenReturn( fields );
 
     IAnalysisContext context = mock( IAnalysisContext.class );
-    doReturn( "thisStepName" ).when( analyzer ).getStepName();
+    lenient().doReturn( "thisStepName" ).when( analyzer ).getStepName();
     when( node.getLogicalId() ).thenReturn( "logical id" );
     ValueMetaInterface vmi = new ValueMeta( "name", 1 );
 
@@ -200,10 +204,10 @@ public class GetXMLDataStepAnalyzerTest {
 
   @Test
   public void testGetInputRowMetaInterfaces_isInFields() throws Exception {
-    when( parentTransMeta.getPrevStepNames( parentStepMeta ) ).thenReturn( null );
+    when( parentTransMeta.getPrevStepNames( Mockito.<StepMeta>any() ) ).thenReturn( null );
 
     RowMetaInterface rowMetaInterface = mock( RowMetaInterface.class );
-    doReturn( rowMetaInterface ).when( analyzer ).getOutputFields( meta );
+    lenient().doReturn( rowMetaInterface ).when( analyzer ).getOutputFields( meta );
     when( meta.isInFields() ).thenReturn( true );
     when( meta.getIsAFile() ).thenReturn( false );
     when( meta.isReadUrl() ).thenReturn( false );
@@ -225,7 +229,7 @@ public class GetXMLDataStepAnalyzerTest {
     when( inputRmi.getValueMetaList() ).thenReturn( vmis );
     inputs.put( "test", inputRmi );
     doReturn( inputs ).when( analyzer ).getInputFields( meta );
-    when( parentTransMeta.getPrevStepNames( parentStepMeta ) ).thenReturn( null );
+    lenient().when( parentTransMeta.getPrevStepNames( parentStepMeta ) ).thenReturn( null );
 
     RowMetaInterface rowMetaInterface = new RowMeta();
     rowMetaInterface.addValueMeta( vmi );
@@ -309,13 +313,13 @@ public class GetXMLDataStepAnalyzerTest {
     when( meta.getIsAFile() ).thenReturn( true );
     assertTrue( consumer.isDataDriven( meta ) );
     assertTrue( consumer.getResourcesFromMeta( meta ).isEmpty() );
-    when( rmi.getString( Mockito.any( Object[].class ), anyString(), anyString() ) )
+    when( rmi.getString( Mockito.any( Object[].class ), any(), any() ) )
       .thenReturn( "/path/to/row/file" );
     resources = consumer.getResourcesFromRow( data, rmi, new String[]{ "id", "name" } );
     assertFalse( resources.isEmpty() );
     assertEquals( 1, resources.size() );
 
-    when( rmi.getString( Mockito.any( Object[].class ), anyString(), anyString() ) )
+    when( rmi.getString( any( Object[].class ), any(), any() ) )
       .thenThrow( new KettleValueException() );
     resources = consumer.getResourcesFromRow( data, rmi, new String[]{ "id", "name" } );
     assertTrue( resources.isEmpty() );

@@ -1,42 +1,21 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
-package org.pentaho.di.trans.steps.simplemapping;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doReturn;
+package org.pentaho.di.trans.steps.simplemapping;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedConstruction;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LoggingObjectInterface;
 import org.pentaho.di.core.row.RowMeta;
@@ -48,6 +27,20 @@ import org.pentaho.di.trans.steps.mapping.MappingIODefinition;
 import org.pentaho.di.trans.steps.mappinginput.MappingInput;
 import org.pentaho.di.trans.steps.mappingoutput.MappingOutput;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Tatsiana_Kasiankova
@@ -114,17 +107,19 @@ public class SimpleMappingTest {
 
   @Test
   public void testStepSetUpAsWasStarted_AtProcessingFirstRow() throws KettleException {
-
-    smp =
+    try ( MockedConstruction<RowDataInputMapper> rowDataInputMapperMockedConstruction = mockConstruction(
+      RowDataInputMapper.class, ( mock, context ) -> when( mock.putRow( any(), any() ) ).thenReturn( true ) ) ) {
+      // RowDataInputMapper called rowMeta.clone, which dies when it gets run on a mock
+      smp =
         new SimpleMapping( stepMockHelper.stepMeta, stepMockHelper.stepDataInterface, 0, stepMockHelper.transMeta,
-            stepMockHelper.trans );
-    smp.init( stepMockHelper.initStepMetaInterface, stepMockHelper.initStepDataInterface );
-    smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] {} ) );
-    assertTrue( "The step is processing in first", smp.first );
-    assertTrue( smp.processRow( stepMockHelper.processRowsStepMetaInterface, simpleMpData ) );
-    assertFalse( "The step is processing not in first", smp.first );
-    assertTrue( "The step was started", smp.getData().wasStarted );
-
+          stepMockHelper.trans );
+      smp.init( stepMockHelper.initStepMetaInterface, stepMockHelper.initStepDataInterface );
+      smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] {} ) );
+      assertTrue( "The step is processing in first", smp.first );
+      assertTrue( smp.processRow( stepMockHelper.processRowsStepMetaInterface, simpleMpData ) );
+      assertFalse( "The step is processing not in first", smp.first );
+      assertTrue( "The step was started", smp.getData().wasStarted );
+    }
   }
 
   @Test
@@ -158,38 +153,41 @@ public class SimpleMappingTest {
   @Test
   public void testStepShouldStopProcessingInput_IfUnderlyingTransitionIsStopped() throws Exception {
 
-    MappingInput mappingInput = mock( MappingInput.class );
-    when( mappingInput.getStepname() ).thenReturn( MAPPING_INPUT_STEP_NAME );
-    stepMockHelper.processRowsStepDataInterface.mappingInput = mappingInput;
+    try ( MockedConstruction<RowDataInputMapper> rowDataInputMapperMockedConstruction = mockConstruction(
+      RowDataInputMapper.class, ( mock, context ) -> when( mock.putRow( any(), any() ) ).thenReturn( true ) ) ) {
+      // RowDataInputMapper called rowMeta.clone, which dies when it gets run on a mock
+      MappingInput mappingInput = mock( MappingInput.class );
+      when( mappingInput.getStepname() ).thenReturn( MAPPING_INPUT_STEP_NAME );
+      stepMockHelper.processRowsStepDataInterface.mappingInput = mappingInput;
 
-    RowProducer rowProducer = mock( RowProducer.class );
-    when( rowProducer.putRow( any( RowMetaInterface.class ), any( Object[].class ), anyBoolean() ) )
-      .thenReturn( true );
+      RowProducer rowProducer = mock( RowProducer.class );
+      when( rowProducer.putRow( any( RowMetaInterface.class ), any( Object[].class ), anyBoolean() ) )
+        .thenReturn( true );
 
-    StepInterface stepInterface = mock( StepInterface.class );
+      StepInterface stepInterface = mock( StepInterface.class );
 
-    Trans mappingTrans = mock( Trans.class );
-    when( mappingTrans.addRowProducer( anyString(), anyInt() ) ).thenReturn( rowProducer );
-    when( mappingTrans.findStepInterface( anyString(), anyInt() ) ).thenReturn( stepInterface );
-    when( mappingTrans.isFinishedOrStopped() ).thenReturn( Boolean.FALSE ).thenReturn( Boolean.TRUE );
-    stepMockHelper.processRowsStepDataInterface.mappingTrans = mappingTrans;
+      Trans mappingTrans = mock( Trans.class );
+      when( mappingTrans.addRowProducer( anyString(), anyInt() ) ).thenReturn( rowProducer );
+      when( mappingTrans.findStepInterface( anyString(), anyInt() ) ).thenReturn( stepInterface );
+      when( mappingTrans.isFinishedOrStopped() ).thenReturn( Boolean.FALSE ).thenReturn( Boolean.TRUE );
+      stepMockHelper.processRowsStepDataInterface.mappingTrans = mappingTrans;
 
-    MappingOutput mappingOutput = mock( MappingOutput.class );
-    when( mappingOutput.getStepname() ).thenReturn( MAPPING_OUTPUT_STEP_NAME );
-    stepMockHelper.processRowsStepDataInterface.mappingOutput = mappingOutput;
+      MappingOutput mappingOutput = mock( MappingOutput.class );
+      when( mappingOutput.getStepname() ).thenReturn( MAPPING_OUTPUT_STEP_NAME );
+      stepMockHelper.processRowsStepDataInterface.mappingOutput = mappingOutput;
 
 
-    smp = new SimpleMapping( stepMockHelper.stepMeta, stepMockHelper.stepDataInterface, 0, stepMockHelper.transMeta,
-      stepMockHelper.trans );
-    smp.init( stepMockHelper.initStepMetaInterface, simpleMpData );
-    smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] { } ) );
-    smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] { } ) );
+      smp = new SimpleMapping( stepMockHelper.stepMeta, stepMockHelper.stepDataInterface, 0, stepMockHelper.transMeta,
+        stepMockHelper.trans );
+      smp.init( stepMockHelper.initStepMetaInterface, simpleMpData );
+      smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] {} ) );
+      smp.addRowSetToInputRowSets( stepMockHelper.getMockInputRowSet( new Object[] {} ) );
 
-    assertTrue(
-      smp.processRow( stepMockHelper.processRowsStepMetaInterface, stepMockHelper.processRowsStepDataInterface ) );
-    assertFalse(
-      smp.processRow( stepMockHelper.processRowsStepMetaInterface, stepMockHelper.processRowsStepDataInterface ) );
-
+      assertTrue(
+        smp.processRow( stepMockHelper.processRowsStepMetaInterface, stepMockHelper.processRowsStepDataInterface ) );
+      assertFalse(
+        smp.processRow( stepMockHelper.processRowsStepMetaInterface, stepMockHelper.processRowsStepDataInterface ) );
+    }
   }
 
   @After

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -78,8 +69,6 @@ public class RedshiftDatabaseMetaTest {
   @Test
   public void testGetDriverClass() throws Exception {
     assertEquals( "com.amazon.redshift.jdbc.Driver", dbMeta.getDriverClass() );
-    dbMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
-    assertEquals( "sun.jdbc.odbc.JdbcOdbcDriver", dbMeta.getDriverClass() );
   }
 
   @Test
@@ -87,13 +76,11 @@ public class RedshiftDatabaseMetaTest {
     assertEquals( "jdbc:redshift://:/", dbMeta.getURL( "", "", "" ) );
     assertEquals( "jdbc:redshift://rs.pentaho.com:4444/myDB",
       dbMeta.getURL( "rs.pentaho.com", "4444", "myDB" ) );
-    dbMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
-    assertEquals( "jdbc:odbc:myDB", dbMeta.getURL( null, "Not Null", "myDB" ) );
     dbMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_NATIVE );
     dbMeta.addAttribute( JDBC_AUTH_METHOD, IAM_CREDENTIALS );
-    dbMeta.addAttribute( IAM_ACCESS_KEY_ID, "myid" );
+    dbMeta.addAttribute( IAM_ACCESS_KEY_ID, Encr.encryptPassword( "myid" ) );
     dbMeta.addAttribute( IAM_SECRET_ACCESS_KEY, Encr.encryptPassword( "mysecretkey" ) );
-    dbMeta.addAttribute( IAM_SESSION_TOKEN, "mytoken" );
+    dbMeta.addAttribute( IAM_SESSION_TOKEN, Encr.encryptPassword( "mytoken" ) );
     assertEquals(
       "jdbc:redshift:iam://amazonhost:12345/foodmart",
       dbMeta.getURL( "amazonhost", "12345", "foodmart" ) );

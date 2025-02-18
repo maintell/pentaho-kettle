@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.delete;
 
@@ -55,11 +46,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.internal.util.reflection.Whitebox.getInternalState;
+import static org.pentaho.test.util.InternalState.getInternalState;
 
 
 public class DeleteMetaTest implements InitializerInterface<StepMetaInterface> {
@@ -73,15 +63,15 @@ public class DeleteMetaTest implements InitializerInterface<StepMetaInterface> {
     List<String> attributes =
             Arrays.asList( "schemaName", "tableName", "commitSize", "databaseMeta", "keyFields" );
 
-    Map<String, String> getterMap = new HashMap<String, String>();
-    Map<String, String> setterMap = new HashMap<String, String>();
+    Map<String, String> getterMap = new HashMap<>();
+    Map<String, String> setterMap = new HashMap<>();
     FieldLoadSaveValidator<String[]> stringArrayLoadSaveValidator =
-            new ArrayLoadSaveValidator<String>( new StringLoadSaveValidator(), 5 );
+      new ArrayLoadSaveValidator<>( new StringLoadSaveValidator(), 5 );
 
-    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<>();
     attrValidatorMap.put( "databaseMeta", new DatabaseMetaLoadSaveValidator() );
-    attrValidatorMap.put ("keyFields", new ArrayLoadSaveValidator<DeleteMeta.KeyFields>( new DeleteFieldLoadSaveValidator(), 5));
-    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    attrValidatorMap.put ("keyFields", new ArrayLoadSaveValidator<>( new DeleteFieldLoadSaveValidator(), 5 ));
+    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<>();
 
     loadSaveTester =
             new LoadSaveTester( testMetaClass, attributes, new ArrayList<String>(), new ArrayList<String>(),
@@ -118,7 +108,7 @@ public class DeleteMetaTest implements InitializerInterface<StepMetaInterface> {
     TransMeta transMeta = new TransMeta();
     transMeta.setName( "delete1" );
 
-    Map<String, String> vars = new HashMap<String, String>();
+    Map<String, String> vars = new HashMap<>();
     vars.put( "max.sz", "10" );
     transMeta.injectVariables( vars );
 
@@ -138,13 +128,13 @@ public class DeleteMetaTest implements InitializerInterface<StepMetaInterface> {
   @Test
   public void testCommitCountFixed() {
     dmi.setCommitSize( "100" );
-    assertTrue( dmi.getCommitSize( del ) == 100 );
+    assertEquals( 100, dmi.getCommitSize( del ) );
   }
 
   @Test
   public void testCommitCountVar() {
     dmi.setCommitSize( "${max.sz}" );
-    assertTrue( dmi.getCommitSize( del ) == 10 );
+    assertEquals( 10, dmi.getCommitSize( del ) );
   }
 
   @Test
@@ -153,7 +143,7 @@ public class DeleteMetaTest implements InitializerInterface<StepMetaInterface> {
     try {
       dmi.getCommitSize( del );
       fail();
-    } catch ( Exception ex ) {
+    } catch ( Exception ignored ) {
     }
   }
 

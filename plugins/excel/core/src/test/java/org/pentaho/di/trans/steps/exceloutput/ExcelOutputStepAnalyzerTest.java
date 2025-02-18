@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.exceloutput;
 
@@ -28,7 +19,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -37,10 +28,6 @@ import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.ClonableStepAnalyzerTest;
 import org.pentaho.di.trans.steps.MetaverseTestUtils;
-import org.pentaho.di.trans.steps.exceloutput.ExcelField;
-import org.pentaho.di.trans.steps.exceloutput.ExcelOutput;
-import org.pentaho.di.trans.steps.exceloutput.ExcelOutputData;
-import org.pentaho.di.trans.steps.exceloutput.ExcelOutputMeta;
 import org.pentaho.dictionary.DictionaryConst;
 import org.pentaho.metaverse.api.IComponentDescriptor;
 import org.pentaho.metaverse.api.IMetaverseNode;
@@ -53,11 +40,17 @@ import org.pentaho.metaverse.api.model.IExternalResourceInfo;
 import java.util.Collection;
 import java.util.Set;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class ExcelOutputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
   private ExcelOutputStepAnalyzer analyzer;
@@ -87,7 +80,7 @@ public class ExcelOutputStepAnalyzerTest extends ClonableStepAnalyzerTest {
     inputs.addNode( "previousStep", "last", node );
     inputs.addNode( "previousStep", "age", node );
     inputs.addNode( "previousStep", "filename", node );
-    doReturn( inputs ).when( analyzer ).getInputs();
+    lenient().doReturn( inputs ).when( analyzer ).getInputs();
   }
 
   @Test
@@ -142,7 +135,7 @@ public class ExcelOutputStepAnalyzerTest extends ClonableStepAnalyzerTest {
 
     when( this.meta.getParentStepMeta() ).thenReturn( spyMeta );
     when( spyMeta.getParentTransMeta() ).thenReturn( transMeta );
-    when( this.meta.getFileName() ).thenReturn( null );
+    lenient().when( this.meta.getFileName() ).thenReturn( null );
     String[] filePaths = { "/path/to/file1", "/another/path/to/file2" };
     when( this.meta.getFiles( Mockito.any( VariableSpace.class ) ) ).thenReturn( filePaths );
 
@@ -152,7 +145,7 @@ public class ExcelOutputStepAnalyzerTest extends ClonableStepAnalyzerTest {
     assertEquals( 2, resources.size() );
 
 
-    when( this.meta.getExtension() ).thenReturn( "xls" );
+    lenient().when( this.meta.getExtension() ).thenReturn( "xls" );
 
     assertFalse( consumer.getResourcesFromMeta( this.meta ).isEmpty() );
 

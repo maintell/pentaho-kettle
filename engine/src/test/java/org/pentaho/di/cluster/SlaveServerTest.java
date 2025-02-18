@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.cluster;
 
@@ -65,9 +56,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -133,20 +125,19 @@ public class SlaveServerTest {
     return resp;
   }
 
-  @Test( expected = KettleException.class )
+  @Test( expected = NullPointerException.class )
   public void testExecService() throws Exception {
     HttpGet httpGetMock = mock( HttpGet.class );
     URI uriMock = new URI( "fake" );
     doReturn( uriMock ).when( httpGetMock ).getURI();
-    doReturn( httpGetMock ).when( slaveServer ).buildExecuteServiceMethod( anyString(), anyMapOf( String.class,
-        String.class ) );
+    doReturn( httpGetMock ).when( slaveServer ).buildExecuteServiceMethod( anyString(), anyMap() );
     slaveServer.setHostname( "hostNameStub" );
     slaveServer.setUsername( "userNAmeStub" );
     slaveServer.execService( "wrong_app_name" );
     fail( "Incorrect connection details had been used, but no exception was thrown" );
   }
 
-  @Test( expected = KettleException.class )
+  @Test( expected = NullPointerException.class )
   public void testSendXML() throws Exception {
     slaveServer.setHostname( "hostNameStub" );
     slaveServer.setUsername( "userNAmeStub" );
@@ -158,7 +149,7 @@ public class SlaveServerTest {
     fail( "Incorrect connection details had been used, but no exception was thrown" );
   }
 
-  @Test( expected = KettleException.class )
+  @Test( expected = NullPointerException.class )
   public void testSendExport() throws Exception {
     slaveServer.setHostname( "hostNameStub" );
     slaveServer.setUsername( "userNAmeStub" );
@@ -190,7 +181,7 @@ public class SlaveServerTest {
     when( client.execute( any(), any( HttpContext.class ) ) ).then( new Answer<HttpResponse>() {
       @Override
       public HttpResponse answer( InvocationOnMock invocation ) throws Throwable {
-        HttpClientContext context = invocation.getArgumentAt( 1, HttpClientContext.class );
+        HttpClientContext context = invocation.getArgument( 1 );
         Credentials cred = context.getCredentialsProvider().getCredentials( new AuthScope( "hname", 1111 ) );
         assertEquals( "uname", cred.getUserPrincipal().getName() );
         return mockResponse( 200, responseContent );
@@ -198,10 +189,10 @@ public class SlaveServerTest {
     } );
     // override init
     when( slaveServer.getHttpClient() ).thenReturn( client );
-    when( slaveServer.getResponseBodyAsString( any() ) ).thenCallRealMethod();
+    doCallRealMethod().when( slaveServer ).getResponseBodyAsString( any() );
 
     doReturn( httpPostMock ).when( slaveServer ).buildSendExportMethod( anyString(), anyString(), any(
-        InputStream.class ) );
+      InputStream.class ) );
     File tempFile;
     tempFile = File.createTempFile( "PDI-", "tmp" );
     tempFile.deleteOnExit();

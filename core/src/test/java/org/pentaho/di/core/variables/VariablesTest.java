@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.variables;
 
@@ -35,13 +26,14 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -172,4 +164,75 @@ public class VariablesTest {
     assertArrayEquals( new String[]{ "DataOne", "TheDataOne" },
       vars.environmentSubstitute( new String[]{ "${VarOne}", "The${VarOne}" } ) );
   }
+
+  @Test
+  public void testInjection() {
+    String systemPropertyName = this.getClass().getName() + "testInjection";
+    String sysValue = "from system";
+    System.getProperties().setProperty( systemPropertyName, sysValue );
+
+    Variables vars1 = new Variables();
+    Variables vars2 = new Variables();
+    // only initialize vars1
+    vars1.initializeVariablesFrom( null );
+    assertEquals( sysValue, vars1.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    Map<String, String> injectionMap = new HashMap<>();
+    injectionMap.put( "VarOne", "DataOne" );
+    String injectionValue = "from injection";
+    injectionMap.put( systemPropertyName, injectionValue );
+
+    vars1.injectVariables( injectionMap );
+    vars2.injectVariables( injectionMap );
+
+    vars2.initializeVariablesFrom( null );
+
+    // make sure values survive regardless of injection/initialize order
+    // these were initialized, then injected
+    assertEquals( "DataOne", vars1.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( injectionValue, vars1.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    // injected then initialized
+    assertEquals( "DataOne", vars2.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( injectionValue, vars2.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    // initialized, injected, initialized
+    vars1.initializeVariablesFrom( null );
+    assertEquals( "DataOne", vars1.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( injectionValue, vars1.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+  }
+
+  @Test
+  public void testParent() {
+    String systemPropertyName = this.getClass().getName() + "testInjection";
+    String sysValue = "from system";
+    System.getProperties().setProperty( systemPropertyName, sysValue );
+
+    Variables vars1 = new Variables();
+    Variables vars2 = new Variables();
+    // only initialize vars1
+    vars1.initializeVariablesFrom( null );
+    assertEquals( sysValue, vars1.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    Variables parentVars = new Variables();
+    parentVars.setVariable( "VarOne", "DataOne" );
+    String parentValue = "from parent";
+    parentVars.setVariable( systemPropertyName, parentValue );
+
+    vars1.initializeVariablesFrom( parentVars );
+    vars2.initializeVariablesFrom( parentVars );
+
+    // make sure values survive regardless of being re-initialized
+    assertEquals( "DataOne", vars1.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( parentValue, vars1.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    assertEquals( "DataOne", vars2.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( parentValue, vars2.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+
+    vars2.initializeVariablesFrom( null );
+
+    assertEquals( "DataOne", vars2.environmentSubstitute( "${VarOne}" ) );
+    assertEquals( parentValue, vars2.environmentSubstitute( "${" + systemPropertyName + "}" ) );
+  }
+
 }

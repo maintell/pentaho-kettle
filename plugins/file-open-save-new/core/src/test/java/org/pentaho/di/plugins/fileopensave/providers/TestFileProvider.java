@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2019-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.plugins.fileopensave.providers;
 
@@ -28,6 +19,7 @@ import org.pentaho.di.plugins.fileopensave.api.overwrite.OverwriteStatus;
 import org.pentaho.di.plugins.fileopensave.api.providers.BaseFileProvider;
 import org.pentaho.di.plugins.fileopensave.api.providers.File;
 import org.pentaho.di.plugins.fileopensave.api.providers.Tree;
+import org.pentaho.di.plugins.fileopensave.api.providers.Utils;
 import org.pentaho.di.plugins.fileopensave.api.providers.exception.FileException;
 import org.pentaho.di.plugins.fileopensave.providers.model.TestDirectory;
 import org.pentaho.di.plugins.fileopensave.providers.model.TestFile;
@@ -38,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class TestFileProvider extends BaseFileProvider<TestFile> {
 
@@ -74,7 +67,7 @@ public class TestFileProvider extends BaseFileProvider<TestFile> {
     testFileSystem.get( file.getPath() ).forEach( testFile -> {
       if ( testFile instanceof TestDirectory ) {
         files.add( TestDirectory.create( testFile.getName(), testFile.getPath(), testFile.getParent() ) );
-      } else {
+      } else if ( Utils.matches(testFile.getName(), filters) ) {
         files.add( TestFile.create( testFile.getName(), testFile.getPath(), testFile.getParent() ) );
       }
     } );

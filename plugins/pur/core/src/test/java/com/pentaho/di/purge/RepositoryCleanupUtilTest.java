@@ -1,19 +1,15 @@
-/*!
- * Copyright 2010 - 2018 Hitachi Vantara.  All rights reserved.
+/*! ******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Pentaho
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package com.pentaho.di.purge;
 
@@ -22,27 +18,21 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.util.Base64;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.reflect.Whitebox.getInternalState;
-import static org.powermock.reflect.Whitebox.setInternalState;
+import static org.pentaho.test.util.InternalState.setInternalState;
+import static org.pentaho.test.util.InternalState.getInternalState;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( Client.class )
 public class RepositoryCleanupUtilTest {
 
   @Test
@@ -62,12 +52,15 @@ public class RepositoryCleanupUtilTest {
     doCallRealMethod().when( client ).getHeadHandler();
     doReturn( resource ).when( client ).resource( anyString() );
 
-    mockStatic( Client.class );
-    when( Client.create( any( ClientConfig.class ) ) ).thenReturn( client );
-    util.authenticateLoginCredentials();
+    try( MockedStatic<Client> mockedClient = mockStatic( Client.class) ) {
+      mockedClient.when( () -> Client.create( any( ClientConfig.class ) ) ).thenReturn( client );
 
-    // the expected value is: "Basic <base64 encoded username:password>"
-    assertEquals( "Basic " + new String( Base64.getEncoder().encode( "admin:password".getBytes( "utf-8" ) ) ),
+      when( Client.create( any( ClientConfig.class ) ) ).thenReturn( client );
+      util.authenticateLoginCredentials();
+
+      // the expected value is: "Basic <base64 encoded username:password>"
+      assertEquals( "Basic " + new String( Base64.getEncoder().encode( "admin:password".getBytes( "utf-8" ) ) ),
       getInternalState( client.getHeadHandler(), "authentication" ) );
+    }
   }
 }

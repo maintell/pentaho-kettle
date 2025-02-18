@@ -1,25 +1,16 @@
 //CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job;
 
@@ -42,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
 import org.pentaho.di.base.IMetaFileCache;
@@ -95,6 +87,7 @@ import org.pentaho.di.job.entries.special.JobEntrySpecial;
 import org.pentaho.di.job.entries.trans.JobEntryTrans;
 import org.pentaho.di.job.entry.JobEntryCopy;
 import org.pentaho.di.job.entry.JobEntryInterface;
+import org.pentaho.di.metastore.MetaStoreConst;
 import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.ObjectRevision;
 import org.pentaho.di.repository.Repository;
@@ -102,6 +95,7 @@ import org.pentaho.di.repository.RepositoryDirectoryInterface;
 import org.pentaho.di.resource.ResourceUtil;
 import org.pentaho.di.resource.TopLevelResource;
 import org.pentaho.di.trans.Trans;
+import org.pentaho.di.www.CarteSingleton;
 import org.pentaho.di.www.RegisterJobServlet;
 import org.pentaho.di.www.RegisterPackageServlet;
 import org.pentaho.di.www.SocketRepository;
@@ -128,7 +122,6 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
 
   private LogChannelInterface log;
 
-  private boolean loggingObjectInUse;
   private LogLevel logLevel = DefaultLogLevel.getLogLevel();
 
   private int logBufferStartLine;
@@ -144,6 +137,8 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
   private AtomicInteger errors;
 
   private VariableSpace variables = new Variables();
+
+  private MutableInt lastNr = new MutableInt( -1 );
 
   /**
    * The job that's launching this (sub-) job. This gives us access to the whole chain, including the parent variables,
@@ -250,17 +245,7 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
     this.log.setHooks( this );
   }
 
-  @Override
-  public boolean isLoggingObjectInUse() {
-    return loggingObjectInUse;
-  }
-
-  public void setLoggingObjectInUse( boolean inUse ) {
-    loggingObjectInUse = inUse;
-  }
-
   public void init() {
-    setLoggingObjectInUse( true );
     status = new AtomicInteger();
 
     jobListeners = new ArrayList<JobListener>();
@@ -478,7 +463,6 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
       KettleEnvironment.setExecutionInformation( this, rep );
 
       log.logMinimal( BaseMessages.getString( PKG, "Job.Comment.JobStarted" ) );
-
       ExtensionPointHandler.callExtensionPoint( log, KettleExtensionPoint.JobStart.id, this );
 
       // Start the tracking...
@@ -547,7 +531,6 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
       // Save this result...
       jobTracker.addJobTracker( new JobTracker( jobMeta, jerEnd ) );
       log.logMinimal( BaseMessages.getString( PKG, "Job.Comment.JobFinished" ) );
-
       setActive( false );
       if ( !isStopped() ) {
         setFinished( true );
@@ -612,7 +595,6 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
    * @see JobListener#jobFinished(Job)
    */
   public void fireJobFinishListeners() throws KettleException {
-    setLoggingObjectInUse( false );
     synchronized ( jobListeners ) {
       for ( JobListener jobListener : jobListeners ) {
         jobListener.jobFinished( this );
@@ -696,9 +678,7 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
       JobEntryInterface cloneJei = (JobEntryInterface) jobEntryInterface.clone();
       ( (VariableSpace) cloneJei ).copyVariablesFrom( this );
       cloneJei.setRepository( rep );
-      if ( rep != null ) {
-        cloneJei.setMetaStore( rep.getMetaStore() );
-      }
+      cloneJei.setMetaStore( MetaStoreConst.getDefaultMetastore() );
       cloneJei.setParentJob( this );
       cloneJei.setParentJobMeta( this.getJobMeta() );
       final long start = System.currentTimeMillis();
@@ -745,8 +725,15 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
       // Also capture the logging text after the execution...
       //
       LoggingBuffer loggingBuffer = KettleLogStore.getAppender();
-      StringBuffer logTextBuffer = loggingBuffer.getBuffer( cloneJei.getLogChannel().getLogChannelId(), false );
-      newResult.setLogText( logTextBuffer.toString() + newResult.getLogText() );
+      StringBuffer logTextBuffer = loggingBuffer.getBuffer( cloneJei.getLogChannel().getLogChannelId(),
+        false, lastNr );
+
+      // User can turn off logging using KETTLE_SKIP_JOB_LOGGING="Y" in kettle.properties
+      // Default is "N"
+      if ( "N".equalsIgnoreCase( System.getProperty( Const.KETTLE_SKIP_JOB_LOGGING,
+              Const.KETTLE_SKIP_JOB_LOGGING_DEFAULT ) ) ) {
+        newResult.appendLogText( logTextBuffer.toString() );
+      }
 
       // Save this result as well...
       //
@@ -1924,6 +1911,9 @@ public class Job extends Thread implements VariableSpace, NamedParams, HasLogCha
    * @return the socket repository
    */
   public SocketRepository getSocketRepository() {
+    if ( socketRepository == null ) {
+      return ( socketRepository = CarteSingleton.getInstance().getSocketRepository() );
+    }
     return socketRepository;
   }
 

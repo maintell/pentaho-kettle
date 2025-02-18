@@ -1,30 +1,23 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.file;
 
 import java.util.List;
 
 import com.google.common.base.Preconditions;
+import org.pentaho.di.core.bowl.Bowl;
+import org.pentaho.di.core.bowl.DefaultBowl;
 import org.pentaho.di.core.fileinput.FileInputList;
 import org.pentaho.di.core.injection.InjectionDeep;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -112,8 +105,12 @@ public abstract class BaseFileInputMeta<A extends BaseFileInputAdditionalField, 
   }
 
   public FileInputList getFileInputList( VariableSpace space ) {
+    return getFileInputList( DefaultBowl.getInstance(), space );
+  }
+
+  public FileInputList getFileInputList( Bowl bowl, VariableSpace space ) {
     inputFiles.normalizeAllocation( inputFiles.fileName.length );
-    return FileInputList.createFileList( space, inputFiles.fileName, inputFiles.fileMask, inputFiles.excludeFileMask,
+    return FileInputList.createFileList( bowl, space, inputFiles.fileName, inputFiles.fileMask, inputFiles.excludeFileMask,
         inputFiles.fileRequired, inputFiles.includeSubFolderBoolean() );
   }
 
@@ -143,7 +140,7 @@ public abstract class BaseFileInputMeta<A extends BaseFileInputAdditionalField, 
     if ( parentStepMeta != null ) {
       final TransMeta parentTransMeta = parentStepMeta.getParentTransMeta();
       if ( parentTransMeta != null ) {
-        final FileInputList inputList = getFileInputList( parentTransMeta );
+        final FileInputList inputList = getFileInputList( parentTransMeta.getBowl(), parentTransMeta );
         if ( inputList != null ) {
           return inputList.getFileStrings();
         }

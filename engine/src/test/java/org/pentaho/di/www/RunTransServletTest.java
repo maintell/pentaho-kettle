@@ -1,35 +1,24 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2017-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.www;
 
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.logging.LoggingObjectType;
@@ -53,16 +42,15 @@ import java.util.StringTokenizer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import static org.mockito.ArgumentMatchers.any;
 
-@RunWith( MockitoJUnitRunner.class )
 public class RunTransServletTest {
 
-  @Mock
+
   TransMeta transMeta;
-  @Mock
   Trans trans;
 
   List<StepMetaDataCombi> stepList;
@@ -82,6 +70,8 @@ public class RunTransServletTest {
 
   @Before
   public void setup() throws Exception {
+    transMeta = mock( TransMeta.class );
+    trans = mock( Trans.class );
     runTransServlet = new RunTransServlet();
     outData = new ByteArrayOutputStream();
     out = new PrintWriter( outData );
@@ -160,11 +150,11 @@ public class RunTransServletTest {
     Mockito.when( request.getParameterValues( testParameter ) ).thenReturn( new String[] { testValue } );
 
     RunTransServlet runTransServlet = Mockito.mock( RunTransServlet.class );
-    Mockito.doCallRealMethod().when( runTransServlet ).doGet( Mockito.anyObject(), Mockito.anyObject() );
+    Mockito.doCallRealMethod().when( runTransServlet ).doGet( any(), any() );
 
     Trans trans =
       new Trans( transMeta, new SimpleLoggingObject( RunTransServlet.CONTEXT_PATH, LoggingObjectType.CARTE, null ) );
-    Mockito.when( runTransServlet.createTrans( Mockito.anyObject(), Mockito.anyObject() ) ).thenReturn( trans );
+    Mockito.when( runTransServlet.createTrans( any(), any() ) ).thenReturn( trans );
     Mockito.when( transMeta.getParameterValue( Mockito.eq( testParameter ) ) ).thenReturn( testValue );
 
     runTransServlet.log = new LogChannel( "RunTransServlet" );

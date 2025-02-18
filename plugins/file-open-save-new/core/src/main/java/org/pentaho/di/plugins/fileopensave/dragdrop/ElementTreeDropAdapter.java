@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.plugins.fileopensave.dragdrop;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -32,15 +23,11 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.variables.Variables;
+import org.pentaho.di.plugins.fileopensave.api.overwrite.OverwriteStatus;
 import org.pentaho.di.plugins.fileopensave.api.providers.Entity;
 import org.pentaho.di.plugins.fileopensave.api.providers.EntityType;
 import org.pentaho.di.plugins.fileopensave.api.providers.File;
-import org.pentaho.di.plugins.fileopensave.controllers.FileController;
-import org.pentaho.di.plugins.fileopensave.api.overwrite.OverwriteStatus;
-import org.pentaho.di.plugins.fileopensave.providers.vfs.model.VFSLocation;
-import org.pentaho.di.plugins.fileopensave.service.FileCacheService;
-import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
-import org.pentaho.di.plugins.fileopensave.util.Util;
+import org.pentaho.di.plugins.fileopensave.providers.vfs.model.VFSDirectory;
 
 import java.util.Arrays;
 
@@ -64,14 +51,13 @@ public class ElementTreeDropAdapter extends ViewerDropAdapter {
   public boolean performDrop( Object data ) {
     int location = getCurrentLocation();
     Object genericTarget = getCurrentTarget() == null ? getViewer().getInput() : getCurrentTarget();
-    if ( !( genericTarget instanceof Entity ) || ( genericTarget instanceof VFSLocation
-      && ( (VFSLocation) genericTarget ).hasBuckets() ) ) {
+    if ( !( genericTarget instanceof Entity )
+      || ( genericTarget instanceof VFSDirectory && !( (VFSDirectory) genericTarget ).isCanAddChildren() ) ) {
       MessageBox errorBox = new MessageBox( getViewer().getControl().getShell(), SWT.ICON_ERROR | SWT.OK );
       errorBox.setMessage( "Error.  This item is not a valid drop item. Please pick a real folder to drop on." );
       errorBox.open();
       return false;
     }
-    Util.rawElementMassage( genericTarget );
     Element target = new Element( genericTarget );
 
     log.logDebug( "TreeDrop: last target element was \"" + target.getPath() + "\" location was " + location );
@@ -86,8 +72,7 @@ public class ElementTreeDropAdapter extends ViewerDropAdapter {
         String name = parent.replaceAll( "^.*[\\/\\\\]", "" ); //Strip off the path leaving file name
         // Making parent of target the new actual target to use.
         target =
-          new Element( name, target.calcParentEntityType(), parent, target.getProvider(), target.getRepositoryName(),
-            target.getDomain(), target.getConnection() );
+          new Element( name, target.calcParentEntityType(), parent, target.getProvider(), target.getRepositoryName() );
       }
     }
 

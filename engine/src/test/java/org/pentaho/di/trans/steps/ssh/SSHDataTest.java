@@ -1,70 +1,59 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2017-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.ssh;
 
 
+import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.HTTPProxyData;
 import com.trilead.ssh2.ServerHostKeyVerifier;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.vfs.KettleVFS;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import com.trilead.ssh2.Connection;
 
 import java.io.ByteArrayInputStream;
 
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( { SSHData.class, KettleVFS.class } )
+
 public class SSHDataTest {
 
-  @Mock
+
   Connection connection;
-  @Mock
+
   FileObject fileObject;
-  @Mock
+
   FileContent fileContent;
-  @Mock
+
   VariableSpace variableSpace;
+
+  MockedStatic<SSHData> sshDataMockedStatic;
+  MockedStatic<KettleVFS> kettleVFSMockedStatic;
 
   String server = "testServerUrl";
   String keyFilePath = "keyFilePath";
@@ -79,12 +68,22 @@ public class SSHDataTest {
 
   @Before
   public void setup() throws Exception {
-    PowerMockito.mockStatic( SSHData.class );
-    PowerMockito.mockStatic( KettleVFS.class );
+    connection = mock( Connection.class );
+    fileObject = mock( FileObject.class );
+    fileContent = mock( FileContent.class );
+    variableSpace = mock( VariableSpace.class );
+    sshDataMockedStatic = mockStatic( SSHData.class );
+    kettleVFSMockedStatic = mockStatic( KettleVFS.class );
     when( SSHData.createConnection( server, port ) ).thenReturn( connection );
     when( SSHData.OpenConnection( any(), anyInt(), any(), any(), anyBoolean(),
-      any(), any(), anyInt(), anyObject(), any(), anyInt(), any(), any() ) ).thenCallRealMethod();
+      any(), any(), anyInt(), any(), any(), anyInt(), any(), any() ) ).thenCallRealMethod();
     when( KettleVFS.getFileObject( keyFilePath ) ).thenReturn( fileObject );
+  }
+
+  @After
+  public void tearDown() {
+    sshDataMockedStatic.close();
+    kettleVFSMockedStatic.close();
   }
 
   @Test
@@ -120,11 +119,11 @@ public class SSHDataTest {
     when( fileContent.getSize() ).thenReturn( 1000L );
     when( fileContent.getInputStream() ).thenReturn( new ByteArrayInputStream( new byte[] { 1, 2, 3, 4, 5 } ) );
     when( variableSpace.environmentSubstitute( passPhrase ) ).thenReturn(  passPhrase );
-    when( connection.authenticateWithPublicKey( eq( username ), Matchers.<char[]>any(), eq( passPhrase ) ) ).thenReturn( true );
+    when( connection.authenticateWithPublicKey( eq( username ), any( char[].class ), eq( passPhrase ) ) ).thenReturn( true );
     SSHData.OpenConnection( server, port, username, null, true, keyFilePath,
       passPhrase, 0, variableSpace, null, 0, null, null );
     verify( connection ).connect();
-    verify( connection ).authenticateWithPublicKey( eq( username ), Matchers.<char[]>any(), eq( passPhrase ) );
+    verify( connection ).authenticateWithPublicKey( eq( username ), any( char[].class ), eq( passPhrase ) );
   }
 
   @Test
@@ -142,7 +141,7 @@ public class SSHDataTest {
     when( connection.authenticateWithPassword( username, password ) ).thenReturn( true );
     assertNotNull( SSHData.OpenConnection( server, port, username, password, false, null,
       null, 100, null, null, proxyPort, proxyUsername, proxyPassword ) );
-    verify( connection ).connect( isNull( ServerHostKeyVerifier.class ), eq( 0 ), eq( 100 * 1000 ) );
+    verify( connection ).connect( isNull(), eq( 0 ), eq( 100 * 1000 ) );
   }
 
 }

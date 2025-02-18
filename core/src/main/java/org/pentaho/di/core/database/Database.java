@@ -1,25 +1,16 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -53,11 +44,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.logging.SimpleLoggingObject;
 import org.pentaho.di.core.plugins.PluginTypeListener;
 import org.pentaho.di.core.row.value.ValueMetaPluginType;
 import org.pentaho.di.core.util.Utils;
@@ -159,8 +151,6 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
 
   private LogChannelInterface log;
   private LoggingObjectInterface parentLoggingObject;
-
-  private boolean loggingObjectInUse;
   private static final String[] TABLE_TYPES_TO_GET = { "TABLE", "VIEW" };
   private static final String TABLES_META_DATA_TABLE_NAME = "TABLE_NAME";
 
@@ -189,6 +179,8 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
 
   private DataSource dataSource;
   private String ownerName;
+
+  private static final Lock lock = new ReentrantLock();
 
   static {
     initValueMetaPluginClasses();
@@ -359,15 +351,6 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
     return dataSource;
   }
 
-  @Override
-  public boolean isLoggingObjectInUse() {
-    return loggingObjectInUse;
-  }
-
-  public void setLoggingObjectInUse( boolean inUse ) {
-    loggingObjectInUse = inUse;
-  }
-
   /**
    * Open the database connection.
    *
@@ -389,7 +372,7 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
 
   public synchronized void connect( String group, String partitionId ) throws KettleDatabaseException {
     try {
-      setLoggingObjectInUse( true );
+
       log.snap( Metrics.METRIC_DATABASE_CONNECT_START, databaseMeta.getName() );
 
       // Before anything else, let's see if we already have a connection defined
@@ -542,7 +525,7 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
   /**
    * Connect using the correct classname
    *
-   * @param classname for example "org.gjt.mm.mysql.Driver"
+   * @param classname for example "com.mysql.jdbc.Driver"
    * @return true if the connect was successful, false if something went wrong.
    */
   private void connectUsingClass( String classname, String partitionId ) throws KettleDatabaseException {
@@ -653,12 +636,9 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
    * Disconnect from the database and close all open prepared statements.
    */
   public synchronized void disconnect() {
-    setLoggingObjectInUse( false );
-
     if ( connection == null ) {
       return; // Nothing to do...
     }
-
     try {
       if ( connection.isClosed() ) {
         return; // Nothing to do...
@@ -2789,6 +2769,7 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
     long startTime = System.currentTimeMillis();
 
     try {
+      lock.lock();
 
       int nrcols = rowInfo.size();
       Object[] data = RowDataUtil.allocateRowData( nrcols );
@@ -2807,6 +2788,7 @@ public class Database implements VariableSpace, LoggingObjectInterface, Closeabl
     } catch ( Exception ex ) {
       throw new KettleDatabaseException( "Couldn't get row from result set", ex );
     } finally {
+      lock.unlock();
       if ( log.isGatheringMetrics() ) {
         long time = System.currentTimeMillis() - startTime;
         log.snap( Metrics.METRIC_DATABASE_GET_ROW_SUM_TIME, databaseMeta.getName(), time );

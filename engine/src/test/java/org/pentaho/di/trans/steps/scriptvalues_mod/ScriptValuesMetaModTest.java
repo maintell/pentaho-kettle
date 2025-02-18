@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.scriptvalues_mod;
 
 import java.util.ArrayList;
@@ -48,7 +39,8 @@ import org.pentaho.di.trans.steps.loadsave.validator.IntLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.PrimitiveBooleanArrayLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.PrimitiveIntArrayLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.StringLoadSaveValidator;
-import org.powermock.reflect.Whitebox;
+
+import static org.pentaho.test.util.InternalState.setInternalState;
 
 public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInterface> {
   @ClassRule public static RestorePDIEngineEnvironment env = new RestorePDIEngineEnvironment();
@@ -63,7 +55,7 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
     List<String> attributes =
         Arrays.asList( "fieldname", "rename", "type", "length", "precision", "replace", "jsScripts", "compatible", "optimizationLevel" );
 
-    Map<String, String> getterMap = new HashMap<String, String>() {
+    Map<String, String> getterMap = new HashMap<>() {
       {
         put( "fieldname", "getFieldname" );
         put( "rename", "getRename" );
@@ -76,7 +68,7 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
         put( "jsScripts", "getJSScripts" );
       }
     };
-    Map<String, String> setterMap = new HashMap<String, String>() {
+    Map<String, String> setterMap = new HashMap<>() {
       {
         put( "fieldname", "setFieldname" );
         put( "rename", "setRename" );
@@ -90,12 +82,12 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
       }
     };
     FieldLoadSaveValidator<String[]> stringArrayLoadSaveValidator =
-        new ArrayLoadSaveValidator<String>( new StringLoadSaveValidator(), 5 );
+      new ArrayLoadSaveValidator<>( new StringLoadSaveValidator(), 5 );
 
     FieldLoadSaveValidator<ScriptValuesScript[]> svsArrayLoadSaveValidator =
-        new ArrayLoadSaveValidator<ScriptValuesScript>( new ScriptValuesScriptLoadSaveValidator(), 5 );
+      new ArrayLoadSaveValidator<>( new ScriptValuesScriptLoadSaveValidator(), 5 );
 
-    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<>();
     attrValidatorMap.put( "fieldname", stringArrayLoadSaveValidator );
     attrValidatorMap.put( "rename", stringArrayLoadSaveValidator );
     attrValidatorMap.put( "type", new PrimitiveIntArrayLoadSaveValidator( new IntLoadSaveValidator( 9 ), 5 ) );
@@ -105,7 +97,7 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
         new PrimitiveBooleanArrayLoadSaveValidator( new BooleanLoadSaveValidator(), 5 ) );
     attrValidatorMap.put( "jsScripts", svsArrayLoadSaveValidator );
 
-    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
+    Map<String, FieldLoadSaveValidator<?>> typeValidatorMap = new HashMap<>();
 
     loadSaveTester =
         new LoadSaveTester( testMetaClass, attributes, new ArrayList<String>(), new ArrayList<String>(),
@@ -124,7 +116,7 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
     loadSaveTester.testSerialization();
   }
 
-  public class ScriptValuesScriptLoadSaveValidator implements FieldLoadSaveValidator<ScriptValuesScript> {
+  public static class ScriptValuesScriptLoadSaveValidator implements FieldLoadSaveValidator<ScriptValuesScript> {
     final Random rand = new Random();
     @Override
     public ScriptValuesScript getTestObject() {
@@ -132,8 +124,7 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
       if ( scriptType == 3 ) {
         scriptType = -1;
       }
-      ScriptValuesScript rtn = new ScriptValuesScript( scriptType, UUID.randomUUID().toString(), UUID.randomUUID().toString() );
-      return rtn;
+      return new ScriptValuesScript( scriptType, UUID.randomUUID().toString(), UUID.randomUUID().toString() );
     }
 
     @Override
@@ -166,9 +157,9 @@ public class ScriptValuesMetaModTest implements InitializerInterface<StepMetaInt
 
     meta = new ScriptValuesMetaMod();
     // set some values, uneven lengths
-    Whitebox.setInternalState( meta, "fieldname", new String[] { "Field 1", "Field 2", "Field 3" } );
-    Whitebox.setInternalState( meta, "rename", new String[] { "Field 1 - new" } );
-    Whitebox.setInternalState( meta, "type", new int[] { ValueMetaInterface.TYPE_STRING, ValueMetaInterface
+    setInternalState( meta, "fieldname", new String[] { "Field 1", "Field 2", "Field 3" } );
+    setInternalState( meta, "rename", new String[] { "Field 1 - new" } );
+    setInternalState( meta, "type", new int[] { ValueMetaInterface.TYPE_STRING, ValueMetaInterface
       .TYPE_INTEGER, ValueMetaInterface.TYPE_NUMBER } );
 
     meta.extend( 3 );

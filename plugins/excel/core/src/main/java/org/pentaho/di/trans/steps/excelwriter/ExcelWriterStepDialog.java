@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.excelwriter;
 
@@ -28,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.poi.ss.usermodel.BuiltinFormats;
@@ -47,6 +39,7 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
@@ -56,9 +49,9 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.util.Utils;
-import org.pentaho.di.core.Props;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
@@ -68,8 +61,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.steps.excelwriter.ExcelWriterStepField;
-import org.pentaho.di.trans.steps.excelwriter.ExcelWriterStepMeta;
+import org.pentaho.di.ui.core.FormDataBuilder;
 import org.pentaho.di.ui.core.dialog.EnterSelectionDialog;
 import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.events.dialog.FilterType;
@@ -85,7 +77,7 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.trans.step.TableItemInsertListener;
 import org.pentaho.di.core.annotations.PluginDialog;
 @PluginDialog( id = "TypeExitExcelWriterStep", image = "XWS.svg", pluginType = PluginDialog.PluginType.STEP,
-        documentationUrl = "Products/Microsoft_Excel_Writer" +
+        documentationUrl = "mk-95pdia003/pdi-transformation-steps/microsoft-excel-writer" +
                 "" )
 public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogInterface {
   private static Class<?> PKG = ExcelWriterStepMeta.class; // for i18n
@@ -97,30 +89,22 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
 
   private FormData fdFileComp, fdContentComp;
 
-  private Label wlFilename;
   private Button wbFilename;
   private TextVar wFilename;
-  private FormData fdlFilename, fdbFilename, fdFilename;
 
-  private Label wlExtension;
   private CCombo wExtension;
-  private FormData fdlExtension, fdExtension;
 
-  private Label wlStreamData;
+  private Button wCreateParentFolder;
+
   private Button wStreamData;
-  private FormData fdlStreamData, fdStreamData;
 
-  private Label wlAddStepnr;
   private Button wAddStepnr;
-  private FormData fdlAddStepnr, fdAddStepnr;
 
   private Label wlAddDate;
   private Button wAddDate;
-  private FormData fdlAddDate, fdAddDate;
 
   private Label wlAddTime;
   private Button wAddTime;
-  private FormData fdlAddTime, fdAddTime;
 
   private Label wlProtectSheet;
   private Button wProtectSheet;
@@ -129,17 +113,11 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
   private Button wbShowFiles;
   private FormData fdbShowFiles;
 
-  private Label wlHeader;
   private Button wHeader;
-  private FormData fdlHeader, fdHeader;
 
-  private Label wlFooter;
   private Button wFooter;
-  private FormData fdlFooter, fdFooter;
 
-  private Label wlSplitEvery;
   private Text wSplitEvery;
-  private FormData fdlSplitEvery, fdSplitEvery;
 
   private Label wlTemplate;
   private Button wTemplate;
@@ -170,10 +148,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
   private Button wAddToResult;
   private FormData fdlAddToResult, fdAddToResult;
 
-  // private Label wlAppend;
-  // private Button wAppend;
-  // private FormData fdlAppend, fdAppend;
-
   private Label wlDoNotOpenNewFileInit;
   private Button wDoNotOpenNewFileInit;
   private FormData fdlDoNotOpenNewFileInit, fdDoNotOpenNewFileInit;
@@ -186,13 +160,9 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
   private CCombo wDateTimeFormat;
   private FormData fdlDateTimeFormat, fdDateTimeFormat;
 
-  private Label wlAutoSize;
   private Button wAutoSize;
-  private FormData fdlAutoSize, fdAutoSize;
 
-  // private Label wlNullIsBlank;
-  // private Button wNullIsBlank;
-  // private FormData fdlNullIsBlank, fdNullIsBlank;
+  private Button wRetainNullValues;
 
   private Group wTemplateGroup;
   private FormData fdTemplateGroup;
@@ -215,11 +185,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
 
   private TextVar wTemplateSheetname;
 
-  private Label wlStartingCell;
-
   private TextVar wStartingCell;
-
-  private Label wlRowWritingMethod;
 
   private CCombo wRowWritingMethod;
 
@@ -242,14 +208,11 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
   private TextVar wProtectedBy;
 
   private Button wMakeActiveSheet;
-  private Label wlForceFormulaRecalculation;
-  private FormData fdlForceFormulaRecalculation;
   private Button wForceFormulaRecalculation;
-  private FormData fdForceFormulaRecalculation;
-  private Label wlLeaveExistingStylesUnchanged;
-  private FormData fdlLeaveExistingStylesUnchanged;
   private Button wLeaveExistingStylesUnchanged;
-  private FormData fdLeaveExistingStylesUnchanged;
+  private Button wExtendDataValidation;
+
+  private int middle;
 
   public ExcelWriterStepDialog( Shell parent, Object in, TransMeta transMeta, String sname ) {
     super( parent, (BaseStepMeta) in, transMeta, sname );
@@ -263,7 +226,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     Display display = parent.getDisplay();
 
     shell = new Shell( parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.MAX | SWT.MIN );
-    props.setLook( shell );
     setShellImage( shell, input );
 
     SelectionAdapter lsSel = new SelectionAdapter() {
@@ -287,13 +249,12 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     shell.setLayout( formLayout );
     shell.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.DialogTitle" ) );
 
-    int middle = props.getMiddlePct();
+    middle = props.getMiddlePct();
     int margin = Const.MARGIN;
 
     // Stepname line
     wlStepname = new Label( shell, SWT.RIGHT );
     wlStepname.setText( BaseMessages.getString( PKG, "System.Label.StepName" ) );
-    props.setLook( wlStepname );
     fdlStepname = new FormData();
     fdlStepname.left = new FormAttachment( 0, 0 );
     fdlStepname.top = new FormAttachment( 0, margin );
@@ -301,7 +262,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlStepname.setLayoutData( fdlStepname );
     wStepname = new Text( shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     wStepname.setText( stepname );
-    props.setLook( wStepname );
     wStepname.addModifyListener( lsMod );
     fdStepname = new FormData();
     fdStepname.left = new FormAttachment( middle, 0 );
@@ -312,7 +272,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     ScrolledComposite sc = new ScrolledComposite( shell, SWT.H_SCROLL | SWT.V_SCROLL );
 
     wTabFolder = new CTabFolder( sc, SWT.BORDER );
-    props.setLook( wTabFolder, Props.WIDGET_STYLE_TAB );
 
     // ////////////////////////
     // START OF FILE TAB///
@@ -321,331 +280,17 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wFileTab.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.FileTab.TabTitle" ) );
 
     Composite wFileComp = new Composite( wTabFolder, SWT.NONE );
-    props.setLook( wFileComp );
 
     FormLayout fileLayout = new FormLayout();
     fileLayout.marginWidth = 3;
     fileLayout.marginHeight = 3;
     wFileComp.setLayout( fileLayout );
 
-    Group fileGroup = new Group( wFileComp, SWT.SHADOW_NONE );
-    props.setLook( fileGroup );
-    fileGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.fileGroup.Label" ) );
-
-    FormLayout fileGroupgroupLayout = new FormLayout();
-    fileGroupgroupLayout.marginWidth = 10;
-    fileGroupgroupLayout.marginHeight = 10;
-    fileGroup.setLayout( fileGroupgroupLayout );
-
-    // Filename line
-    wlFilename = new Label( fileGroup, SWT.RIGHT );
-    wlFilename.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Filename.Label" ) );
-    props.setLook( wlFilename );
-    fdlFilename = new FormData();
-    fdlFilename.left = new FormAttachment( 0, 0 );
-    fdlFilename.top = new FormAttachment( 0, margin );
-    fdlFilename.right = new FormAttachment( middle, -margin );
-    wlFilename.setLayoutData( fdlFilename );
-
-    wbFilename = new Button( fileGroup, SWT.PUSH | SWT.CENTER );
-    props.setLook( wbFilename );
-    wbFilename.setText( BaseMessages.getString( PKG, "System.Button.Browse" ) );
-    fdbFilename = new FormData();
-    fdbFilename.right = new FormAttachment( 100, 0 );
-    fdbFilename.top = new FormAttachment( 0, 0 );
-    wbFilename.setLayoutData( fdbFilename );
-
-    wFilename = new TextVar( transMeta, fileGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( wFilename );
-    wFilename.addModifyListener( lsMod );
-    wFilename.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Filename.Tooltip" ) );
-    fdFilename = new FormData();
-    fdFilename.left = new FormAttachment( middle, 0 );
-    fdFilename.top = new FormAttachment( 0, margin );
-    fdFilename.right = new FormAttachment( wbFilename, -margin );
-    wFilename.setLayoutData( fdFilename );
-
-    // Extension line
-    wlExtension = new Label( fileGroup, SWT.RIGHT );
-    wlExtension.setText( BaseMessages.getString( PKG, "System.Label.Extension" ) );
-    props.setLook( wlExtension );
-    fdlExtension = new FormData();
-    fdlExtension.left = new FormAttachment( 0, 0 );
-    fdlExtension.top = new FormAttachment( wFilename, margin );
-    fdlExtension.right = new FormAttachment( middle, -margin );
-    wlExtension.setLayoutData( fdlExtension );
-    wExtension = new CCombo( fileGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
-
-    String xlsLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.FormatXLS.Label" );
-    String xlsxLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.FormatXLSX.Label" );
-    wExtension.setItems( new String[] { xlsLabel, xlsxLabel } );
-    wExtension.setData( xlsLabel, "xls" );
-    wExtension.setData( xlsxLabel, "xlsx" );
-
-    props.setLook( wExtension );
-    wExtension.addModifyListener( lsMod );
-
-    wExtension.addSelectionListener( new SelectionAdapter() {
-      @Override
-      public void widgetSelected( SelectionEvent e ) {
-        input.setChanged();
-        enableExtension();
-      }
-    } );
-
-    wExtension.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Extension.Tooltip" ) );
-
-    fdExtension = new FormData();
-    fdExtension.left = new FormAttachment( middle, 0 );
-    fdExtension.top = new FormAttachment( wFilename, margin );
-    fdExtension.right = new FormAttachment( wbFilename, -margin );
-    wExtension.setLayoutData( fdExtension );
-
-    wlStreamData = new Label( fileGroup, SWT.RIGHT );
-    wlStreamData.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.StreamData.Label" ) );
-    props.setLook( wlStreamData );
-    fdlStreamData = new FormData();
-    fdlStreamData.left = new FormAttachment( 0, 0 );
-    fdlStreamData.top = new FormAttachment( wExtension, margin );
-    fdlStreamData.right = new FormAttachment( middle, -margin );
-    wlStreamData.setLayoutData( fdlStreamData );
-    wStreamData = new Button( fileGroup, SWT.CHECK );
-    props.setLook( wStreamData );
-    fdStreamData = new FormData();
-    fdStreamData.left = new FormAttachment( middle, 0 );
-    fdStreamData.top = new FormAttachment( wExtension, margin );
-    fdStreamData.right = new FormAttachment( 100, 0 );
-    wStreamData.setLayoutData( fdStreamData );
-    wStreamData.addSelectionListener( lsSel );
-
-    // split every x rows
-    wlSplitEvery = new Label( fileGroup, SWT.RIGHT );
-    wlSplitEvery.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.SplitEvery.Label" ) );
-    props.setLook( wlSplitEvery );
-    fdlSplitEvery = new FormData();
-    fdlSplitEvery.left = new FormAttachment( 0, 0 );
-    fdlSplitEvery.top = new FormAttachment( wStreamData, margin );
-    fdlSplitEvery.right = new FormAttachment( middle, -margin );
-    wlSplitEvery.setLayoutData( fdlSplitEvery );
-    wSplitEvery = new Text( fileGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( wSplitEvery );
-    wSplitEvery.addModifyListener( lsMod );
-    wSplitEvery.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SplitEvery.Tooltip" ) );
-    fdSplitEvery = new FormData();
-    fdSplitEvery.left = new FormAttachment( middle, 0 );
-    fdSplitEvery.top = new FormAttachment( wStreamData, margin );
-    fdSplitEvery.right = new FormAttachment( 100, 0 );
-    wSplitEvery.setLayoutData( fdSplitEvery );
-
-    // Create multi-part file?
-    wlAddStepnr = new Label( fileGroup, SWT.RIGHT );
-    wlAddStepnr.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddStepnr.Label" ) );
-    props.setLook( wlAddStepnr );
-    fdlAddStepnr = new FormData();
-    fdlAddStepnr.left = new FormAttachment( 0, 0 );
-    fdlAddStepnr.top = new FormAttachment( wSplitEvery, margin );
-    fdlAddStepnr.right = new FormAttachment( middle, -margin );
-    wlAddStepnr.setLayoutData( fdlAddStepnr );
-    wAddStepnr = new Button( fileGroup, SWT.CHECK );
-    props.setLook( wAddStepnr );
-    fdAddStepnr = new FormData();
-    fdAddStepnr.left = new FormAttachment( middle, 0 );
-    fdAddStepnr.top = new FormAttachment( wSplitEvery, margin );
-    fdAddStepnr.right = new FormAttachment( 100, 0 );
-    wAddStepnr.setLayoutData( fdAddStepnr );
-    wAddStepnr.addSelectionListener( lsSel );
-
-    // Create multi-part file?
-    wlAddDate = new Label( fileGroup, SWT.RIGHT );
-    wlAddDate.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddDate.Label" ) );
-    props.setLook( wlAddDate );
-    fdlAddDate = new FormData();
-    fdlAddDate.left = new FormAttachment( 0, 0 );
-    fdlAddDate.top = new FormAttachment( wAddStepnr, margin );
-    fdlAddDate.right = new FormAttachment( middle, -margin );
-    wlAddDate.setLayoutData( fdlAddDate );
-    wAddDate = new Button( fileGroup, SWT.CHECK );
-    props.setLook( wAddDate );
-    fdAddDate = new FormData();
-    fdAddDate.left = new FormAttachment( middle, 0 );
-    fdAddDate.top = new FormAttachment( wAddStepnr, margin );
-    fdAddDate.right = new FormAttachment( 100, 0 );
-    wAddDate.setLayoutData( fdAddDate );
-    wAddDate.addSelectionListener( lsSel );
-    // Create multi-part file?
-    wlAddTime = new Label( fileGroup, SWT.RIGHT );
-    wlAddTime.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddTime.Label" ) );
-    props.setLook( wlAddTime );
-    fdlAddTime = new FormData();
-    fdlAddTime.left = new FormAttachment( 0, 0 );
-    fdlAddTime.top = new FormAttachment( wAddDate, margin );
-    fdlAddTime.right = new FormAttachment( middle, -margin );
-    wlAddTime.setLayoutData( fdlAddTime );
-    wAddTime = new Button( fileGroup, SWT.CHECK );
-    props.setLook( wAddTime );
-    fdAddTime = new FormData();
-    fdAddTime.left = new FormAttachment( middle, 0 );
-    fdAddTime.top = new FormAttachment( wAddDate, margin );
-    fdAddTime.right = new FormAttachment( 100, 0 );
-    wAddTime.setLayoutData( fdAddTime );
-    wAddTime.addSelectionListener( lsSel );
-    // Specify date time format?
-    wlSpecifyFormat = new Label( fileGroup, SWT.RIGHT );
-    wlSpecifyFormat.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.SpecifyFormat.Label" ) );
-    props.setLook( wlSpecifyFormat );
-    fdlSpecifyFormat = new FormData();
-    fdlSpecifyFormat.left = new FormAttachment( 0, 0 );
-    fdlSpecifyFormat.top = new FormAttachment( wAddTime, margin );
-    fdlSpecifyFormat.right = new FormAttachment( middle, -margin );
-    wlSpecifyFormat.setLayoutData( fdlSpecifyFormat );
-    wSpecifyFormat = new Button( fileGroup, SWT.CHECK );
-    props.setLook( wSpecifyFormat );
-    wSpecifyFormat.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SpecifyFormat.Tooltip" ) );
-    fdSpecifyFormat = new FormData();
-    fdSpecifyFormat.left = new FormAttachment( middle, 0 );
-    fdSpecifyFormat.top = new FormAttachment( wAddTime, margin );
-    fdSpecifyFormat.right = new FormAttachment( 100, 0 );
-    wSpecifyFormat.setLayoutData( fdSpecifyFormat );
-    wSpecifyFormat.addSelectionListener( new SelectionAdapter() {
-      @Override
-      public void widgetSelected( SelectionEvent e ) {
-        input.setChanged();
-        setDateTimeFormat();
-      }
-    } );
-
-    // Prepare a list of possible DateTimeFormats...
-    String[] dats = Const.getDateFormats();
-
-    // DateTimeFormat
-    wlDateTimeFormat = new Label( fileGroup, SWT.RIGHT );
-    wlDateTimeFormat.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.DateTimeFormat.Label" ) );
-    props.setLook( wlDateTimeFormat );
-    fdlDateTimeFormat = new FormData();
-    fdlDateTimeFormat.left = new FormAttachment( 0, 0 );
-    fdlDateTimeFormat.top = new FormAttachment( wSpecifyFormat, margin );
-    fdlDateTimeFormat.right = new FormAttachment( middle, -margin );
-    wlDateTimeFormat.setLayoutData( fdlDateTimeFormat );
-    wDateTimeFormat = new CCombo( fileGroup, SWT.BORDER | SWT.READ_ONLY );
-    wDateTimeFormat.setEditable( true );
-    props.setLook( wDateTimeFormat );
-    wDateTimeFormat.addModifyListener( lsMod );
-    fdDateTimeFormat = new FormData();
-    fdDateTimeFormat.left = new FormAttachment( middle, 0 );
-    fdDateTimeFormat.top = new FormAttachment( wSpecifyFormat, margin );
-    fdDateTimeFormat.right = new FormAttachment( 100, 0 );
-    wDateTimeFormat.setLayoutData( fdDateTimeFormat );
-    for ( int x = 0; x < dats.length; x++ ) {
-      wDateTimeFormat.add( dats[x] );
-    }
-
-    wbShowFiles = new Button( fileGroup, SWT.PUSH | SWT.CENTER );
-    props.setLook( wbShowFiles );
-    wbShowFiles.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ShowFiles.Button" ) );
-    fdbShowFiles = new FormData();
-    fdbShowFiles.left = new FormAttachment( middle, 0 );
-    fdbShowFiles.top = new FormAttachment( wDateTimeFormat, margin * 3 );
-    wbShowFiles.setLayoutData( fdbShowFiles );
-    wbShowFiles.addSelectionListener( new SelectionAdapter() {
-      @Override
-      public void widgetSelected( SelectionEvent e ) {
-        ExcelWriterStepMeta tfoi = new ExcelWriterStepMeta();
-        getInfo( tfoi );
-        String[] files = tfoi.getFiles( transMeta );
-        if ( files != null && files.length > 0 ) {
-          EnterSelectionDialog esd =
-            new EnterSelectionDialog( shell, files,
-              BaseMessages.getString( PKG, "ExcelWriterDialog.SelectOutputFiles.DialogTitle" ),
-              BaseMessages.getString( PKG, "ExcelWriterDialog.SelectOutputFiles.DialogMessage" ) );
-          esd.setViewOnly();
-          esd.open();
-        } else {
-          MessageBox mb = new MessageBox( shell, SWT.OK | SWT.ICON_ERROR );
-          mb.setMessage( BaseMessages.getString( PKG, "ExcelWriterDialog.NoFilesFound.DialogMessage" ) );
-          mb.setText( BaseMessages.getString( PKG, "System.Dialog.Error.Title" ) );
-          mb.open();
-        }
-      }
-    } );
-
-    // If output file exists line
-    wlIfFileExists = new Label( fileGroup, SWT.RIGHT );
-    wlIfFileExists.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Label" ) );
-    props.setLook( wlIfFileExists );
-    fdlIfFileExists = new FormData();
-    fdlIfFileExists.left = new FormAttachment( 0, 0 );
-    fdlIfFileExists.top = new FormAttachment( wbShowFiles, 2 * margin, margin );
-    fdlIfFileExists.right = new FormAttachment( middle, -margin );
-    wlIfFileExists.setLayoutData( fdlIfFileExists );
-    // wIfFileExists=new TextVar(transMeta,wFileComp, SWT.SINGLE | SWT.LEFT |
-    // SWT.BORDER);
-    wIfFileExists = new CCombo( fileGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
-
-    String createNewLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.CreateNew.Label" );
-    String reuseLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Reuse.Label" );
-    wIfFileExists.setItems( new String[] { createNewLabel, reuseLabel } );
-    wIfFileExists.setData( createNewLabel, ExcelWriterStepMeta.IF_FILE_EXISTS_CREATE_NEW );
-    wIfFileExists.setData( reuseLabel, ExcelWriterStepMeta.IF_FILE_EXISTS_REUSE );
-
-    props.setLook( wIfFileExists );
-    wIfFileExists.addModifyListener( lsMod );
-    wIfFileExists.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Tooltip" ) );
-
-    FormData fdIfFileExists = new FormData();
-    fdIfFileExists.left = new FormAttachment( middle, 0 );
-    fdIfFileExists.top = new FormAttachment( wbShowFiles, 2 * margin, margin );
-    fdIfFileExists.right = new FormAttachment( 100, 0 );
-    wIfFileExists.setLayoutData( fdIfFileExists );
-
-    // Open new File at Init
-    wlDoNotOpenNewFileInit = new Label( fileGroup, SWT.RIGHT );
-    wlDoNotOpenNewFileInit.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.DoNotOpenNewFileInit.Label" ) );
-    props.setLook( wlDoNotOpenNewFileInit );
-    fdlDoNotOpenNewFileInit = new FormData();
-    fdlDoNotOpenNewFileInit.left = new FormAttachment( 0, 0 );
-    fdlDoNotOpenNewFileInit.top = new FormAttachment( wIfFileExists, 2 * margin, margin );
-    fdlDoNotOpenNewFileInit.right = new FormAttachment( middle, -margin );
-    wlDoNotOpenNewFileInit.setLayoutData( fdlDoNotOpenNewFileInit );
-    wDoNotOpenNewFileInit = new Button( fileGroup, SWT.CHECK );
-    wDoNotOpenNewFileInit.setToolTipText( BaseMessages.getString(
-      PKG, "ExcelWriterDialog.DoNotOpenNewFileInit.Tooltip" ) );
-    props.setLook( wDoNotOpenNewFileInit );
-    fdDoNotOpenNewFileInit = new FormData();
-    fdDoNotOpenNewFileInit.left = new FormAttachment( middle, 0 );
-    fdDoNotOpenNewFileInit.top = new FormAttachment( wIfFileExists, 2 * margin, margin );
-    fdDoNotOpenNewFileInit.right = new FormAttachment( 100, 0 );
-    wDoNotOpenNewFileInit.setLayoutData( fdDoNotOpenNewFileInit );
-    wDoNotOpenNewFileInit.addSelectionListener( lsSel );
-
-    // Add File to the result files name
-    wlAddToResult = new Label( fileGroup, SWT.RIGHT );
-    wlAddToResult.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddFileToResult.Label" ) );
-    props.setLook( wlAddToResult );
-    fdlAddToResult = new FormData();
-    fdlAddToResult.left = new FormAttachment( 0, 0 );
-    fdlAddToResult.top = new FormAttachment( wDoNotOpenNewFileInit );
-    fdlAddToResult.right = new FormAttachment( middle, -margin );
-    wlAddToResult.setLayoutData( fdlAddToResult );
-    wAddToResult = new Button( fileGroup, SWT.CHECK );
-    wAddToResult.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddFileToResult.Tooltip" ) );
-    props.setLook( wAddToResult );
-    fdAddToResult = new FormData();
-    fdAddToResult.left = new FormAttachment( middle, 0 );
-    fdAddToResult.top = new FormAttachment( wDoNotOpenNewFileInit );
-    fdAddToResult.right = new FormAttachment( 100, 0 );
-    wAddToResult.setLayoutData( fdAddToResult );
-    wAddToResult.addSelectionListener( lsSel );
-
-    FormData fsFileGroup = new FormData();
-    fsFileGroup.left = new FormAttachment( 0, margin );
-    fsFileGroup.top = new FormAttachment( 0, margin );
-    fsFileGroup.right = new FormAttachment( 100, -margin );
-    fileGroup.setLayoutData( fsFileGroup );
+    Group fileGroup = createFileGroup( lsSel, lsMod, margin, wFileComp );
 
     // END OF FILE GROUP
 
     Group sheetGroup = new Group( wFileComp, SWT.SHADOW_NONE );
-    props.setLook( sheetGroup );
     sheetGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.sheetGroup.Label" ) );
 
     FormLayout sheetGroupLayout = new FormLayout();
@@ -656,7 +301,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Sheet name line
     wlSheetname = new Label( sheetGroup, SWT.RIGHT );
     wlSheetname.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Sheetname.Label" ) );
-    props.setLook( wlSheetname );
+
     fdlSheetname = new FormData();
     fdlSheetname.left = new FormAttachment( 0, 0 );
     fdlSheetname.top = new FormAttachment( 0, margin );
@@ -664,7 +309,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlSheetname.setLayoutData( fdlSheetname );
     wSheetname = new TextVar( transMeta, sheetGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     wSheetname.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Sheetname.Tooltip" ) );
-    props.setLook( wSheetname );
     wSheetname.addModifyListener( lsMod );
     fdSheetname = new FormData();
     fdSheetname.left = new FormAttachment( middle, 0 );
@@ -675,7 +319,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Make sheet active Sheet Line
     Label wlMakeActiveSheet = new Label( sheetGroup, SWT.RIGHT );
     wlMakeActiveSheet.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.MakeActiveSheet.Label" ) );
-    props.setLook( wlMakeActiveSheet );
     FormData fdlMakeActiveSheet = new FormData();
     fdlMakeActiveSheet.left = new FormAttachment( 0, 0 );
     fdlMakeActiveSheet.top = new FormAttachment( wSheetname, margin );
@@ -683,7 +326,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlMakeActiveSheet.setLayoutData( fdlMakeActiveSheet );
     wMakeActiveSheet = new Button( sheetGroup, SWT.CHECK );
     wMakeActiveSheet.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.MakeActiveSheet.Tooltip" ) );
-    props.setLook( wMakeActiveSheet );
     FormData fdMakeActiveSheet = new FormData();
     fdMakeActiveSheet.left = new FormAttachment( middle, 0 );
     fdMakeActiveSheet.top = new FormAttachment( wSheetname, margin );
@@ -694,7 +336,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // If output sheet exists line
     wlIfSheetExists = new Label( sheetGroup, SWT.RIGHT );
     wlIfSheetExists.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfSheetExists.Label" ) );
-    props.setLook( wlIfSheetExists );
     FormData fdlIfSheetExists = new FormData();
     fdlIfSheetExists.left = new FormAttachment( 0, 0 );
     fdlIfSheetExists.top = new FormAttachment( wMakeActiveSheet, margin );
@@ -708,7 +349,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wIfSheetExists.setData( replaceSheetNewLabel, ExcelWriterStepMeta.IF_SHEET_EXISTS_CREATE_NEW );
     wIfSheetExists.setData( reuseSheetLabel, ExcelWriterStepMeta.IF_SHEET_EXISTS_REUSE );
 
-    props.setLook( wIfSheetExists );
     wIfSheetExists.addModifyListener( lsMod );
     wIfSheetExists.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfSheetExists.Tooltip" ) );
 
@@ -721,7 +361,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Protect Sheet?
     wlProtectSheet = new Label( sheetGroup, SWT.RIGHT );
     wlProtectSheet.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ProtectSheet.Label" ) );
-    props.setLook( wlProtectSheet );
     fdlProtectSheet = new FormData();
     fdlProtectSheet.left = new FormAttachment( 0, 0 );
     fdlProtectSheet.top = new FormAttachment( wIfSheetExists, margin );
@@ -729,7 +368,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlProtectSheet.setLayoutData( fdlProtectSheet );
     wProtectSheet = new Button( sheetGroup, SWT.CHECK );
     wProtectSheet.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.ProtectSheet.Tooltip" ) );
-    props.setLook( wProtectSheet );
     fdProtectSheet = new FormData();
     fdProtectSheet.left = new FormAttachment( middle, 0 );
     fdProtectSheet.top = new FormAttachment( wIfSheetExists, margin );
@@ -746,7 +384,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Protected by line
     Label wlProtectedBy = new Label( sheetGroup, SWT.RIGHT );
     wlProtectedBy.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ProtectedBy.Label" ) );
-    props.setLook( wlProtectedBy );
     FormData fdlProtectedBy = new FormData();
     fdlProtectedBy.left = new FormAttachment( 0, 0 );
     fdlProtectedBy.top = new FormAttachment( wProtectSheet, margin );
@@ -754,7 +391,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlProtectedBy.setLayoutData( fdlProtectedBy );
     wProtectedBy = new TextVar( transMeta, sheetGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     wProtectedBy.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.ProtectedBy.Tooltip" ) );
-    props.setLook( wProtectedBy );
 
     wProtectedBy.addModifyListener( lsMod );
     FormData fdProtectedBy = new FormData();
@@ -766,7 +402,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Password line
     wlPassword = new Label( sheetGroup, SWT.RIGHT );
     wlPassword.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Password.Label" ) );
-    props.setLook( wlPassword );
     fdlPassword = new FormData();
     fdlPassword.left = new FormAttachment( 0, 0 );
     fdlPassword.top = new FormAttachment( wProtectedBy, margin );
@@ -774,7 +409,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlPassword.setLayoutData( fdlPassword );
     wPassword = new PasswordTextVar( transMeta, sheetGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
     wPassword.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Password.Tooltip" ) );
-    props.setLook( wPassword );
     wPassword.addModifyListener( lsMod );
     fdPassword = new FormData();
     fdPassword.left = new FormAttachment( middle, 0 );
@@ -795,7 +429,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // ///////////////////////////////
 
     wTemplateGroup = new Group( wFileComp, SWT.SHADOW_NONE );
-    props.setLook( wTemplateGroup );
     wTemplateGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateGroup.Label" ) );
 
     FormLayout TemplateGroupgroupLayout = new FormLayout();
@@ -806,14 +439,12 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Use template
     wlTemplate = new Label( wTemplateGroup, SWT.RIGHT );
     wlTemplate.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Template.Label" ) );
-    props.setLook( wlTemplate );
     fdlTemplate = new FormData();
     fdlTemplate.left = new FormAttachment( 0, 0 );
     fdlTemplate.top = new FormAttachment( 0, margin );
     fdlTemplate.right = new FormAttachment( middle, -margin );
     wlTemplate.setLayoutData( fdlTemplate );
     wTemplate = new Button( wTemplateGroup, SWT.CHECK );
-    props.setLook( wTemplate );
     fdTemplate = new FormData();
     fdTemplate.left = new FormAttachment( middle, 0 );
     fdTemplate.top = new FormAttachment( 0, margin );
@@ -831,7 +462,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // TemplateFilename line
     wlTemplateFilename = new Label( wTemplateGroup, SWT.RIGHT );
     wlTemplateFilename.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateFilename.Label" ) );
-    props.setLook( wlTemplateFilename );
     fdlTemplateFilename = new FormData();
     fdlTemplateFilename.left = new FormAttachment( 0, 0 );
     fdlTemplateFilename.top = new FormAttachment( wTemplate, margin );
@@ -839,7 +469,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlTemplateFilename.setLayoutData( fdlTemplateFilename );
 
     wbTemplateFilename = new Button( wTemplateGroup, SWT.PUSH | SWT.CENTER );
-    props.setLook( wbTemplateFilename );
     wbTemplateFilename.setText( BaseMessages.getString( PKG, "System.Button.Browse" ) );
     fdbTemplateFilename = new FormData();
     fdbTemplateFilename.right = new FormAttachment( 100, 0 );
@@ -847,7 +476,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wbTemplateFilename.setLayoutData( fdbTemplateFilename );
 
     wTemplateFilename = new TextVar( transMeta, wTemplateGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( wTemplateFilename );
     wTemplateFilename.addModifyListener( lsMod );
     fdTemplateFilename = new FormData();
     fdTemplateFilename.left = new FormAttachment( middle, 0 );
@@ -858,7 +486,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // Use template sheet
     wlTemplateSheet = new Label( wTemplateGroup, SWT.RIGHT );
     wlTemplateSheet.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateSheet.Label" ) );
-    props.setLook( wlTemplateSheet );
     FormData fdlTemplateSheet = new FormData();
     fdlTemplateSheet.left = new FormAttachment( 0, 0 );
     fdlTemplateSheet.top = new FormAttachment( wTemplateFilename, margin );
@@ -867,7 +494,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wTemplateSheet = new Button( wTemplateGroup, SWT.CHECK );
     wTemplateSheet.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateSheet.Tooltip" ) );
 
-    props.setLook( wTemplateSheet );
     FormData fdTemplateSheet = new FormData();
     fdTemplateSheet.left = new FormAttachment( middle, 0 );
     fdTemplateSheet.top = new FormAttachment( wTemplateFilename, margin );
@@ -884,7 +510,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // TemplateSheetname line
     wlTemplateSheetname = new Label( wTemplateGroup, SWT.RIGHT );
     wlTemplateSheetname.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateSheetname.Label" ) );
-    props.setLook( wlTemplateSheetname );
     FormData fdlTemplateSheetname = new FormData();
     fdlTemplateSheetname.left = new FormAttachment( 0, 0 );
     fdlTemplateSheetname.top = new FormAttachment( wTemplateSheet, margin );
@@ -892,7 +517,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wlTemplateSheetname.setLayoutData( fdlTemplateSheetname );
 
     wTemplateSheetname = new TextVar( transMeta, wTemplateGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    props.setLook( wTemplateSheetname );
     wTemplateSheetname.addModifyListener( lsMod );
     FormData fdTemplateSheetname = new FormData();
     fdTemplateSheetname.left = new FormAttachment( middle, 0 );
@@ -903,7 +527,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     //Hide Template Sheet
     wlTemplateSheetHide = new Label( wTemplateGroup, SWT.RIGHT );
     wlTemplateSheetHide.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateSheetHide.Label" ) );
-    props.setLook(  wlTemplateSheetHide );
     FormData fdlTemplateSheetHide = new FormData();
     fdlTemplateSheetHide.left = new FormAttachment( 0, 0 );
     fdlTemplateSheetHide.top = new FormAttachment( wTemplateSheetname, margin );
@@ -912,7 +535,6 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
 
     wTemplateSheetHide = new Button( wTemplateGroup, SWT.CHECK );
     wTemplateSheetHide.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.TemplateSheetHide.Tooltip" ) );
-    props.setLook( wTemplateSheetHide );
     FormData fdTemplateSheetHide = new FormData();
     fdTemplateSheetHide.left = new FormAttachment( middle, 0 );
     fdTemplateSheetHide.top = new FormAttachment( wTemplateSheetname, margin );
@@ -947,431 +569,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     // ////////////////////////
     // START OF CONTENT TAB///
     // /
-    wContentTab = new CTabItem( wTabFolder, SWT.NONE );
-    wContentTab.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ContentTab.TabTitle" ) );
-
-    FormLayout contentLayout = new FormLayout();
-    contentLayout.marginWidth = 3;
-    contentLayout.marginHeight = 3;
-
-    Composite wContentComp = new Composite( wTabFolder, SWT.NONE );
-    props.setLook( wContentComp );
-    wContentComp.setLayout( contentLayout );
-
-    Group wContentGroup = new Group( wContentComp, SWT.SHADOW_NONE );
-    props.setLook( wContentGroup );
-    wContentGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ContentGroup.Label" ) );
-
-    FormLayout ContentGroupgroupLayout = new FormLayout();
-    ContentGroupgroupLayout.marginWidth = 10;
-    ContentGroupgroupLayout.marginHeight = 10;
-    wContentGroup.setLayout( ContentGroupgroupLayout );
-
-    // starting cell
-    wlStartingCell = new Label( wContentGroup, SWT.RIGHT );
-    wlStartingCell.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.StartingCell.Label" ) );
-    props.setLook( wlStartingCell );
-    FormData fdlStartingCell = new FormData();
-    fdlStartingCell.left = new FormAttachment( 0, 0 );
-    fdlStartingCell.top = new FormAttachment( wIfSheetExists, margin );
-    fdlStartingCell.right = new FormAttachment( middle, -margin );
-    wlStartingCell.setLayoutData( fdlStartingCell );
-    wStartingCell = new TextVar( transMeta, wContentGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    wStartingCell.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.StartingCell.Tooltip" ) );
-    props.setLook( wStartingCell );
-    wStartingCell.addModifyListener( lsMod );
-    FormData fdStartingCell = new FormData();
-    fdStartingCell.left = new FormAttachment( middle, 0 );
-    fdStartingCell.top = new FormAttachment( wIfSheetExists, margin );
-    fdStartingCell.right = new FormAttachment( 100, 0 );
-    wStartingCell.setLayoutData( fdStartingCell );
-
-    // row writing method line
-    wlRowWritingMethod = new Label( wContentGroup, SWT.RIGHT );
-    wlRowWritingMethod.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.Label" ) );
-    props.setLook( wlRowWritingMethod );
-    FormData fdlRowWritingMethod = new FormData();
-    fdlRowWritingMethod.left = new FormAttachment( 0, 0 );
-    fdlRowWritingMethod.top = new FormAttachment( wStartingCell, margin );
-    fdlRowWritingMethod.right = new FormAttachment( middle, -margin );
-    wlRowWritingMethod.setLayoutData( fdlRowWritingMethod );
-    wRowWritingMethod = new CCombo( wContentGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
-
-    String overwriteLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.Overwrite.Label" );
-    String pushDownLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.PushDown.Label" );
-    wRowWritingMethod.setItems( new String[] { overwriteLabel, pushDownLabel } );
-    wRowWritingMethod.setData( overwriteLabel, ExcelWriterStepMeta.ROW_WRITE_OVERWRITE );
-    wRowWritingMethod.setData( pushDownLabel, ExcelWriterStepMeta.ROW_WRITE_PUSH_DOWN );
-    wRowWritingMethod.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.Tooltip" ) );
-
-    props.setLook( wRowWritingMethod );
-    wRowWritingMethod.addModifyListener( lsMod );
-
-    // wRowWritingMethod.addSelectionListener(new SelectionAdapter() {
-    // public void widgetSelected(SelectionEvent e) {
-    // input.setChanged();
-    // EnableRowWritingMethod();
-    // }
-    // });
-
-    FormData fdRowWritingMethod = new FormData();
-    fdRowWritingMethod.left = new FormAttachment( middle, 0 );
-    fdRowWritingMethod.top = new FormAttachment( wStartingCell, margin );
-    fdRowWritingMethod.right = new FormAttachment( 100, 0 );
-    wRowWritingMethod.setLayoutData( fdRowWritingMethod );
-
-    wlHeader = new Label( wContentGroup, SWT.RIGHT );
-    wlHeader.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Header.Label" ) );
-    props.setLook( wlHeader );
-    fdlHeader = new FormData();
-    fdlHeader.left = new FormAttachment( 0, 0 );
-    fdlHeader.top = new FormAttachment( wRowWritingMethod, margin );
-    fdlHeader.right = new FormAttachment( middle, -margin );
-    wlHeader.setLayoutData( fdlHeader );
-    wHeader = new Button( wContentGroup, SWT.CHECK );
-    props.setLook( wHeader );
-    fdHeader = new FormData();
-    fdHeader.left = new FormAttachment( middle, 0 );
-    fdHeader.top = new FormAttachment( wRowWritingMethod, margin );
-    fdHeader.right = new FormAttachment( 100, 0 );
-    wHeader.setLayoutData( fdHeader );
-    wHeader.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Header.Tooltip" ) );
-    wHeader.addSelectionListener( new SelectionAdapter() {
-      @Override
-      public void widgetSelected( SelectionEvent e ) {
-        input.setChanged();
-        enableHeader();
-      }
-    } );
-
-    wlFooter = new Label( wContentGroup, SWT.RIGHT );
-    wlFooter.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.Footer.Label" ) );
-    props.setLook( wlFooter );
-    fdlFooter = new FormData();
-    fdlFooter.left = new FormAttachment( 0, 0 );
-    fdlFooter.top = new FormAttachment( wHeader, margin );
-    fdlFooter.right = new FormAttachment( middle, -margin );
-    wlFooter.setLayoutData( fdlFooter );
-    wFooter = new Button( wContentGroup, SWT.CHECK );
-    props.setLook( wFooter );
-    fdFooter = new FormData();
-    fdFooter.left = new FormAttachment( middle, 0 );
-    fdFooter.top = new FormAttachment( wHeader, margin );
-    fdFooter.right = new FormAttachment( 100, 0 );
-    wFooter.setLayoutData( fdFooter );
-    wFooter.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Footer.Tooltip" ) );
-    wFooter.addSelectionListener( lsSel );
-
-    // auto size columns?
-    wlAutoSize = new Label( wContentGroup, SWT.RIGHT );
-    wlAutoSize.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AutoSize.Label" ) );
-    props.setLook( wlAutoSize );
-    fdlAutoSize = new FormData();
-    fdlAutoSize.left = new FormAttachment( 0, 0 );
-    fdlAutoSize.top = new FormAttachment( wFooter, margin );
-    fdlAutoSize.right = new FormAttachment( middle, -margin );
-    wlAutoSize.setLayoutData( fdlAutoSize );
-    wAutoSize = new Button( wContentGroup, SWT.CHECK );
-    props.setLook( wAutoSize );
-    wAutoSize.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AutoSize.Tooltip" ) );
-    fdAutoSize = new FormData();
-    fdAutoSize.left = new FormAttachment( middle, 0 );
-    fdAutoSize.top = new FormAttachment( wFooter, margin );
-    fdAutoSize.right = new FormAttachment( 100, 0 );
-    wAutoSize.setLayoutData( fdAutoSize );
-    wAutoSize.addSelectionListener( lsSel );
-
-    // force formula recalculation?
-    wlForceFormulaRecalculation = new Label( wContentGroup, SWT.RIGHT );
-    wlForceFormulaRecalculation.setText( BaseMessages.getString(
-      PKG, "ExcelWriterDialog.ForceFormulaRecalculation.Label" ) );
-    props.setLook( wlForceFormulaRecalculation );
-    fdlForceFormulaRecalculation = new FormData();
-    fdlForceFormulaRecalculation.left = new FormAttachment( 0, 0 );
-    fdlForceFormulaRecalculation.top = new FormAttachment( wAutoSize, margin );
-    fdlForceFormulaRecalculation.right = new FormAttachment( middle, -margin );
-    wlForceFormulaRecalculation.setLayoutData( fdlForceFormulaRecalculation );
-    wForceFormulaRecalculation = new Button( wContentGroup, SWT.CHECK );
-    props.setLook( wForceFormulaRecalculation );
-    wForceFormulaRecalculation.setToolTipText( BaseMessages.getString(
-      PKG, "ExcelWriterDialog.ForceFormulaRecalculation.Tooltip" ) );
-    fdForceFormulaRecalculation = new FormData();
-    fdForceFormulaRecalculation.left = new FormAttachment( middle, 0 );
-    fdForceFormulaRecalculation.top = new FormAttachment( wAutoSize, margin );
-    fdForceFormulaRecalculation.right = new FormAttachment( 100, 0 );
-    wForceFormulaRecalculation.setLayoutData( fdForceFormulaRecalculation );
-    wForceFormulaRecalculation.addSelectionListener( lsSel );
-
-    // leave existing styles alone?
-    wlLeaveExistingStylesUnchanged = new Label( wContentGroup, SWT.RIGHT );
-    wlLeaveExistingStylesUnchanged.setText( BaseMessages.getString(
-      PKG, "ExcelWriterDialog.LeaveExistingStylesUnchanged.Label" ) );
-    props.setLook( wlLeaveExistingStylesUnchanged );
-    fdlLeaveExistingStylesUnchanged = new FormData();
-    fdlLeaveExistingStylesUnchanged.left = new FormAttachment( 0, 0 );
-    fdlLeaveExistingStylesUnchanged.top = new FormAttachment( wForceFormulaRecalculation, margin );
-    fdlLeaveExistingStylesUnchanged.right = new FormAttachment( middle, -margin );
-    wlLeaveExistingStylesUnchanged.setLayoutData( fdlLeaveExistingStylesUnchanged );
-    wLeaveExistingStylesUnchanged = new Button( wContentGroup, SWT.CHECK );
-    props.setLook( wLeaveExistingStylesUnchanged );
-    wLeaveExistingStylesUnchanged.setToolTipText( BaseMessages.getString(
-      PKG, "ExcelWriterDialog.LeaveExistingStylesUnchanged.Tooltip" ) );
-    fdLeaveExistingStylesUnchanged = new FormData();
-    fdLeaveExistingStylesUnchanged.left = new FormAttachment( middle, 0 );
-    fdLeaveExistingStylesUnchanged.top = new FormAttachment( wForceFormulaRecalculation, margin );
-    fdLeaveExistingStylesUnchanged.right = new FormAttachment( 100, 0 );
-    wLeaveExistingStylesUnchanged.setLayoutData( fdLeaveExistingStylesUnchanged );
-    wLeaveExistingStylesUnchanged.addSelectionListener( lsSel );
-
-    FormData fdContentGroup = new FormData();
-    fdContentGroup.left = new FormAttachment( 0, margin );
-    fdContentGroup.top = new FormAttachment( 0, margin );
-    fdContentGroup.right = new FormAttachment( 100, -margin );
-    wContentGroup.setLayoutData( fdContentGroup );
-
-    // / END OF CONTENT GROUP
-
-    Group writeToExistingGroup = new Group( wContentComp, SWT.SHADOW_NONE );
-    props.setLook( writeToExistingGroup );
-    writeToExistingGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.writeToExistingGroup.Label" ) );
-
-    FormLayout writeToExistingGroupgroupLayout = new FormLayout();
-    writeToExistingGroupgroupLayout.marginWidth = 10;
-    writeToExistingGroupgroupLayout.marginHeight = 10;
-    writeToExistingGroup.setLayout( writeToExistingGroupgroupLayout );
-
-    // Use AppendLines
-    Label wlAppendLines = new Label( writeToExistingGroup, SWT.RIGHT );
-    wlAppendLines.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AppendLines.Label" ) );
-    props.setLook( wlAppendLines );
-    FormData fdlAppendLines = new FormData();
-    fdlAppendLines.left = new FormAttachment( 0, 0 );
-    fdlAppendLines.top = new FormAttachment( 0, margin );
-    fdlAppendLines.right = new FormAttachment( middle, -margin );
-    wlAppendLines.setLayoutData( fdlAppendLines );
-    wAppendLines = new Button( writeToExistingGroup, SWT.CHECK );
-    wAppendLines.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AppendLines.Tooltip" ) );
-    props.setLook( wAppendLines );
-    FormData fdAppendLines = new FormData();
-    fdAppendLines.left = new FormAttachment( middle, 0 );
-    fdAppendLines.top = new FormAttachment( 0, margin );
-    fdAppendLines.right = new FormAttachment( 100, 0 );
-    wAppendLines.setLayoutData( fdAppendLines );
-    // wAppendLines.addSelectionListener(lsMod);
-    wAppendLines.addSelectionListener( new SelectionAdapter() {
-      @Override
-      public void widgetSelected( SelectionEvent arg0 ) {
-        input.setChanged();
-        enableAppend();
-      }
-    } );
-
-    // SkipRows line
-    Label wlSkipRows = new Label( writeToExistingGroup, SWT.RIGHT );
-    wlSkipRows.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.SkipRows.Label" ) );
-    props.setLook( wlSkipRows );
-    FormData fdlSkipRows = new FormData();
-    fdlSkipRows.left = new FormAttachment( 0, 0 );
-    fdlSkipRows.top = new FormAttachment( wAppendLines, margin );
-    fdlSkipRows.right = new FormAttachment( middle, -margin );
-    wlSkipRows.setLayoutData( fdlSkipRows );
-
-    wSkipRows = new Text( writeToExistingGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    wSkipRows.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SkipRows.Tooltip" ) );
-    props.setLook( wSkipRows );
-    wSkipRows.addModifyListener( lsMod );
-    FormData fdSkipRows = new FormData();
-    fdSkipRows.left = new FormAttachment( middle, 0 );
-    fdSkipRows.top = new FormAttachment( wAppendLines, margin );
-    fdSkipRows.right = new FormAttachment( 100, 0 );
-    wSkipRows.setLayoutData( fdSkipRows );
-
-    // EmptyRows line
-    Label wlEmptyRows = new Label( writeToExistingGroup, SWT.RIGHT );
-    wlEmptyRows.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.EmptyRows.Label" ) );
-    props.setLook( wlEmptyRows );
-    FormData fdlEmptyRows = new FormData();
-    fdlEmptyRows.left = new FormAttachment( 0, 0 );
-    fdlEmptyRows.top = new FormAttachment( wSkipRows, margin );
-    fdlEmptyRows.right = new FormAttachment( middle, -margin );
-    wlEmptyRows.setLayoutData( fdlEmptyRows );
-
-    wEmptyRows = new Text( writeToExistingGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
-    wEmptyRows.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.EmptyRows.Tooltip" ) );
-    props.setLook( wEmptyRows );
-    wEmptyRows.addModifyListener( lsMod );
-    FormData fdEmptyRows = new FormData();
-    fdEmptyRows.left = new FormAttachment( middle, 0 );
-    fdEmptyRows.top = new FormAttachment( wSkipRows, margin );
-    fdEmptyRows.right = new FormAttachment( 100, 0 );
-    wEmptyRows.setLayoutData( fdEmptyRows );
-
-    // Use AppendLines
-    Label wlOmitHeader = new Label( writeToExistingGroup, SWT.RIGHT );
-    wlOmitHeader.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.OmitHeader.Label" ) );
-    props.setLook( wlOmitHeader );
-    FormData fdlOmitHeader = new FormData();
-    fdlOmitHeader.left = new FormAttachment( 0, 0 );
-    fdlOmitHeader.top = new FormAttachment( wEmptyRows, margin );
-    fdlOmitHeader.right = new FormAttachment( middle, -margin );
-    wlOmitHeader.setLayoutData( fdlOmitHeader );
-    wOmitHeader = new Button( writeToExistingGroup, SWT.CHECK );
-    wOmitHeader.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.OmitHeader.Tooltip" ) );
-    props.setLook( wOmitHeader );
-    FormData fdOmitHeader = new FormData();
-    fdOmitHeader.left = new FormAttachment( middle, 0 );
-    fdOmitHeader.top = new FormAttachment( wEmptyRows, margin );
-    fdOmitHeader.right = new FormAttachment( 100, 0 );
-    wOmitHeader.setLayoutData( fdOmitHeader );
-    wOmitHeader.addSelectionListener( lsSel );
-
-    FormData fdWriteToExistingGroup = new FormData();
-    fdWriteToExistingGroup.left = new FormAttachment( 0, margin );
-    fdWriteToExistingGroup.top = new FormAttachment( wContentGroup, margin );
-    fdWriteToExistingGroup.right = new FormAttachment( 100, -margin );
-    writeToExistingGroup.setLayoutData( fdWriteToExistingGroup );
-
-    // ///////////////////////////////////////////////////////////
-    // / END OF Write to existing Group GROUP
-    // ///////////////////////////////////////////////////////////
-
-    Group fieldGroup = new Group( wContentComp, SWT.SHADOW_NONE );
-    props.setLook( fieldGroup );
-    fieldGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.fieldGroup.Label" ) );
-
-    FormLayout fieldGroupgroupLayout = new FormLayout();
-    fieldGroupgroupLayout.marginWidth = 10;
-    fieldGroupgroupLayout.marginHeight = 10;
-    fieldGroup.setLayout( fieldGroupgroupLayout );
-
-    wGet = new Button( fieldGroup, SWT.PUSH );
-    wGet.setText( BaseMessages.getString( PKG, "System.Button.GetFields" ) );
-    wGet.setToolTipText( BaseMessages.getString( PKG, "System.Tooltip.GetFields" ) );
-
-    wMinWidth = new Button( fieldGroup, SWT.PUSH );
-    wMinWidth.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.MinWidth.Button" ) );
-    wMinWidth.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.MinWidth.Tooltip" ) );
-
-    setButtonPositions( new Button[] { wGet, wMinWidth }, margin, null );
-
-    final int FieldsRows = input.getOutputFields().length;
-
-    // Prepare a list of possible formats, filtering reserved internal formats away
-    String[] formats = BuiltinFormats.getAll();
-
-    List<String> allFormats = Arrays.asList( BuiltinFormats.getAll() );
-    List<String> nonReservedFormats = new ArrayList<String>( allFormats.size() );
-
-    for ( String format : allFormats ) {
-      if ( !format.startsWith( "reserved" ) ) {
-        nonReservedFormats.add( format );
-      }
-    }
-
-    Collections.sort( nonReservedFormats );
-    formats = nonReservedFormats.toArray( new String[0] );
-
-    colinf =
-      new ColumnInfo[] {
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.NameColumn.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.TypeColumn.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, ValueMetaFactory.getValueMetaNames() ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.FormatColumn.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, formats ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.UseStyleCell.Column" ),
-          ColumnInfo.COLUMN_TYPE_TEXT ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.TitleColumn.Column" ), ColumnInfo.COLUMN_TYPE_TEXT ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.UseTitleStyleCell.Column" ),
-          ColumnInfo.COLUMN_TYPE_TEXT ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.FormulaField.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "N", "Y" }, true ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.HyperLinkField.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.CommentField.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
-        new ColumnInfo(
-          BaseMessages.getString( PKG, "ExcelWriterDialog.CommentAuthor.Column" ),
-          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ) };
-
-    wFields =
-      new TableView(
-        transMeta, fieldGroup, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI, colinf, FieldsRows, lsMod, props );
-
-    fdFields = new FormData();
-    fdFields.left = new FormAttachment( 0, 0 );
-    fdFields.top = new FormAttachment( 0, 0 );
-    fdFields.right = new FormAttachment( 100, 0 );
-    fdFields.bottom = new FormAttachment( wGet, -margin );
-    wFields.setLayoutData( fdFields );
-    wFields.addModifyListener( lsMod );
-
-    // Search the fields in the background
-
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        StepMeta stepMeta = transMeta.findStep( stepname );
-        if ( stepMeta != null ) {
-          try {
-            RowMetaInterface row = transMeta.getPrevStepFields( stepMeta );
-
-            // Remember these fields...
-            for ( int i = 0; i < row.size(); i++ ) {
-              inputFields.put( row.getValueMeta( i ).getName(), Integer.valueOf( i ) );
-            }
-            setComboBoxes();
-          } catch ( KettleException e ) {
-            logError( BaseMessages.getString( PKG, "System.Dialog.GetFieldsFailed.Message" ) );
-          }
-        }
-      }
-    };
-    new Thread( runnable ).start();
-
-    FormData fdFieldGroup = new FormData();
-    fdFieldGroup.left = new FormAttachment( 0, margin );
-    fdFieldGroup.top = new FormAttachment( writeToExistingGroup, margin );
-    fdFieldGroup.bottom = new FormAttachment( 100, 0 );
-    fdFieldGroup.right = new FormAttachment( 100, -margin );
-    fieldGroup.setLayoutData( fdFieldGroup );
-
-    fdContentComp = new FormData();
-    fdContentComp.left = new FormAttachment( 0, 0 );
-    fdContentComp.top = new FormAttachment( 0, 0 );
-    fdContentComp.right = new FormAttachment( 100, 0 );
-    fdContentComp.bottom = new FormAttachment( 100, 0 );
-    wContentComp.setLayoutData( fdContentComp );
-
-    wContentComp.layout();
-    wContentTab.setControl( wContentComp );
-
-    fdTabFolder = new FormData();
-    fdTabFolder.left = new FormAttachment( 0, 0 );
-    fdTabFolder.top = new FormAttachment( 0, 0 );
-    fdTabFolder.right = new FormAttachment( 100, 0 );
-    fdTabFolder.bottom = new FormAttachment( 100, 0 );
-    wTabFolder.setLayoutData( fdTabFolder );
-
-    FormData fdSc = new FormData();
-    fdSc.left = new FormAttachment( 0, 0 );
-    fdSc.top = new FormAttachment( wStepname, margin );
-    fdSc.right = new FormAttachment( 100, 0 );
-    fdSc.bottom = new FormAttachment( 100, -50 );
-    sc.setLayoutData( fdSc );
-
-    sc.setContent( wTabFolder );
-
-    // ///////////////////////////////////////////////////////////
+    createContentTab( lsSel, lsMod, middle, margin, sc );
     // / END OF CONTENT TAB
     // ///////////////////////////////////////////////////////////
 
@@ -1515,6 +713,8 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     } );
 
     wTabFolder.setSelection( 0 );
+    // propsUI.setLook is recursive; only needs to be run once, at the end, in the parent container
+    props.setLook( shell );
 
     getData();
     setDateTimeFormat();
@@ -1552,6 +752,580 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     return stepname;
   }
 
+  private Group createGroup( Composite parent, String labelKey ) {
+    Group group = new Group( parent, SWT.SHADOW_NONE );
+    group.setText( getMsg( labelKey ) );
+
+    FormLayout groupLayout = new FormLayout();
+    groupLayout.marginWidth = 10;
+    groupLayout.marginHeight = 10;
+    group.setLayout( groupLayout );
+
+    return group;
+  }
+
+  private Group createFileGroup( SelectionAdapter lsSel, ModifyListener lsMod, int margin, Composite wFileComp ) {
+    Group fileGroup = createGroup( wFileComp, "ExcelWriterDialog.fileGroup.Label" );
+
+    // Filename line
+    Label wlFilename = createLabel( fileGroup, "ExcelWriterDialog.Filename.Label" );
+    wlFilename.setLayoutData( fd().right( middle, -margin ).top( 0, margin ).result() );
+
+    wbFilename = new Button( fileGroup, SWT.PUSH | SWT.CENTER );
+    wbFilename.setText( BaseMessages.getString( PKG, "System.Button.Browse" ) );
+    FormData fdbFilename = new FormData();
+    fdbFilename.right = new FormAttachment( 100, 0 );
+    fdbFilename.top = new FormAttachment( 0, 0 );
+    wbFilename.setLayoutData( fdbFilename );
+
+    wFilename = new TextVar( transMeta, fileGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wFilename.addModifyListener( lsMod );
+    wFilename.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Filename.Tooltip" ) );
+    FormData fdFilename = fd().left( middle, 0 ).top( 0, margin ).right(wbFilename, -margin).result();
+    wFilename.setLayoutData( fdFilename );
+    Control lastWidget = wFilename;
+    // Extension line
+    Label wlExtension = createLabel( fileGroup, "System.Label.Extension" );
+    wExtension = new CCombo( fileGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
+    String xlsLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.FormatXLS.Label" );
+    String xlsxLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.FormatXLSX.Label" );
+    wExtension.setItems( new String[] { xlsLabel, xlsxLabel } );
+    wExtension.setData( xlsLabel, "xls" );
+    wExtension.setData( xlsxLabel, "xlsx" );
+
+    wExtension.addModifyListener( lsMod );
+
+    wExtension.addSelectionListener( new SelectionAdapter() {
+      @Override
+      public void widgetSelected( SelectionEvent e ) {
+        input.setChanged();
+        enableExtension();
+      }
+    } );
+    wExtension.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Extension.Tooltip" ) );
+
+    wlExtension.setLayoutData( fd().left().right( middle, -margin ).top( lastWidget, margin ).result() );
+    wExtension.setLayoutData( fd().left( middle, 0 ).right( wbFilename, -margin ).top( lastWidget, margin ).result() );
+    lastWidget = wExtension;
+
+    Label wlCreateParentFolder = createLabel( fileGroup, "ExcelWriterDialog.CreateParentFolder.Label" );
+    wCreateParentFolder = new Button( fileGroup, SWT.CHECK );
+    wCreateParentFolder.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlCreateParentFolder, wCreateParentFolder, lastWidget );
+
+    Label wlStreamData = createLabel( fileGroup, "ExcelWriterDialog.StreamData.Label" );
+    wStreamData = new Button( fileGroup, SWT.CHECK );
+    wStreamData.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlStreamData, wStreamData, lastWidget );
+
+    // split every x rows
+    Label wlSplitEvery = createLabel(fileGroup, "ExcelWriterDialog.SplitEvery.Label" ); new Label( fileGroup, SWT.RIGHT );
+    wSplitEvery = new Text( fileGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wSplitEvery.addModifyListener( lsMod );
+    wSplitEvery.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SplitEvery.Tooltip" ) );
+    lastWidget = layoutLabelControlPair( wlSplitEvery, wSplitEvery, lastWidget );
+
+    // include step number
+    Label wlAddStepnr = createLabel(fileGroup, "ExcelWriterDialog.AddStepnr.Label" );
+    wAddStepnr = new Button( fileGroup, SWT.CHECK );
+    wAddStepnr.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlAddStepnr, wAddStepnr, lastWidget );
+
+    // include date
+    wlAddDate = createLabel( fileGroup,  "ExcelWriterDialog.AddDate.Label" );
+    wAddDate = new Button( fileGroup, SWT.CHECK );
+    wAddDate.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlAddDate, wAddDate, lastWidget );
+
+    // include time
+    wlAddTime = createLabel( fileGroup, "ExcelWriterDialog.AddTime.Label" );
+    wAddTime = new Button( fileGroup, SWT.CHECK );
+    wAddTime.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlAddTime, wAddTime, lastWidget );
+
+    // Specify date time format?
+    wlSpecifyFormat = new Label( fileGroup, SWT.RIGHT );
+    wlSpecifyFormat.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.SpecifyFormat.Label" ) );
+    fdlSpecifyFormat = new FormData();
+    fdlSpecifyFormat.left = new FormAttachment( 0, 0 );
+    fdlSpecifyFormat.top = new FormAttachment( wAddTime, margin );
+    fdlSpecifyFormat.right = new FormAttachment( middle, -margin );
+    wlSpecifyFormat.setLayoutData( fdlSpecifyFormat );
+    wSpecifyFormat = new Button( fileGroup, SWT.CHECK );
+    wSpecifyFormat.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SpecifyFormat.Tooltip" ) );
+    fdSpecifyFormat = new FormData();
+    fdSpecifyFormat.left = new FormAttachment( middle, 0 );
+    fdSpecifyFormat.top = new FormAttachment( wAddTime, margin );
+    fdSpecifyFormat.right = new FormAttachment( 100, 0 );
+    wSpecifyFormat.setLayoutData( fdSpecifyFormat );
+    wSpecifyFormat.addSelectionListener( new SelectionAdapter() {
+      @Override
+      public void widgetSelected( SelectionEvent e ) {
+        input.setChanged();
+        setDateTimeFormat();
+      }
+    } );
+
+    // Prepare a list of possible DateTimeFormats...
+    String[] dats = Const.getDateFormats();
+
+    // DateTimeFormat
+    wlDateTimeFormat = new Label( fileGroup, SWT.RIGHT );
+    wlDateTimeFormat.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.DateTimeFormat.Label" ) );
+    fdlDateTimeFormat = new FormData();
+    fdlDateTimeFormat.left = new FormAttachment( 0, 0 );
+    fdlDateTimeFormat.top = new FormAttachment( wSpecifyFormat, margin );
+    fdlDateTimeFormat.right = new FormAttachment( middle, -margin );
+    wlDateTimeFormat.setLayoutData( fdlDateTimeFormat );
+    wDateTimeFormat = new CCombo( fileGroup, SWT.BORDER | SWT.READ_ONLY );
+    wDateTimeFormat.setEditable( true );
+    wDateTimeFormat.addModifyListener( lsMod );
+    fdDateTimeFormat = new FormData();
+    fdDateTimeFormat.left = new FormAttachment( middle, 0 );
+    fdDateTimeFormat.top = new FormAttachment( wSpecifyFormat, margin );
+    fdDateTimeFormat.right = new FormAttachment( 100, 0 );
+    wDateTimeFormat.setLayoutData( fdDateTimeFormat );
+    for ( int x = 0; x < dats.length; x++ ) {
+      wDateTimeFormat.add( dats[x] );
+    }
+
+    wbShowFiles = new Button( fileGroup, SWT.PUSH | SWT.CENTER );
+    wbShowFiles.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ShowFiles.Button" ) );
+    fdbShowFiles = new FormData();
+    fdbShowFiles.left = new FormAttachment( middle, 0 );
+    fdbShowFiles.top = new FormAttachment( wDateTimeFormat, margin * 3 );
+    wbShowFiles.setLayoutData( fdbShowFiles );
+    wbShowFiles.addSelectionListener( new SelectionAdapter() {
+      @Override
+      public void widgetSelected( SelectionEvent e ) {
+        ExcelWriterStepMeta tfoi = new ExcelWriterStepMeta();
+        getInfo( tfoi );
+        String[] files = tfoi.getFiles( transMeta );
+        if ( files != null && files.length > 0 ) {
+          EnterSelectionDialog esd =
+            new EnterSelectionDialog( shell, files,
+              BaseMessages.getString( PKG, "ExcelWriterDialog.SelectOutputFiles.DialogTitle" ),
+              BaseMessages.getString( PKG, "ExcelWriterDialog.SelectOutputFiles.DialogMessage" ) );
+          esd.setViewOnly();
+          esd.open();
+        } else {
+          MessageBox mb = new MessageBox( shell, SWT.OK | SWT.ICON_ERROR );
+          mb.setMessage( BaseMessages.getString( PKG, "ExcelWriterDialog.NoFilesFound.DialogMessage" ) );
+          mb.setText( BaseMessages.getString( PKG, "System.Dialog.Error.Title" ) );
+          mb.open();
+        }
+      }
+    } );
+
+    // If output file exists line
+    wlIfFileExists = new Label( fileGroup, SWT.RIGHT );
+    wlIfFileExists.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Label" ) );
+    fdlIfFileExists = new FormData();
+    fdlIfFileExists.left = new FormAttachment( 0, 0 );
+    fdlIfFileExists.top = new FormAttachment( wbShowFiles, 2 * margin, margin );
+    fdlIfFileExists.right = new FormAttachment( middle, -margin );
+    wlIfFileExists.setLayoutData( fdlIfFileExists );
+    wIfFileExists = new CCombo( fileGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
+
+    String createNewLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.CreateNew.Label" );
+    String reuseLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Reuse.Label" );
+    wIfFileExists.setItems( new String[] { createNewLabel, reuseLabel } );
+    wIfFileExists.setData( createNewLabel, ExcelWriterStepMeta.IF_FILE_EXISTS_CREATE_NEW );
+    wIfFileExists.setData( reuseLabel, ExcelWriterStepMeta.IF_FILE_EXISTS_REUSE );
+
+    wIfFileExists.addModifyListener( lsMod );
+    wIfFileExists.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.IfFileExists.Tooltip" ) );
+
+    FormData fdIfFileExists = new FormData();
+    fdIfFileExists.left = new FormAttachment( middle, 0 );
+    fdIfFileExists.top = new FormAttachment( wbShowFiles, 2 * margin, margin );
+    fdIfFileExists.right = new FormAttachment( 100, 0 );
+    wIfFileExists.setLayoutData( fdIfFileExists );
+
+    // Open new File at Init
+    wlDoNotOpenNewFileInit = new Label( fileGroup, SWT.RIGHT );
+    wlDoNotOpenNewFileInit.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.DoNotOpenNewFileInit.Label" ) );
+    fdlDoNotOpenNewFileInit = new FormData();
+    fdlDoNotOpenNewFileInit.left = new FormAttachment( 0, 0 );
+    fdlDoNotOpenNewFileInit.top = new FormAttachment( wIfFileExists, 2 * margin, margin );
+    fdlDoNotOpenNewFileInit.right = new FormAttachment( middle, -margin );
+    wlDoNotOpenNewFileInit.setLayoutData( fdlDoNotOpenNewFileInit );
+    wDoNotOpenNewFileInit = new Button( fileGroup, SWT.CHECK );
+    wDoNotOpenNewFileInit.setToolTipText( BaseMessages.getString(
+      PKG, "ExcelWriterDialog.DoNotOpenNewFileInit.Tooltip" ) );
+    fdDoNotOpenNewFileInit = new FormData();
+    fdDoNotOpenNewFileInit.left = new FormAttachment( middle, 0 );
+    fdDoNotOpenNewFileInit.top = new FormAttachment( wIfFileExists, 2 * margin, margin );
+    fdDoNotOpenNewFileInit.right = new FormAttachment( 100, 0 );
+    wDoNotOpenNewFileInit.setLayoutData( fdDoNotOpenNewFileInit );
+    wDoNotOpenNewFileInit.addSelectionListener( lsSel );
+
+    // Add File to the result files name
+    wlAddToResult = new Label( fileGroup, SWT.RIGHT );
+    wlAddToResult.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddFileToResult.Label" ) );
+    fdlAddToResult = new FormData();
+    fdlAddToResult.left = new FormAttachment( 0, 0 );
+    fdlAddToResult.top = new FormAttachment( wDoNotOpenNewFileInit );
+    fdlAddToResult.right = new FormAttachment( middle, -margin );
+    wlAddToResult.setLayoutData( fdlAddToResult );
+    wAddToResult = new Button( fileGroup, SWT.CHECK );
+    wAddToResult.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AddFileToResult.Tooltip" ) );
+    fdAddToResult = new FormData();
+    fdAddToResult.left = new FormAttachment( middle, 0 );
+    fdAddToResult.top = new FormAttachment( wDoNotOpenNewFileInit );
+    fdAddToResult.right = new FormAttachment( 100, 0 );
+    wAddToResult.setLayoutData( fdAddToResult );
+    wAddToResult.addSelectionListener( lsSel );
+
+    FormData fsFileGroup = new FormData();
+    fsFileGroup.left = new FormAttachment( 0, margin );
+    fsFileGroup.top = new FormAttachment( 0, margin );
+    fsFileGroup.right = new FormAttachment( 100, -margin );
+    fileGroup.setLayoutData( fsFileGroup );
+    return fileGroup;
+  }
+
+  private void createContentTab( SelectionAdapter lsSel, ModifyListener lsMod, int middle, int margin, ScrolledComposite sc ) {
+
+    wContentTab = new CTabItem( wTabFolder, SWT.NONE );
+    wContentTab.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ContentTab.TabTitle" ) );
+
+    FormLayout contentLayout = new FormLayout();
+    contentLayout.marginWidth = 3;
+    contentLayout.marginHeight = 3;
+
+    Composite wContentComp = new Composite( wTabFolder, SWT.NONE );
+    wContentComp.setLayout( contentLayout );
+
+    // CONTENT GROUP
+    Group wContentGroup = new Group( wContentComp, SWT.SHADOW_NONE );
+    wContentGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.ContentGroup.Label" ) );
+
+    FormLayout ContentGroupgroupLayout = new FormLayout();
+    ContentGroupgroupLayout.marginWidth = 10;
+    ContentGroupgroupLayout.marginHeight = 10;
+    wContentGroup.setLayout( ContentGroupgroupLayout );
+
+    createContentGroup( lsSel, lsMod, middle, margin, wContentGroup );
+    FormData fdContentGroup = fd().left( 0, margin ).top( 0, margin ).right( 100, -margin ).result();
+    wContentGroup.setLayoutData( fdContentGroup );
+
+    // / END OF CONTENT GROUP
+
+    Group writeToExistingGroup = new Group( wContentComp, SWT.SHADOW_NONE );
+    writeToExistingGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.writeToExistingGroup.Label" ) );
+
+    FormLayout writeToExistingGroupgroupLayout = new FormLayout();
+    writeToExistingGroupgroupLayout.marginWidth = 10;
+    writeToExistingGroupgroupLayout.marginHeight = 10;
+    writeToExistingGroup.setLayout( writeToExistingGroupgroupLayout );
+
+    // Use AppendLines
+    Label wlAppendLines = new Label( writeToExistingGroup, SWT.RIGHT );
+    wlAppendLines.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.AppendLines.Label" ) );
+    FormData fdlAppendLines = new FormData();
+    fdlAppendLines.left = new FormAttachment( 0, 0 );
+    fdlAppendLines.top = new FormAttachment( 0, margin );
+    fdlAppendLines.right = new FormAttachment( middle, -margin );
+    wlAppendLines.setLayoutData( fdlAppendLines );
+    wAppendLines = new Button( writeToExistingGroup, SWT.CHECK );
+    wAppendLines.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AppendLines.Tooltip" ) );
+    FormData fdAppendLines = new FormData();
+    fdAppendLines.left = new FormAttachment( middle, 0 );
+    fdAppendLines.top = new FormAttachment( 0, margin );
+    fdAppendLines.right = new FormAttachment( 100, 0 );
+    wAppendLines.setLayoutData( fdAppendLines );
+    // wAppendLines.addSelectionListener(lsMod);
+    wAppendLines.addSelectionListener( new SelectionAdapter() {
+      @Override
+      public void widgetSelected( SelectionEvent arg0 ) {
+        input.setChanged();
+        enableAppend();
+      }
+    } );
+
+    // SkipRows line
+    Label wlSkipRows = new Label( writeToExistingGroup, SWT.RIGHT );
+    wlSkipRows.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.SkipRows.Label" ) );
+    FormData fdlSkipRows = new FormData();
+    fdlSkipRows.left = new FormAttachment( 0, 0 );
+    fdlSkipRows.top = new FormAttachment( wAppendLines, margin );
+    fdlSkipRows.right = new FormAttachment( middle, -margin );
+    wlSkipRows.setLayoutData( fdlSkipRows );
+
+    wSkipRows = new Text( writeToExistingGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wSkipRows.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.SkipRows.Tooltip" ) );
+    wSkipRows.addModifyListener( lsMod );
+    FormData fdSkipRows = new FormData();
+    fdSkipRows.left = new FormAttachment( middle, 0 );
+    fdSkipRows.top = new FormAttachment( wAppendLines, margin );
+    fdSkipRows.right = new FormAttachment( 100, 0 );
+    wSkipRows.setLayoutData( fdSkipRows );
+
+    // EmptyRows line
+    Label wlEmptyRows = new Label( writeToExistingGroup, SWT.RIGHT );
+    wlEmptyRows.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.EmptyRows.Label" ) );
+    FormData fdlEmptyRows = new FormData();
+    fdlEmptyRows.left = new FormAttachment( 0, 0 );
+    fdlEmptyRows.top = new FormAttachment( wSkipRows, margin );
+    fdlEmptyRows.right = new FormAttachment( middle, -margin );
+    wlEmptyRows.setLayoutData( fdlEmptyRows );
+
+    wEmptyRows = new Text( writeToExistingGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wEmptyRows.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.EmptyRows.Tooltip" ) );
+    wEmptyRows.addModifyListener( lsMod );
+    FormData fdEmptyRows = new FormData();
+    fdEmptyRows.left = new FormAttachment( middle, 0 );
+    fdEmptyRows.top = new FormAttachment( wSkipRows, margin );
+    fdEmptyRows.right = new FormAttachment( 100, 0 );
+    wEmptyRows.setLayoutData( fdEmptyRows );
+
+    // Use AppendLines
+    Label wlOmitHeader = new Label( writeToExistingGroup, SWT.RIGHT );
+    wlOmitHeader.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.OmitHeader.Label" ) );
+    FormData fdlOmitHeader = new FormData();
+    fdlOmitHeader.left = new FormAttachment( 0, 0 );
+    fdlOmitHeader.top = new FormAttachment( wEmptyRows, margin );
+    fdlOmitHeader.right = new FormAttachment( middle, -margin );
+    wlOmitHeader.setLayoutData( fdlOmitHeader );
+    wOmitHeader = new Button( writeToExistingGroup, SWT.CHECK );
+    wOmitHeader.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.OmitHeader.Tooltip" ) );
+    FormData fdOmitHeader = new FormData();
+    fdOmitHeader.left = new FormAttachment( middle, 0 );
+    fdOmitHeader.top = new FormAttachment( wEmptyRows, margin );
+    fdOmitHeader.right = new FormAttachment( 100, 0 );
+    wOmitHeader.setLayoutData( fdOmitHeader );
+    wOmitHeader.addSelectionListener( lsSel );
+
+    FormData fdWriteToExistingGroup = new FormData();
+    fdWriteToExistingGroup.left = new FormAttachment( 0, margin );
+    fdWriteToExistingGroup.top = new FormAttachment( wContentGroup, margin );
+    fdWriteToExistingGroup.right = new FormAttachment( 100, -margin );
+    writeToExistingGroup.setLayoutData( fdWriteToExistingGroup );
+
+    // ///////////////////////////////////////////////////////////
+    // / END OF Write to existing Group GROUP
+    // ///////////////////////////////////////////////////////////
+
+    Group fieldGroup = new Group( wContentComp, SWT.SHADOW_NONE );
+    fieldGroup.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.fieldGroup.Label" ) );
+
+    FormLayout fieldGroupgroupLayout = new FormLayout();
+    fieldGroupgroupLayout.marginWidth = 10;
+    fieldGroupgroupLayout.marginHeight = 10;
+    fieldGroup.setLayout( fieldGroupgroupLayout );
+
+    wGet = new Button( fieldGroup, SWT.PUSH );
+    wGet.setText( BaseMessages.getString( PKG, "System.Button.GetFields" ) );
+    wGet.setToolTipText( BaseMessages.getString( PKG, "System.Tooltip.GetFields" ) );
+
+    wMinWidth = new Button( fieldGroup, SWT.PUSH );
+    wMinWidth.setText( BaseMessages.getString( PKG, "ExcelWriterDialog.MinWidth.Button" ) );
+    wMinWidth.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.MinWidth.Tooltip" ) );
+
+    setButtonPositions( new Button[] { wGet, wMinWidth }, margin, null );
+
+    final int FieldsRows = input.getOutputFields().length;
+
+    // Prepare a list of possible formats, filtering reserved internal formats away
+    String[] formats = BuiltinFormats.getAll();
+
+    List<String> allFormats = Arrays.asList( BuiltinFormats.getAll() );
+    List<String> nonReservedFormats = new ArrayList<String>( allFormats.size() );
+
+    for ( String format : allFormats ) {
+      if ( !format.startsWith( "reserved" ) ) {
+        nonReservedFormats.add( format );
+      }
+    }
+
+    Collections.sort( nonReservedFormats );
+    formats = nonReservedFormats.toArray( new String[0] );
+
+    colinf =
+      new ColumnInfo[] {
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.NameColumn.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.TypeColumn.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, ValueMetaFactory.getValueMetaNames() ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.FormatColumn.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, formats ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.UseStyleCell.Column" ),
+          ColumnInfo.COLUMN_TYPE_TEXT ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.TitleColumn.Column" ), ColumnInfo.COLUMN_TYPE_TEXT ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.UseTitleStyleCell.Column" ),
+          ColumnInfo.COLUMN_TYPE_TEXT ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.FormulaField.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "N", "Y" }, true ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.HyperLinkField.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.CommentField.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ),
+        new ColumnInfo(
+          BaseMessages.getString( PKG, "ExcelWriterDialog.CommentAuthor.Column" ),
+          ColumnInfo.COLUMN_TYPE_CCOMBO, new String[] { "" }, false ) };
+
+    wFields =
+      new TableView(
+        transMeta, fieldGroup, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI, colinf, FieldsRows, lsMod, props );
+
+    fdFields = new FormData();
+    fdFields.left = new FormAttachment( 0, 0 );
+    fdFields.top = new FormAttachment( 0, 0 );
+    fdFields.right = new FormAttachment( 100, 0 );
+    fdFields.bottom = new FormAttachment( wGet, -margin );
+    wFields.setLayoutData( fdFields );
+    wFields.addModifyListener( lsMod );
+
+    // Search the fields in the background
+
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        StepMeta stepMeta = transMeta.findStep( stepname );
+        if ( stepMeta != null ) {
+          try {
+            RowMetaInterface row = transMeta.getPrevStepFields( stepMeta );
+
+            // Remember these fields...
+            for ( int i = 0; i < row.size(); i++ ) {
+              inputFields.put( row.getValueMeta( i ).getName(), Integer.valueOf( i ) );
+            }
+            setComboBoxes();
+          } catch ( KettleException e ) {
+            logError( BaseMessages.getString( PKG, "System.Dialog.GetFieldsFailed.Message" ) );
+          }
+        }
+      }
+    };
+    new Thread( runnable ).start();
+
+    FormData fdFieldGroup = new FormData();
+    fdFieldGroup.left = new FormAttachment( 0, margin );
+    fdFieldGroup.top = new FormAttachment( writeToExistingGroup, margin );
+    fdFieldGroup.bottom = new FormAttachment( 100, 0 );
+    fdFieldGroup.right = new FormAttachment( 100, -margin );
+    fieldGroup.setLayoutData( fdFieldGroup );
+
+    fdContentComp = new FormData();
+    fdContentComp.left = new FormAttachment( 0, 0 );
+    fdContentComp.top = new FormAttachment( 0, 0 );
+    fdContentComp.right = new FormAttachment( 100, 0 );
+    fdContentComp.bottom = new FormAttachment( 100, 0 );
+    wContentComp.setLayoutData( fdContentComp );
+
+    wContentComp.layout();
+    wContentTab.setControl( wContentComp );
+
+    fdTabFolder = new FormData();
+    fdTabFolder.left = new FormAttachment( 0, 0 );
+    fdTabFolder.top = new FormAttachment( 0, 0 );
+    fdTabFolder.right = new FormAttachment( 100, 0 );
+    fdTabFolder.bottom = new FormAttachment( 100, 0 );
+    wTabFolder.setLayoutData( fdTabFolder );
+
+    FormData fdSc = new FormData();
+    fdSc.left = new FormAttachment( 0, 0 );
+    fdSc.top = new FormAttachment( wStepname, margin );
+    fdSc.right = new FormAttachment( 100, 0 );
+    fdSc.bottom = new FormAttachment( 100, -50 );
+    sc.setLayoutData( fdSc );
+
+    sc.setContent( wTabFolder );
+  }
+
+  private void createContentGroup( SelectionAdapter lsSel, ModifyListener lsMod, int middle, int margin,
+      Group wContentGroup ) {
+    // starting cell
+    Label wlStartingCell = createLabel( wContentGroup, "ExcelWriterDialog.StartingCell.Label" );
+    wStartingCell = new TextVar( transMeta, wContentGroup, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
+    wStartingCell.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.StartingCell.Tooltip" ) );
+    wStartingCell.addModifyListener( lsMod );
+    Control lastWidget = layoutLabelControlPair( wlStartingCell, wStartingCell );
+
+    // row writing method line
+    Label wlRowWritingMethod = createLabel( wContentGroup, "ExcelWriterDialog.RowWritingMethod.Label" );
+    wRowWritingMethod = new CCombo( wContentGroup, SWT.LEFT | SWT.BORDER | SWT.SINGLE | SWT.READ_ONLY );
+    lastWidget = layoutLabelControlPair( wlRowWritingMethod, wRowWritingMethod, lastWidget );
+
+    String overwriteLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.Overwrite.Label" );
+    String pushDownLabel = BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.PushDown.Label" );
+    wRowWritingMethod.setItems( new String[] { overwriteLabel, pushDownLabel } );
+    wRowWritingMethod.setData( overwriteLabel, ExcelWriterStepMeta.ROW_WRITE_OVERWRITE );
+    wRowWritingMethod.setData( pushDownLabel, ExcelWriterStepMeta.ROW_WRITE_PUSH_DOWN );
+    wRowWritingMethod.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.RowWritingMethod.Tooltip" ) );
+    wRowWritingMethod.addModifyListener( lsMod );
+
+    Label wlHeader = createLabel( wContentGroup, "ExcelWriterDialog.Header.Label" );
+
+    wHeader = new Button( wContentGroup, SWT.CHECK );
+    wHeader.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Header.Tooltip" ) );
+    wHeader.addSelectionListener( new SelectionAdapter() {
+      @Override
+      public void widgetSelected( SelectionEvent e ) {
+        input.setChanged();
+        enableHeader();
+      }
+    } );
+    lastWidget = layoutLabelControlPair( wlHeader, wHeader, lastWidget );
+
+    Label wlFooter = createLabel( wContentGroup, "ExcelWriterDialog.Footer.Label" );
+    wFooter = new Button( wContentGroup, SWT.CHECK );
+    lastWidget = layoutLabelControlPair( wlFooter, wFooter, lastWidget );
+    wFooter.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.Footer.Tooltip" ) );
+    wFooter.addSelectionListener( lsSel );
+
+    // auto size columns?
+    Label wlAutoSize = createLabel( wContentGroup, "ExcelWriterDialog.AutoSize.Label", "ExcelWriterDialog.AutoSize.Tooltip" );
+    wAutoSize = new Button( wContentGroup, SWT.CHECK );
+    wAutoSize.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.AutoSize.Tooltip" ) );
+    lastWidget = layoutLabelControlPair( wlAutoSize, wAutoSize, lastWidget );
+    wAutoSize.addSelectionListener( lsSel );
+
+    Label wlRetainNullValues = createLabel( wContentGroup, "ExcelWriterDialog.NullIsBlank.Label" );
+    wRetainNullValues = new Button( wContentGroup, SWT.CHECK );
+    wRetainNullValues.setToolTipText( BaseMessages.getString( PKG, "ExcelWriterDialog.NullIsBlank.Tooltip" ) );
+    wRetainNullValues.addSelectionListener( lsSel );
+    lastWidget = layoutLabelControlPair( wlRetainNullValues, wRetainNullValues, lastWidget );
+
+    // force formula recalculation?
+    Label wlForceFormulaRecalculation = createLabel(wContentGroup, "ExcelWriterDialog.ForceFormulaRecalculation.Label" );
+    wForceFormulaRecalculation = new Button( wContentGroup, SWT.CHECK );
+    wForceFormulaRecalculation.setToolTipText( BaseMessages.getString(
+      PKG, "ExcelWriterDialog.ForceFormulaRecalculation.Tooltip" ) );
+    lastWidget = layoutLabelControlPair(wlForceFormulaRecalculation, wForceFormulaRecalculation, lastWidget );
+    wForceFormulaRecalculation.addSelectionListener( lsSel );
+
+    // leave existing styles alone?
+    Label wlLeaveExistingStylesUnchanged = createLabel( wContentGroup, "ExcelWriterDialog.LeaveExistingStylesUnchanged.Label", "ExcelWriterDialog.LeaveExistingStylesUnchanged.Tooltip" );
+    wLeaveExistingStylesUnchanged = new Button( wContentGroup, SWT.CHECK );
+    wLeaveExistingStylesUnchanged.setToolTipText( BaseMessages.getString(
+      PKG, "ExcelWriterDialog.LeaveExistingStylesUnchanged.Tooltip" ) );
+    lastWidget = layoutLabelControlPair( wlLeaveExistingStylesUnchanged, wLeaveExistingStylesUnchanged, lastWidget );
+    wLeaveExistingStylesUnchanged.addSelectionListener( lsSel );
+
+    // extend data validation
+    Label lblExtendDataValidation = createLabel( wContentGroup, "ExcelWriterDialog.ExtendDataValidation.Label" );
+    wExtendDataValidation = new Button( wContentGroup, SWT.CHECK );
+    wExtendDataValidation.setToolTipText( getMsg( "ExcelWriterDialog.Injection.EXTEND_DATA_VALIDATION" ) );
+    lastWidget = layoutLabelControlPair( lblExtendDataValidation, wExtendDataValidation, lastWidget );
+    wExtendDataValidation.addSelectionListener( lsSel );
+
+  }
+
+  private String getMsg( String key ) {
+    return BaseMessages.getString( PKG, key );
+  }
+
   private void enableAppend() {
     wSplitEvery.setEnabled( !wAppendLines.getSelection() );
   }
@@ -1573,6 +1347,49 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wAddTime.setEnabled( !wSpecifyFormat.getSelection() );
     wlAddTime.setEnabled( !wSpecifyFormat.getSelection() );
 
+  }
+
+
+  private Label createLabel( Composite parent, String labelKey ) {
+    return createLabel( parent, labelKey, Optional.empty() );
+  }
+
+  private Label createLabel( Composite parent, String labelKey, String tooltipKey ) {
+    return createLabel( parent, labelKey, Optional.of( tooltipKey ) );
+  }
+
+  private Label createLabel( Composite parent, String labelKey, Optional<String> tooltipKey ) {
+    Label label = new Label(parent, SWT.RIGHT );
+    label.setText( BaseMessages.getString( PKG, labelKey ) );
+    tooltipKey.ifPresent( tooltip -> label.setToolTipText(BaseMessages.getString( PKG, tooltip ) ) );
+    return label;
+  }
+
+  private Control layoutLabelControlPair( Label label, Control control, Control above ) {
+    return layoutLabelControlPair( label, control, Optional.of( above ) );
+  }
+
+  private Control layoutLabelControlPair( Label label, Control control ) {
+    return layoutLabelControlPair( label, control, Optional.empty() );
+  }
+
+  private Control layoutLabelControlPair( Label label, Control control, Optional<Control> above ) {
+    int margin = Const.MARGIN;
+    FormDataBuilder fdbLabel = fd().left().right( middle, -margin );
+    setTop( fdbLabel, above, margin );
+    label.setLayoutData( fdbLabel.result() );
+    FormDataBuilder fdControl = fd().left( middle, 0 ).right();
+    setTop( fdControl, above, margin );
+    control.setLayoutData( fdControl.result() );
+    return control;
+  }
+
+  private FormDataBuilder setTop( FormDataBuilder fdb, Optional<Control> above, int margin ) {
+    return above.isPresent() ? fdb.top( above.get(), margin ) : fdb.top( 0, margin );
+  }
+
+  private FormDataBuilder fd() {
+    return new FormDataBuilder();
   }
 
   protected void setComboBoxes() {
@@ -1612,7 +1429,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
       }
 
     }
-
+    wCreateParentFolder.setSelection( input.isCreateParentFolders() );
     wStreamData.setSelection( input.isStreamingData() );
     wSplitEvery.setText( "" + input.getSplitEvery() );
     wEmptyRows.setText( "" + input.getAppendEmpty() );
@@ -1623,6 +1440,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     wOmitHeader.setSelection( input.isAppendOmitHeader() );
     wForceFormulaRecalculation.setSelection( input.isForceFormulaRecalculation() );
     wLeaveExistingStylesUnchanged.setSelection( input.isLeaveExistingStylesUnchanged() );
+    wExtendDataValidation.setSelection( input.isExtendDataValidationRanges() );
 
     if ( input.getStartingCell() != null ) {
       wStartingCell.setText( input.getStartingCell() );
@@ -1638,6 +1456,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
 
     wAddToResult.setSelection( input.isAddToResultFiles() );
     wAutoSize.setSelection( input.isAutoSizeColums() );
+    wRetainNullValues.setSelection( input.isRetainNullValues() );
     wIfFileExists.select( ExcelWriterStepMeta.IF_FILE_EXISTS_REUSE.equals( input.getIfFileExists() ) ? 1 : 0 );
     wIfSheetExists.select( ExcelWriterStepMeta.IF_SHEET_EXISTS_REUSE.equals( input.getIfSheetExists() ) ? 1 : 0 );
     wRowWritingMethod.select( ExcelWriterStepMeta.ROW_WRITE_PUSH_DOWN.equals( input.getRowWritingMethod() )
@@ -1731,6 +1550,7 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
 
   private void getInfo( ExcelWriterStepMeta tfoi ) {
     tfoi.setFileName( wFilename.getText() );
+    tfoi.setCreateParentFolders( wCreateParentFolder.getSelection() );
     tfoi.setStreamingData( wStreamData.getSelection() );
     tfoi.setDoNotOpenNewFileInit( wDoNotOpenNewFileInit.getSelection() );
     tfoi.setAppendOmitHeader( wOmitHeader.getSelection() );
@@ -1750,10 +1570,12 @@ public class ExcelWriterStepDialog extends BaseStepDialog implements StepDialogI
     tfoi.setRowWritingMethod( (String) wRowWritingMethod.getData( wRowWritingMethod.getText() ) );
     tfoi.setForceFormulaRecalculation( wForceFormulaRecalculation.getSelection() );
     tfoi.setLeaveExistingStylesUnchanged( wLeaveExistingStylesUnchanged.getSelection() );
+    tfoi.setExtendDataValidationRanges( wExtendDataValidation.getSelection() );
 
     tfoi.setDateTimeFormat( wDateTimeFormat.getText() );
     tfoi.setSpecifyFormat( wSpecifyFormat.getSelection() );
     tfoi.setAutoSizeColums( wAutoSize.getSelection() );
+    tfoi.setRetainNullValues( wRetainNullValues.getSelection() );
 
     tfoi.setAddToResultFiles( wAddToResult.getSelection() );
 

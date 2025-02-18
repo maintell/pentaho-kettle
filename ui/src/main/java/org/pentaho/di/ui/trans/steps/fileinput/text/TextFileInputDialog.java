@@ -1,25 +1,16 @@
 //CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.trans.steps.fileinput.text;
 
@@ -698,8 +689,9 @@ public class TextFileInputDialog extends BaseStepDialog implements StepDialogInt
     TextFileInputMeta tfii = new TextFileInputMeta();
     getInfo( tfii, true );
     String[] files =
-        FileInputList.createFilePathList( transMeta, tfii.inputFiles.fileName, tfii.inputFiles.fileMask,
-            tfii.inputFiles.excludeFileMask, tfii.inputFiles.fileRequired, tfii.inputFiles.includeSubFolderBoolean() );
+        FileInputList.createFilePathList( transMeta.getBowl(), transMeta, tfii.inputFiles.fileName,
+            tfii.inputFiles.fileMask, tfii.inputFiles.excludeFileMask, tfii.inputFiles.fileRequired,
+            tfii.inputFiles.includeSubFolderBoolean() );
 
     if ( files != null && files.length > 0 ) {
       EnterSelectionDialog esd = new EnterSelectionDialog( shell, files, "Files read", "Files read:" );
@@ -2698,7 +2690,7 @@ public class TextFileInputDialog extends BaseStepDialog implements StepDialogInt
     getInfo( info, true );
 
     try {
-      if ( info.getFileInputList( transMeta ).nrOfFiles() > 0 ) {
+      if ( info.getFileInputList( transMeta.getBowl(), transMeta ).nrOfFiles() > 0 ) {
         String shellText = BaseMessages.getString( PKG, "TextFileInputDialog.LinesToView.DialogTitle" );
         String lineText = BaseMessages.getString( PKG, "TextFileInputDialog.LinesToView.DialogMessage" );
         EnterNumberDialog end = new EnterNumberDialog( shell, 100, shellText, lineText );
@@ -2741,7 +2733,7 @@ public class TextFileInputDialog extends BaseStepDialog implements StepDialogInt
   private List<String> getFirst( int nrlines, boolean skipHeaders ) throws KettleException {
     TextFileInputMeta meta = new TextFileInputMeta();
     getInfo( meta, true );
-    FileInputList textFileList = meta.getFileInputList( transMeta );
+    FileInputList textFileList = meta.getFileInputList( transMeta.getBowl(), transMeta );
 
     InputStream fi;
     CompressionInputStream f = null;

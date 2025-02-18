@@ -1,38 +1,35 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024-2025 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.provider.UriParser;
 import org.apache.http.conn.util.InetAddressUtils;
+import org.pentaho.di.core.bowl.Bowl;
+import org.pentaho.di.core.bowl.DefaultBowl;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.core.util.EnvUtil;
 import org.pentaho.di.core.util.Utils;
+import org.pentaho.di.core.vfs.IKettleVFS;
+import org.pentaho.di.core.vfs.KettleVFS;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.laf.BasePropertyHandler;
 import org.pentaho.di.version.BuildVersion;
@@ -1200,6 +1197,9 @@ public class Const {
   // See PDI-17203 for details
   public static final String KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_VALUES = "KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_VALUES";
 
+  // See PDI-19254 for details
+  public static final String KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_IF_FIELD_VALUES = "KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_IF_FIELD_VALUES";
+
   // See PDI-17980 for details
   public static final String KETTLE_COMPATIBILITY_USE_JDBC_METADATA = "KETTLE_COMPATIBILITY_USE_JDBC_METADATA";
 
@@ -1214,6 +1214,9 @@ public class Const {
 
   // See PDI-19138 for details
   public static final String KETTLE_JSON_INPUT_INCLUDE_NULLS = "KETTLE_JSON_INPUT_INCLUDE_NULLS";
+
+  // See PDI-17309 for details
+  public static final String KETTLE_COMPATIBILITY_CONCAT_FIELDS_SPLIT_ROWS_HEADER_OFFSET = "KETTLE_COMPATIBILITY_CONCAT_FIELDS_SPLIT_ROWS_HEADER_OFFSET";
 
   /**
    * This property when set to Y force the same output file even when splits is required.
@@ -1414,6 +1417,10 @@ public class Const {
   public static final String KETTLE_USE_AWS_DEFAULT_CREDENTIALS = "KETTLE_USE_AWS_DEFAULT_CREDENTIALS";
 
   /**
+   * This environment variable allows to enable s3 legacy URI. Please check: PDI-19732.
+   */
+  public static final String KETTLE_COMPATIBILITY_ALLOW_S3_LEGACY_URI = "KETTLE_COMPATIBILITY_ALLOW_S3_LEGACY_URI";
+  /**
    * <p>This environment variable is used by streaming consumer steps to limit the total of concurrent batches across transformations.</p>
    */
   public static final String SHARED_STREAMING_BATCH_POOL_SIZE = "SHARED_STREAMING_BATCH_POOL_SIZE";
@@ -1438,6 +1445,25 @@ public class Const {
     }
     return driversLocation;
   }
+
+  /**
+   * File used to prevent multiple instances of kettle from starting at the same time to avoid file
+   * system contention when building karaf sys/cache directories.
+   */
+  public static final String KARAF_BOOT_LOCK_FILE = "karaf.boot.lock";
+  public static final String KARAF_BOOT_LOCK_WAIT_TIME = "KARAF_BOOT_LOCK_WAIT_TIME";
+  /**
+   * Flag to indicate whether to check for and set a boot lock file when starting karaf, or proceed without the lock.
+   * Default behavior is to not use a lock file and boot without checking or waiting.
+   */
+  public static final String KARAF_WAIT_FOR_BOOT_LOCK_FILE = "KARAF_WAIT_FOR_BOOT_LOCK_FILE";
+
+  /**
+   * Determines whether failure to find the HDFS file system is a fatal error in Hadoop File Input step.
+   * Default (legacy) behavior is false.
+   */
+  public static final String KETTLE_FATAL_ERROR_ON_HDFS_NOT_FOUND = "KETTLE_FATAL_ERROR_ON_HDFS_NOT_FOUND";
+  public static final String KETTLE_FATAL_ERROR_ON_HDFS_NOT_FOUND_DEFAULT = "N";
 
   /**
    * <p>This environment is used to specify how many attempts before failing to read an XML from within a Zip file
@@ -1628,11 +1654,75 @@ public class Const {
   public static final String KETTLE_USE_META_FILE_CACHE_DEFAULT = "N";
 
   /**
+   * If true, do not append real-time logging during Job execution. This prevents the logging from growing too large
+   * in memory, especially for long-running jobs or jobs with a large number of subjobs/subtrans
+   * However, if set to "Y", it would prevent users from seeing any log data visible in tools like the Pentaho Ops Mart,
+   * the kettle job status monitor, and other similar tools. It does not change anything regarding what data gets
+   * written out via log4j such as the tomcat catalina.out log, or pentaho.log, etc.
+   */
+  public static final String KETTLE_SKIP_JOB_LOGGING = "KETTLE_SKIP_JOB_LOGGING";
+  public static final String KETTLE_SKIP_JOB_LOGGING_DEFAULT = "N";
+
+  /**
    * Value used to replace nulls in Python Executor Step Input Lines. Empty will mean no replacement will be done
    */
   public static final String KETTLE_PYTHON_STEP_REPLACE_NULLS = "KETTLE_PYTHON_STEP_REPLACE_NULLS";
 
+  /**
+   Value to revert the behaviour of the flag "Execute every Input Row" behavior back to executing even with 0 rows as job input mode.
+  */
+  public static final String COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT = "COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT";
 
+  /**
+   Value to revert the behaviour of the flag "Execute every Input Row" behavior back to executing even with 0 rows as trans input mode.
+   */
+    public static final String COMPATIBILITY_TRANS_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT = "COMPATIBILITY_TRANS_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT";
+
+  /**
+   Value to show/not show the Warning messages regarding the configured behaviour of the flag "Execute every Input Row"
+   */
+  public static final String COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW = "COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW";
+
+  /**
+   Value to revert the behaviour of the flag "Execute every Input Row" behavior back to executing even with 0 rows as job input mode.
+   */
+  public static final String KETTLE_COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT = "KETTLE_COMPATIBILITY_JOB_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT";
+
+  /**
+   Value to revert the behaviour of the flag "Execute every Input Row" behavior back to executing even with 0 rows as trans input mode.
+   */
+  public static final String KETTLE_COMPATIBILITY_TRANS_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT = "KETTLE_COMPATIBILITY_TRANS_EXECUTE_FOR_EVERY_ROW_ON_NO_INPUT";
+
+  /**
+   Value to show/not show the Warning messages regarding the configured behaviour of the flag "Execute every Input Row"
+   */
+  public static final String KETTLE_COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW = "KETTLE_COMPATIBILITY_SHOW_WARNINGS_EXECUTE_EVERY_INPUT_ROW";
+
+  /**
+   Value to execute a temporary generated file or the original script in Shell step
+   */
+  public static final String KETTLE_EXECUTE_TEMPORARY_GENERATED_FILE = "KETTLE_EXECUTE_TEMPORARY_GENERATED_FILE";
+
+  /**
+   Value that overrides gather performance metrics checkbox value in scheduler dialog
+   */
+  public static final String KETTLE_PUC_SCHEDULE_GATHER_METRICS_OVERRIDE_VALUE = "KETTLE_PUC_SCHEDULE_GATHER_METRICS_OVERRIDE_VALUE";
+
+  /**
+   Value to Configure if we want to export only the used connections to the XML file
+   */
+  public static final String STRING_ONLY_USED_DB_TO_XML = "STRING_ONLY_USED_DB_TO_XML";
+
+  /**
+   Value to Configure if we want to disable/grayed out internal variables, and remove from the new/edit schedule.
+   */
+  public static final String HIDE_INTERNAL_VARIABLES = "PENTAHO_SCHEDULER_HIDE_INTERNAL_VARIABLES";
+  public static final String HIDE_INTERNAL_VARIABLES_DEFAULT = "Y";
+
+  /**
+   Set the maximum allowed size for byte arrays in Apache POI.
+   */
+  public static final String POI_BYTE_ARRAY_MAX_SIZE = "POI_BYTE_ARRAY_MAX_SIZE";
 
   /**
    * rounds double f to any number of places after decimal point Does arithmetic using BigDecimal class to avoid integer
@@ -2666,6 +2756,22 @@ public class Const {
   }
 
   /**
+   * Implements Oracle style NVL function for generic arguments
+   *
+   * @param source
+   *          The source argument
+   * @param def
+   *          The default value in case source is null
+   * @return source if source is not null, otherwise return def
+   */
+  public static <T> T NVL( T source, T def ) {
+    if ( source == null ) {
+      return def;
+    }
+    return source;
+  }
+
+  /**
    * Return empty string "" in case the given parameter is null, otherwise return the same value.
    *
    * @param source
@@ -3364,8 +3470,22 @@ public class Const {
   }
 
   public static String createName( String filename ) {
+    return createName( DefaultBowl.getInstance() , filename );
+  }
+
+  public static String createName( Bowl bowl, String filename ) {
     if ( Utils.isEmpty( filename ) ) {
       return filename;
+    }
+
+    IKettleVFS vfs = KettleVFS.getInstance( bowl );
+    try {
+      FileName fname = vfs.resolveURI( filename );
+      if ( fname != null ) {
+        filename = fname.getPathDecoded();
+      }
+    } catch ( FileSystemException | KettleException ex ) {
+      // must not have been a vfs URI
     }
 
     String pureFilename = filenameOnly( filename );

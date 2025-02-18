@@ -1,19 +1,15 @@
-/*!
- * Copyright 2010 - 2017 Hitachi Vantara.  All rights reserved.
+/*! ******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Pentaho
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.repository.pur;
 
@@ -53,6 +49,13 @@ public class AbsSecurityProviderTest {
   }
 
   @Test( expected = KettleException.class )
+  public void exceptionThrown_WhenOperationNotAllowed_ExecuteSchedulesOperation() throws Exception {
+
+    setOperationPermissions( IAbsSecurityProvider.SCHEDULER_EXECUTE_ACTION, false );
+    provider.validateAction( RepositoryOperation.SCHEDULER_EXECUTE );
+  }
+
+  @Test( expected = KettleException.class )
   public void exceptionThrown_WhenOperationNotAllowed_CreateOperation() throws Exception {
 
     setOperationPermissions( IAbsSecurityProvider.CREATE_CONTENT_ACTION, false );
@@ -61,7 +64,7 @@ public class AbsSecurityProviderTest {
 
   @Test( expected = KettleException.class )
   public void exceptionThrown_WhenOperationNotAllowed_DatasourcesOperation() throws Exception {
-    setOperationPermissions( IAbsSecurityProvider.MODIFY_DATABASE_ACTION, false);
+    setOperationPermissions( IAbsSecurityProvider.MODIFY_DATABASE_ACTION, false );
     provider.validateAction( RepositoryOperation.MODIFY_DATABASE );
   }
 
@@ -80,6 +83,13 @@ public class AbsSecurityProviderTest {
   }
 
   @Test
+  public void noExceptionThrown_WhenOperationIsAllowed_ExecuteSchedulesOperation() throws Exception {
+
+    setOperationPermissions( IAbsSecurityProvider.SCHEDULER_EXECUTE_ACTION, true );
+    provider.validateAction( RepositoryOperation.SCHEDULER_EXECUTE );
+  }
+
+  @Test
   public void noExceptionThrown_WhenOperationIsAllowed_ExecuteOperation() throws Exception {
 
     setOperationPermissions( IAbsSecurityProvider.CREATE_CONTENT_ACTION, true );
@@ -88,7 +98,7 @@ public class AbsSecurityProviderTest {
 
   @Test
   public void noExceptionThrown_WhenOperationNotAllowed_DatasourcesOperation() throws Exception {
-    setOperationPermissions( IAbsSecurityProvider.MODIFY_DATABASE_ACTION, true);
+    setOperationPermissions( IAbsSecurityProvider.MODIFY_DATABASE_ACTION, true );
     provider.validateAction( RepositoryOperation.MODIFY_DATABASE );
   }
 

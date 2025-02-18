@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.loadfileinput;
 
@@ -86,7 +77,7 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
     meta.setFileRequired( new String[] { "N" } );
     meta.setIncludeSubFolders( new String[] { "N" } );
     meta.setRowLimit( 0 );
-    meta.setIsInFields( false );
+    meta.setFileInFields( false );
     meta.setDynamicFilenameField( null );
     meta.setShortFileNameField( null );
     meta.setPathField( null );
@@ -132,7 +123,7 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
             "uriNameFieldName", "rootUriNameFieldName", "extensionFieldName", "includeSubFolders", "fileName",
             "fileMask", "excludeFileMask", "fileRequired", "inputFields" );
 
-    Map<String, String> getterMap = new HashMap<String, String>() {
+    Map<String, String> getterMap = new HashMap<>() {
       {
         put( "includeFilename", "getIncludeFilename" );
         put( "filenameField", "getFilenameField" );
@@ -161,7 +152,7 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
       }
     };
 
-    Map<String, String> setterMap = new HashMap<String, String>() {
+    Map<String, String> setterMap = new HashMap<>() {
       {
         put( "includeFilename", "setIncludeFilename" );
         put( "filenameField", "setFilenameField" );
@@ -189,14 +180,15 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
         put( "inputFields", "setInputFields" );
       }
     };
+
     FieldLoadSaveValidator<String[]> stringArrayLoadSaveValidator =
-        new ArrayLoadSaveValidator<String>( new StringLoadSaveValidator(), 5 );
+        new ArrayLoadSaveValidator<>( new StringLoadSaveValidator(), 5 );
 
     FieldLoadSaveValidator<LoadFileInputField[]> lfifArrayLoadSaveValidator =
-        new ArrayLoadSaveValidator<LoadFileInputField>( new LoadFileInputFieldLoadSaveValidator(), 5 );
+        new ArrayLoadSaveValidator<>( new LoadFileInputFieldLoadSaveValidator(), 5 );
 
     FieldLoadSaveValidator<String[]> YNArrayLoadSaveValidator =
-        new ArrayLoadSaveValidator<String>( new YNLoadSaveValidator(), 5 );
+        new ArrayLoadSaveValidator<>( new YNLoadSaveValidator(), 5 );
 
     Map<String, FieldLoadSaveValidator<?>> attrValidatorMap = new HashMap<String, FieldLoadSaveValidator<?>>();
     attrValidatorMap.put( "includeSubFolders", stringArrayLoadSaveValidator );
@@ -222,7 +214,6 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
     }
   }
 
-
   @Test
   public void testSerialization() throws KettleException {
     loadSaveTester.testSerialization();
@@ -230,6 +221,7 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
 
   public class LoadFileInputFieldLoadSaveValidator implements FieldLoadSaveValidator<LoadFileInputField> {
     final Random rand = new Random();
+
     @Override
     public LoadFileInputField getTestObject() {
       LoadFileInputField rtn = new LoadFileInputField();
@@ -246,6 +238,7 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
       rtn.setLength( rand.nextInt( 50 ) );
       return rtn;
     }
+
     @Override
     public boolean validateTestObject( LoadFileInputField testObject, Object actualObj ) {
       if ( !( actualObj instanceof LoadFileInputField ) ) {
@@ -258,5 +251,4 @@ public class LoadFileInputMetaTest implements InitializerInterface<StepMetaInter
       return ( tst1 && tst2 );
     }
   }
-
 }

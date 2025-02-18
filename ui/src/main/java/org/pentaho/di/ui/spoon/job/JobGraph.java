@@ -1,25 +1,16 @@
 // CHECKSTYLE:FileLength:OFF
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.spoon.job;
 
@@ -1477,6 +1468,7 @@ public class JobGraph extends AbstractGraph implements XulEventHandler, Redrawab
    * Allows for magnifying to any percentage entered by the user...
    */
   private void readMagnification() {
+    float previousMagnification = magnification;
     String possibleText = zoomLabel.getText();
     possibleText = possibleText.replace( "%", "" );
 
@@ -1484,13 +1476,17 @@ public class JobGraph extends AbstractGraph implements XulEventHandler, Redrawab
     try {
       possibleFloatMagnification = Float.parseFloat( possibleText ) / 100;
       magnification = possibleFloatMagnification;
+      if ( magnification < MIN_ZOOM || magnification > MAX_ZOOM ) {
+        magnification = previousMagnification;
+        log.logError( "Invalid zoom value: " + zoomLabel.getText() );
+        throw new IllegalArgumentException( );
+      }
       if ( zoomLabel.getText().indexOf( '%' ) < 0 ) {
         zoomLabel.setText( zoomLabel.getText().concat( "%" ) );
       }
     } catch ( Exception e ) {
       MessageBox mb = new MessageBox( shell, SWT.YES | SWT.ICON_ERROR );
-      mb.setMessage( BaseMessages.getString( PKG, "TransGraph.Dialog.InvalidZoomMeasurement.Message", zoomLabel
-        .getText() ) );
+      mb.setMessage( BaseMessages.getString( PKG, "TransGraph.Dialog.InvalidZoomMeasurement.Message", String.valueOf( (int) ( MIN_ZOOM * 100 ) ), String.valueOf( (int) MAX_ZOOM * 100 ) ) );
       mb.setText( BaseMessages.getString( PKG, "TransGraph.Dialog.InvalidZoomMeasurement.Title" ) );
       mb.open();
     }
@@ -2521,7 +2517,7 @@ public class JobGraph extends AbstractGraph implements XulEventHandler, Redrawab
   protected void loadReferencedObject( JobEntryCopy jobEntryCopy, int index ) {
     try {
       Object referencedMeta =
-        jobEntryCopy.getEntry().loadReferencedObject( index, spoon.rep, spoon.metaStore, jobMeta );
+          jobEntryCopy.getEntry().loadReferencedObject( index, spoon.rep, spoon.getMetaStore(), jobMeta );
       if ( referencedMeta == null ) {
         // Compatible re-try for older plugins.
         referencedMeta =
@@ -2712,7 +2708,7 @@ public class JobGraph extends AbstractGraph implements XulEventHandler, Redrawab
           // Open the file or create a new one!
           //
           if ( KettleVFS.fileExists( exactFilename ) ) {
-            launchJobMeta = new JobMeta( jobMeta, exactFilename, spoon.rep, spoon.metaStore, null );
+            launchJobMeta = new JobMeta( jobMeta, exactFilename, spoon.rep, spoon.getMetaStore(), null );
           } else {
             launchJobMeta = new JobMeta();
           }

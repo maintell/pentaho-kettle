@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 /**
  * Author = Shailesh Ahuja
@@ -42,7 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
-import org.apache.poi.xssf.model.SharedStringsTable;
+import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTXf;
@@ -87,7 +78,7 @@ public class StaxPoiSheet implements KSheet {
   private KCell[] currentRowCells;
 
   // full shared strings table
-  private SharedStringsTable sst;
+  private SharedStrings sst;
   // custom styles
   private StylesTable styles;
 
@@ -137,8 +128,10 @@ public class StaxPoiSheet implements KSheet {
                     event = sheetReader.next();
                     if ( event == XMLStreamConstants.START_ELEMENT && sheetReader.getLocalName().equals( TAG_V ) ) {
                       int idx = Integer.parseInt( sheetReader.getElementText() );
-                      String content = new XSSFRichTextString( sst.getEntryAt( idx ) ).toString();
-                      headerRow.add( content );
+                      if (sst != null && sst.getCount() > 0) {
+                        String content = new XSSFRichTextString(sst.getItemAt(idx).getString()).toString();
+                        headerRow.add( content );
+                      }
                       break;
                     }
                   }
@@ -287,7 +280,9 @@ public class StaxPoiSheet implements KSheet {
             // read content as string
             if ( cellType != null && cellType.equals( "s" ) ) {
               int idx = Integer.parseInt( sheetReader.getElementText() );
-              content = new XSSFRichTextString( sst.getEntryAt( idx ) ).toString();
+              if (sst != null && sst.getCount() > 0) {
+                content = new XSSFRichTextString(sst.getItemAt(idx).getString()).toString();
+              }
             } else {
               content = sheetReader.getElementText();
             }

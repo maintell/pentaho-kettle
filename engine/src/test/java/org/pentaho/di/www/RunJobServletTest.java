@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.www;
 
 import org.junit.Before;
@@ -31,7 +22,6 @@ import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.repository.RepositoryDirectoryInterface;
 import org.pentaho.di.repository.RepositoryObjectType;
-import org.powermock.reflect.Whitebox;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,10 +30,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.pentaho.test.util.InternalState.setInternalState;
 
 public class RunJobServletTest {
 
@@ -62,7 +55,7 @@ public class RunJobServletTest {
     TransformationMap transformationMap = mock( TransformationMap.class );
     SlaveServerConfig slaveServerConfig = mock( SlaveServerConfig.class );
     Repository repository = mock( Repository.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
@@ -89,7 +82,7 @@ public class RunJobServletTest {
     TransformationMap transformationMap = mock( TransformationMap.class );
     SlaveServerConfig slaveServerConfig = mock( SlaveServerConfig.class );
     Repository repository = mock( Repository.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
@@ -119,22 +112,22 @@ public class RunJobServletTest {
     RepositoryDirectoryInterface repDirInterface = mock( RepositoryDirectoryInterface.class );
     JobMeta jobMeta = mock( JobMeta.class );
     ObjectId objId = mock( ObjectId.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
     PrintWriter printWriter = new PrintWriter( out );
 
-    when( mockHttpServletRequest.getParameter( "job" ) ).thenReturn( "dummyJob" );
-    when( mockHttpServletRequest.getParameter( "level" ) ).thenReturn( "SomethingInvalid" );
+    when( mockHttpServletRequest.getParameter( eq( "job" ) ) ).thenReturn( "dummyJob" );
+    when( mockHttpServletRequest.getParameter( eq ("level" ) ) ).thenReturn( "SomethingInvalid" );
     when( mockHttpServletResponse.getWriter() ).thenReturn( printWriter );
     when( transformationMap.getSlaveServerConfig() ).thenReturn( slaveServerConfig );
     when( slaveServerConfig.getRepository() ).thenReturn( repository );
     when( repository.isConnected() ).thenReturn( true );
     when( repository.loadRepositoryDirectoryTree() ).thenReturn( repDirInterface );
     when( repDirInterface.findDirectory( anyString() ) ).thenReturn( repDirInterface );
-    when( repository.getJobId( "dummyJob", repDirInterface ) ).thenReturn( objId );
-    when( repository.loadJob( objId, null ) ).thenReturn( jobMeta );
+    when( repository.getJobId( eq( "dummyJob" ), eq( repDirInterface ) ) ).thenReturn( objId );
+    when( repository.loadJob( eq( objId ), nullable( String.class ) ) ).thenReturn( jobMeta );
     when( mockHttpServletRequest.getParameterNames() ).thenReturn( Collections.enumeration( Collections.emptyList() ) );
     runJobServlet.doGet( mockHttpServletRequest, mockHttpServletResponse );
 
@@ -152,7 +145,7 @@ public class RunJobServletTest {
     Repository repository = mock( Repository.class );
     RepositoryDirectoryInterface repDirInterface = mock( RepositoryDirectoryInterface.class );
     ObjectId objId = mock( ObjectId.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
@@ -185,7 +178,7 @@ public class RunJobServletTest {
     Repository repository = mock( Repository.class );
     RepositoryDirectoryInterface repDirInterface = mock( RepositoryDirectoryInterface.class );
     ObjectId objId = mock( ObjectId.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
@@ -218,7 +211,7 @@ public class RunJobServletTest {
     Repository repository = mock( Repository.class );
     RepositoryDirectoryInterface repDirInterface = mock( RepositoryDirectoryInterface.class );
     ObjectId objId = mock( ObjectId.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();
@@ -251,7 +244,7 @@ public class RunJobServletTest {
     Repository repository = mock( Repository.class );
     RepositoryDirectoryInterface repDirInterface = mock( RepositoryDirectoryInterface.class );
     ObjectId objId = mock( ObjectId.class );
-    Whitebox.setInternalState( runJobServlet, "transformationMap", transformationMap );
+    setInternalState( runJobServlet, "transformationMap", transformationMap );
 
     KettleLogStore.init();
     StringWriter out = new StringWriter();

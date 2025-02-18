@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.www;
 
@@ -34,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -56,7 +47,6 @@ public class GetSlavesServletTest {
   }
 
   @Test
-  @SuppressWarnings( "ResultOfMethodCallIgnored" )
   public void testUpdateActivityStatusInDoGet() throws Exception {
     LogChannelInterface log = mock( LogChannelInterface.class );
     ServletOutputStream outputStream = mock( ServletOutputStream.class );
@@ -83,12 +73,12 @@ public class GetSlavesServletTest {
 
     verify( activeSlaveServer ).getStatus();
     verify( activeServerDetection, never() ).setActive( false );
-    verify( activeServerDetection, never() ).setLastInactiveDate( anyObject() );
+    verify( activeServerDetection, never() ).setLastInactiveDate( any() );
     verify( activeServerDetection ).getXML();
 
     verify( inactiveSlaveServer ).getStatus();
     verify( inactiveServerDetection ).setActive( false );
-    verify( inactiveServerDetection ).setLastInactiveDate( anyObject() );
+    verify( inactiveServerDetection ).setLastInactiveDate( any() );
     verify( inactiveServerDetection ).getXML();
   }
 }

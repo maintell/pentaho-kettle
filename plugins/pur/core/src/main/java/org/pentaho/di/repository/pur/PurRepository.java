@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2010-2023 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 
 package org.pentaho.di.repository.pur;
@@ -42,6 +33,8 @@ import org.pentaho.di.core.extension.KettleExtensionPoint;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.util.Utils;
+import org.pentaho.di.core.xml.XMLHandler;
+import org.pentaho.di.core.xml.XMLInterface;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.imp.Import;
 import org.pentaho.di.job.JobMeta;
@@ -110,6 +103,7 @@ import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -221,9 +215,8 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
 
   private String connectMessage = null;
 
-  protected PurRepositoryMetaStore metaStore;
-
   private ConnectionManager connectionManager = ConnectionManager.getInstance();
+  private IMetaStore metaStore;
 
   // The servers (DI Server, BA Server) that a user can authenticate to
   protected enum RepositoryServers {
@@ -342,13 +335,8 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
         if ( log.isDetailed() ) {
           log.logDetailed( BaseMessages.getString( PKG, "PurRepositoryMetastore.Create.Message" ) );
         }
-        metaStore = new PurRepositoryMetaStore( this );
-        IMetaStore activeMetaStore = metaStore;
-        if ( activeMetaStore != null ) {
-          final IMetaStore connectedMetaStore = activeMetaStore;
-          connectionManager.setMetastoreSupplier( () -> connectedMetaStore );
-        }
 
+        metaStore = new PurRepositoryMetaStore( this );
         // Create the default Pentaho namespace if it does not exist
         try {
           metaStore.createNamespace( PentahoDefaults.NAMESPACE );
@@ -380,17 +368,6 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
   @Override public void disconnect() {
     connected = false;
     metaStore = null;
-    IMetaStore activeMetaStore = null;
-    try {
-      activeMetaStore = MetaStoreConst.openLocalPentahoMetaStore();
-    } catch ( MetaStoreException e ) {
-      activeMetaStore = null;
-    }
-    if ( activeMetaStore != null ) {
-      final IMetaStore connectedMetaStore = activeMetaStore;
-      connectionManager.setMetastoreSupplier( () -> connectedMetaStore );
-    }
-
     purRepositoryConnector.disconnect();
   }
 
@@ -2519,7 +2496,7 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
     transMeta.setObjectRevision( revision );
     transMeta.setRepository( this );
     transMeta.setRepositoryDirectory( parentDir );
-    transMeta.setMetaStore( getMetaStore() );
+    transMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() );
     readTransSharedObjects( transMeta ); // This should read from the local cache
     transDelegate.dataNodeToElement( data.getNode(), transMeta );
     transMeta.clearChanged();
@@ -2634,7 +2611,7 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
     jobMeta.setObjectRevision( revision );
     jobMeta.setRepository( this );
     jobMeta.setRepositoryDirectory( parentDir );
-    jobMeta.setMetaStore( getMetaStore() );
+    jobMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() );
     readJobMetaSharedObjects( jobMeta ); // This should read from the local cache
     jobDelegate.dataNodeToElement( data.getNode(), jobMeta );
     jobMeta.clearChanged();
@@ -3226,7 +3203,7 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
         jobMeta.setRepository( this );
         jobMeta.setRepositoryDirectory( findDirectory( getParentPath( file.getPath() ) ) );
 
-        jobMeta.setMetaStore( getMetaStore() ); // inject metastore
+        jobMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() ); // inject metastore
 
         readJobMetaSharedObjects( jobMeta );
         // Additional obfuscation through obscurity
@@ -3270,7 +3247,7 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
         transMeta.setRepository( this );
         transMeta.setRepositoryDirectory( findDirectory( getParentPath( file.getPath() ) ) );
         transMeta.setRepositoryLock( unifiedRepositoryLockService.getLock( file ) );
-        transMeta.setMetaStore( getMetaStore() ); // inject metastore
+        transMeta.setMetaStore( MetaStoreConst.getDefaultMetastore() ); // inject metastore
 
         readTransSharedObjects( transMeta );
 
@@ -3370,7 +3347,7 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
   }
 
   @Override
-  public IMetaStore getMetaStore() {
+  public IMetaStore getRepositoryMetaStore() {
     return metaStore;
   }
 
@@ -3491,6 +3468,9 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
         renameKettleEntity( element, null, element.getName() );
       }
     } else {
+
+      int dataSize = calculateDataSize( element );
+
       readWriteLock.writeLock().lock();
       try {
         file =
@@ -3498,11 +3478,11 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
             + element.getRepositoryElementType().getExtension() ) ).versioned( true ).title(
             RepositoryFile.DEFAULT_LOCALE, element.getName() ).createdDate(
             versionDate != null ? versionDate.getTime() : new Date() ).description( RepositoryFile.DEFAULT_LOCALE,
-            Const.NVL( element.getDescription(), "" ) ).build();
+            Const.NVL( element.getDescription(), "" ) ).fileSize( dataSize ).build();
 
         file =
           pur.createFile( element.getRepositoryDirectory().getObjectId().getId(), file,
-            new NodeRepositoryFileData( objectTransformer.elementToDataNode( element ) ), versionComment );
+            new NodeRepositoryFileData( objectTransformer.elementToDataNode( element ), dataSize ), versionComment );
       } catch ( SOAPFaultException e ) {
         if ( e.getMessage().contains( UnifiedRepositoryCreateFileException.PREFIX ) ) {
           throw new KettleException(
@@ -3526,6 +3506,16 @@ public class PurRepository extends AbstractRepository implements Repository, Rec
       TransMeta transMeta = loadTransformation( objectId, null );
       ExtensionPointHandler.callExtensionPoint( log, KettleExtensionPoint.TransImportAfterSaveToRepo.id, transMeta );
     }
+  }
+
+  private static int calculateDataSize( RepositoryElementInterface element ) throws KettleException {
+    if ( !( element instanceof XMLInterface ) ) {
+      return 0;
+    }
+
+    String xml = XMLHandler.getXMLHeader() + ( (XMLInterface) element ).getXML();
+    byte[] bytes = xml.getBytes( StandardCharsets.UTF_8 );
+    return bytes.length;
   }
 
   protected ObjectId renameKettleEntity( final RepositoryElementInterface transOrJob,

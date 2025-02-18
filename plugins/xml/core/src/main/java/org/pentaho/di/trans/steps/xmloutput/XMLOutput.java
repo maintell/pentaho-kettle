@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.xmloutput;
 
@@ -200,7 +191,7 @@ public class XMLOutput extends BaseStep implements StepInterface {
             }
 
             ValueMetaInterface valueMeta = data.formatRowMeta.getValueMeta( data.fieldnrs[i] );
-            Object valueData = r[data.fieldnrs[i]];
+            Object valueData = getNullIfValue( r[data.fieldnrs[i]], outputField.getNullString() );
 
             String elementName = outputField.getElementName();
             if ( Utils.isEmpty( elementName ) ) {
@@ -255,6 +246,22 @@ public class XMLOutput extends BaseStep implements StepInterface {
     String val = getVariable( Const.KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_VALUES, "N" );
 
     return ValueMetaBase.convertStringToBoolean( Const.NVL( val, "N" ) ) && valueMetaType == ValueMetaInterface.TYPE_STRING;
+  }
+
+  private boolean isNullIfFieldValueAllowed() {
+
+    //Check if retro compatibility is set or not, to guaranty compatibility with older versions.
+    //Value set to data if it is null, which is set under fields property for null
+    String val = getVariable( Const.KETTLE_COMPATIBILITY_XML_OUTPUT_NULL_IF_FIELD_VALUES, "N" );
+
+    return Boolean.TRUE.equals( ValueMetaBase.convertStringToBoolean( Const.NVL( val, "N" ) ) );
+  }
+
+  private Object getNullIfValue( Object valueData, String nullString ) {
+    if ( valueData == null && !Utils.isEmpty( nullString ) && isNullIfFieldValueAllowed() ) {
+      return nullString;
+    }
+    return valueData;
   }
 
   private void writeField( ValueMetaInterface valueMeta, Object valueData, String element ) throws KettleStepException {

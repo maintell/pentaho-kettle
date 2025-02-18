@@ -1,26 +1,15 @@
-/*
- * *****************************************************************************
+/*! ******************************************************************************
  *
- *  Pentaho Data Integration
+ * Pentaho
  *
- *  Copyright (C) 2017-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *  *******************************************************************************
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use
- *  this file except in compliance with the License. You may obtain a copy of the
- *  License at
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- * *****************************************************************************
- *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 
 package org.pentaho.di.engine.configuration.impl.pentaho;
 
@@ -28,7 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.base.AbstractMeta;
 import org.pentaho.di.cluster.SlaveServer;
 import org.pentaho.di.core.exception.KettleException;
@@ -41,12 +30,13 @@ import org.pentaho.di.ui.spoon.Spoon;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 /**
  * Created by bmorrise on 3/22/17.
  */
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.StrictStubs.class )
 public class DefaultRunConfigurationExecutorTest {
 
   private DefaultRunConfigurationExecutor defaultRunConfigurationExecutor;
@@ -74,14 +64,14 @@ public class DefaultRunConfigurationExecutorTest {
 
   @Before
   public void setup() {
-    when( spoon.getRepository() ).thenReturn( repository );
-    when( repository.getUserInfo() ).thenReturn( userInfo );
-    when( userInfo.getName() ).thenReturn( "admin" );
-    when( userInfo.getUsername() ).thenReturn( "password" );
-    when( abstractMeta.getRepositoryDirectory() ).thenReturn( repositoryDirectory );
-    when( repositoryDirectory.getPath() ).thenReturn( "/admin" );
-    when( abstractMeta.getName() ).thenReturn( "file" );
-    when( abstractMeta.getDefaultExtension() ).thenReturn( "ktr" );
+    lenient().when( spoon.getRepository() ).thenReturn( repository );
+    lenient().when( repository.getUserInfo() ).thenReturn( userInfo );
+    lenient().when( userInfo.getName() ).thenReturn( "admin" );
+    lenient().when( userInfo.getUsername() ).thenReturn( "password" );
+    lenient().when( abstractMeta.getRepositoryDirectory() ).thenReturn( repositoryDirectory );
+    lenient().when( repositoryDirectory.getPath() ).thenReturn( "/admin" );
+    lenient().when( abstractMeta.getName() ).thenReturn( "file" );
+    lenient().when( abstractMeta.getDefaultExtension() ).thenReturn( "ktr" );
 
     defaultRunConfigurationExecutor = new DefaultRunConfigurationExecutor();
   }
@@ -175,7 +165,7 @@ public class DefaultRunConfigurationExecutorTest {
     defaultRunConfiguration.setServer( "Test Server" );
 
     TransExecutionConfiguration transExecutionConfiguration = new TransExecutionConfiguration();
-    doReturn( slaveServer ).when( abstractMeta ).findSlaveServer( null );
+    lenient().doReturn( slaveServer ).when( abstractMeta ).findSlaveServer( null );
 
     try {
       defaultRunConfigurationExecutor
@@ -228,7 +218,7 @@ public class DefaultRunConfigurationExecutorTest {
     defaultRunConfiguration.setServer( "Test Server" );
 
     JobExecutionConfiguration jobExecutionConfiguration = new JobExecutionConfiguration();
-    doReturn( slaveServer ).when( abstractMeta ).findSlaveServer( null );
+    lenient().doReturn( slaveServer ).when( abstractMeta ).findSlaveServer( null );
 
     try {
       defaultRunConfigurationExecutor

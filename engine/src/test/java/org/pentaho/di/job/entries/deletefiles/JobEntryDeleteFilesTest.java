@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2020 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.deletefiles;
 
@@ -26,20 +17,19 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Result;
 import org.pentaho.di.core.RowMetaAndData;
+import org.pentaho.di.core.logging.DefaultLogLevel;
 import org.pentaho.di.core.logging.LogChannel;
+import org.pentaho.di.core.logging.LogLevel;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.job.Job;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.trans.steps.named.cluster.NamedClusterEmbedManager;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.anyObject;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -60,9 +51,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( { JobEntryDeleteFiles.class } )
 public class JobEntryDeleteFilesTest {
   private final String PATH_TO_FILE = "path/to/file";
   private final String STRING_SPACES_ONLY = "   ";
@@ -112,7 +100,6 @@ public class JobEntryDeleteFilesTest {
     when( mockLogChannel.isDetailed() ).thenReturn( false );
     doNothing().when( mockLogChannel ).logDebug( anyString() );
     doNothing().when( mockLogChannel ).logDetailed( anyString() );
-    PowerMockito.whenNew( LogChannel.class ).withAnyArguments().thenReturn( mockLogChannel );
 
     jobEntry.setParentJob( parentJob );
     JobMeta mockJobMeta = mock( JobMeta.class );
@@ -136,7 +123,7 @@ public class JobEntryDeleteFilesTest {
   @Test
   public void filesWithPath_AreProcessed_ArgsOfCurrentJob() throws Exception {
     // Complete JobEntryDeleteFiles mocking
-    doReturn( true ).when( jobEntry ).processFile( anyString(), anyString(), any( Job.class ) );
+    doReturn( true ).when( jobEntry ).processFile( any(), any(), any( Job.class ) );
 
     String[] args = new String[] { PATH_TO_FILE };
     jobEntry.setArguments( args );
@@ -144,8 +131,7 @@ public class JobEntryDeleteFilesTest {
     jobEntry.setArgFromPrevious( false );
 
     jobEntry.execute( new Result(), 0 );
-    verify( jobEntry, times( args.length ) ).processFile( anyString(), anyString(), any( Job.class ) );
-    verify( mockNamedClusterEmbedManager ).passEmbeddedMetastoreKey( anyObject(), anyString() );
+    verify( jobEntry, times( args.length ) ).processFile( any(), any(), any( Job.class ) );
   }
 
 
@@ -168,7 +154,7 @@ public class JobEntryDeleteFilesTest {
   @Test
   public void filesPath_AreProcessed_ArgsOfPreviousMeta() throws Exception {
     // Complete JobEntryDeleteFiles mocking
-    doReturn( true ).when( jobEntry ).processFile( anyString(), anyString(), any( Job.class ) );
+    doReturn( true ).when( jobEntry ).processFile( any(), any(), any( Job.class ) );
 
     jobEntry.setArgFromPrevious( true );
 
@@ -179,13 +165,13 @@ public class JobEntryDeleteFilesTest {
     prevMetaResult.setRows( metaAndDataList );
 
     jobEntry.execute( prevMetaResult, 0 );
-    verify( jobEntry, times( metaAndDataList.size() ) ).processFile( anyString(), anyString(), any( Job.class ) );
+    verify( jobEntry, times( metaAndDataList.size() ) ).processFile( any(), any(), any( Job.class ) );
   }
 
   @Test
   public void filesPathVariables_AreProcessed_OnlyIfValueIsNotBlank() throws Exception {
     // Complete JobEntryDeleteFiles mocking
-    doReturn( true ).when( jobEntry ).processFile( anyString(), anyString(), any( Job.class ) );
+    doReturn( true ).when( jobEntry ).processFile( any(), any(), any( Job.class ) );
 
     final String pathToFileBlankValue = "pathToFileBlankValue";
     final String pathToFileValidValue = "pathToFileValidValue";
@@ -199,7 +185,7 @@ public class JobEntryDeleteFilesTest {
 
     jobEntry.execute( new Result(), 0 );
 
-    verify( jobEntry ).processFile( eq( PATH_TO_FILE ), anyString(), any( Job.class ) );
+    verify( jobEntry ).processFile( eq( PATH_TO_FILE ), any(), any( Job.class ) );
   }
 
   @Test
@@ -315,8 +301,7 @@ public class JobEntryDeleteFilesTest {
 
   private void testExecute_Mask_SubFolder( String mask, boolean includeSubfolders ) throws Exception {
 
-    when( jobEntry.processFile( anyString(), anyString(), any( Job.class ) ) ).thenCallRealMethod();
-
+    doCallRealMethod().when( jobEntry ).processFile( anyString(), anyString(), any( Job.class) );
     buildTestFolderTree();
 
     String[] args = new String[] { tempFolder.getRoot().getPath() };

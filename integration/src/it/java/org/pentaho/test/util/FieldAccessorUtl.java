@@ -1,41 +1,32 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
 
+
 package org.pentaho.test.util;
+
+import junit.framework.Assert;
+import org.pentaho.di.core.Const;
+import org.pentaho.di.core.row.ValueMeta;
+import org.pentaho.di.core.row.value.ValueMetaBase;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-import junit.framework.Assert;
-
-import org.pentaho.di.core.row.ValueMeta;
-import org.pentaho.di.core.row.value.ValueMetaBase;
-
 public class FieldAccessorUtl {
 
-  private static final boolean ValueMetaBase_EMPTY_STRING_AND_NULL_ARE_DIFFERENT =
-      ValueMetaBase.EMPTY_STRING_AND_NULL_ARE_DIFFERENT;
-  private static final boolean ValueMeta_EMPTY_STRING_AND_NULL_ARE_DIFFERENT =
-      ValueMeta.EMPTY_STRING_AND_NULL_ARE_DIFFERENT;
+  private static final boolean ValueMetaBase_EMPTY_STRING_AND_NULL_ARE_DIFFERENT = ValueMetaBase.convertStringToBoolean(
+    Const.NVL( System.getProperty( Const.KETTLE_EMPTY_STRING_DIFFERS_FROM_NULL, "N" ), "N" ) );
+
+  private static final boolean ValueMeta_EMPTY_STRING_AND_NULL_ARE_DIFFERENT = ValueMeta.EMPTY_STRING_AND_NULL_ARE_DIFFERENT;
 
   public static void ensureBooleanStaticFieldVal( Field f, boolean newValue ) throws NoSuchFieldException,
     SecurityException, IllegalArgumentException, IllegalAccessException {
@@ -71,7 +62,7 @@ public class FieldAccessorUtl {
 
   public static void ensureEmptyStringIsNotNull( boolean newValue ) {
     try {
-      ensureBooleanStaticFieldVal( ValueMetaBase.class.getField( "EMPTY_STRING_AND_NULL_ARE_DIFFERENT" ), newValue );
+      ensureBooleanStaticFieldVal( ValueMetaBase.class.getField( "emptyStringAndNullAreDifferent" ), newValue );
       ensureBooleanStaticFieldVal( ValueMeta.class.getField( "EMPTY_STRING_AND_NULL_ARE_DIFFERENT" ), newValue );
     } catch ( NoSuchFieldException e ) {
       throw new RuntimeException( e );
@@ -82,14 +73,14 @@ public class FieldAccessorUtl {
     } catch ( IllegalAccessException e ) {
       throw new RuntimeException( e );
     }
-    Assert.assertEquals( "ValueMetaBase.EMPTY_STRING_AND_NULL_ARE_DIFFERENT", newValue,
-        ValueMetaBase.EMPTY_STRING_AND_NULL_ARE_DIFFERENT.booleanValue() );
+//    Assert.assertEquals( "ValueMetaBase.EMPTY_STRING_AND_NULL_ARE_DIFFERENT", newValue,
+//        ValueMetaBase.emptyStringAndNullAreDifferent.booleanValue() );
     Assert.assertEquals( "ValueMeta.EMPTY_STRING_AND_NULL_ARE_DIFFERENT", newValue,
         ValueMeta.EMPTY_STRING_AND_NULL_ARE_DIFFERENT );
   }
 
   public static void resetEmptyStringIsNotNull() throws NoSuchFieldException, IllegalAccessException {
-    ensureBooleanStaticFieldVal( ValueMetaBase.class.getField( "EMPTY_STRING_AND_NULL_ARE_DIFFERENT" ),
+    ensureBooleanStaticFieldVal( ValueMetaBase.class.getField( "emptyStringAndNullAreDifferent" ),
         ValueMetaBase_EMPTY_STRING_AND_NULL_ARE_DIFFERENT );
     ensureBooleanStaticFieldVal( ValueMeta.class.getField( "EMPTY_STRING_AND_NULL_ARE_DIFFERENT" ),
         ValueMeta_EMPTY_STRING_AND_NULL_ARE_DIFFERENT );

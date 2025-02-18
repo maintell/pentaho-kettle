@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.jsoninput;
 
@@ -71,7 +62,7 @@ import org.w3c.dom.Node;
  * Store run-time data on the JsonInput step.
  */
 @Step( id = "JsonInput", image = "JSI.svg", i18nPackageName = "org.pentaho.di.trans.steps.jsoninput",
-    documentationUrl = "Products/JSON_Input", name = "JsonInput.name",
+    documentationUrl = "mk-95pdia003/pdi-transformation-steps/json-input", name = "JsonInput.name",
     description = "JsonInput.description", categoryDescription = "JsonInput.category" )
 @InjectionSupported( localizationPrefix = "JsonInput.Injection.", groups = { "FILENAME_LINES", "FIELDS" }, hide = {
   "ACCEPT_FILE_NAMES", "ACCEPT_FILE_STEP", "PASS_THROUGH_FIELDS", "ACCEPT_FILE_FIELD", "ADD_FILES_TO_RESULT",

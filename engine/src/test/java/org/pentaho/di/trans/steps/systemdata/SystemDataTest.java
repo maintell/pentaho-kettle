@@ -1,40 +1,22 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
 
-package org.pentaho.di.trans.steps.systemdata;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package org.pentaho.di.trans.steps.systemdata;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.logging.LoggingObjectInterface;
 import org.pentaho.di.core.row.RowMetaInterface;
@@ -44,11 +26,19 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 /**
  * User: Dzmitry Stsiapanau Date: 1/20/14 Time: 12:12 PM
  */
 public class SystemDataTest {
-  private class SystemDataHandler extends SystemData {
+  private static class SystemDataHandler extends SystemData {
 
     Object[] row = new Object[] { "anyData" };
     Object[] outputRow;
@@ -68,7 +58,7 @@ public class SystemDataTest {
      * have to copy the data to the alternate splits: rowsets 1 through n.
      */
     @Override
-    public Object[] getRow() throws KettleException {
+    public Object[] getRow() {
       return row;
     }
 
@@ -98,7 +88,7 @@ public class SystemDataTest {
   @Before
   public void setUp() throws Exception {
     stepMockHelper =
-      new StepMockHelper<SystemDataMeta, SystemDataData>( "SYSTEM_DATA TEST", SystemDataMeta.class,
+      new StepMockHelper<>( "SYSTEM_DATA TEST", SystemDataMeta.class,
         SystemDataData.class );
     when( stepMockHelper.logChannelInterfaceFactory.create( any(), any( LoggingObjectInterface.class ) ) ).thenReturn(
       stepMockHelper.logChannelInterface );

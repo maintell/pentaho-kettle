@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.trans.steps.denormaliser;
 
 import org.junit.AfterClass;
@@ -31,16 +22,12 @@ import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.logging.LoggingObjectInterface;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.core.row.value.ValueMetaBigNumber;
-import org.pentaho.di.core.row.value.ValueMetaBinary;
 import org.pentaho.di.core.row.value.ValueMetaBoolean;
 import org.pentaho.di.core.row.value.ValueMetaDate;
 import org.pentaho.di.core.row.value.ValueMetaInteger;
-import org.pentaho.di.core.row.value.ValueMetaInternetAddress;
 import org.pentaho.di.core.row.value.ValueMetaNumber;
-import org.pentaho.di.core.row.value.ValueMetaSerializable;
 import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.trans.steps.mock.StepMockHelper;
 
@@ -51,19 +38,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_BIGNUMBER;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_BINARY;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_BOOLEAN;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_DATE;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_INET;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_INTEGER;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_NONE;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_NUMBER;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_SERIALIZABLE;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_STRING;
-import static org.pentaho.di.core.row.ValueMetaInterface.TYPE_TIMESTAMP;
 
 public class DenormalizerNullIfTest {
   private static final String KEY_VALUE = "keyValue";
@@ -76,7 +52,7 @@ public class DenormalizerNullIfTest {
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     mockHelper =
-      new StepMockHelper<DenormaliserMeta, DenormaliserData>( "Denormaliser", DenormaliserMeta.class,
+      new StepMockHelper<>( "Denormaliser", DenormaliserMeta.class,
         DenormaliserData.class );
     when( mockHelper.logChannelInterfaceFactory.create( any(), any( LoggingObjectInterface.class ) ) ).thenReturn(
       mockHelper.logChannelInterface );
@@ -126,7 +102,7 @@ public class DenormalizerNullIfTest {
   public void testNullIfBooleanAltPositive() throws KettleValueException {
     step.deNormalise( getRmi( "y", new ValueMetaBoolean( "target", 5, 0 ), new ValueMetaBoolean( "value", 1, 0 ) ),
       new Object[] { KEY_VALUE, "target1", true } );
-    Assert.assertEquals( null, data.targetResult[ 0 ] );
+    Assert.assertNull( data.targetResult[ 0 ] );
   }
 
   @Test
@@ -206,15 +182,15 @@ public class DenormalizerNullIfTest {
 
     // create rmi for one string and 2 integers
     RowMetaInterface rmi = new RowMeta();
-    List<ValueMetaInterface> list = new ArrayList<ValueMetaInterface>();
+    List<ValueMetaInterface> list = new ArrayList<>();
     list.add( new ValueMetaString( "key" ) );
     list.add( targetVmi );
     list.add( valueVmi );
     rmi.setValueMetaList( list );
 
     // denormalizer key field will be String 'keyValue'
-    data.keyValue = new HashMap<String, List<Integer>>();
-    List<Integer> listInt = new ArrayList<Integer>();
+    data.keyValue = new HashMap<>();
+    List<Integer> listInt = new ArrayList<>();
     listInt.add( 0 );
     data.keyValue.put( KEY_VALUE, listInt );
 

@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2018-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.di.core.database;
 
 import org.pentaho.di.core.Const;
@@ -37,7 +28,7 @@ public class GoogleBigQueryDatabaseMeta extends BaseDatabaseMeta implements Data
   @Override public String[] getUsedLibraries() {
     return new String[] { "google-api-client-1.22.0.jar", "google-api-services-bigquery-v2-rev355-1.22.0.jar",
       "google-http-client-1.22.0.jar", "google-http-client-jackson2-1.22.0.jar",
-      "google-oauth-client-1.22.0.jar", "GoogleBigQueryJDBC42.jar", "jackson-core-2.1.3.jar"};
+      "google-oauth-client-1.22.0.jar", "GoogleBigQueryJDBC42.jar", "jackson-core-2.14.2.jar"};
   }
 
   @Override public String getDriverClass() {

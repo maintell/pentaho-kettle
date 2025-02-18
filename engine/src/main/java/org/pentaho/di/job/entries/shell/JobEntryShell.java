@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.job.entries.shell;
 
@@ -29,6 +20,7 @@ import org.pentaho.di.job.entry.validator.JobEntryValidatorUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -95,6 +87,8 @@ public class JobEntryShell extends JobEntryBase implements Cloneable, JobEntryIn
   public String script;
   private String filename;
   private String workDirectory;
+  private static final String KETTLE = "kettle";
+  private static final String SHELL = "shell";
 
   public JobEntryShell( String name ) {
     super( name, "" );
@@ -441,7 +435,7 @@ public class JobEntryShell extends JobEntryBase implements Cloneable, JobEntryIn
         result.getResultFiles().put( resultFile.getFile().toString(), resultFile );
       }
     }
-    setLoggingObjectInUse( false );
+
     return result;
   }
 
@@ -470,29 +464,38 @@ public class JobEntryShell extends JobEntryBase implements Cloneable, JobEntryIn
         base = new String[] { "command.com", "/C" };
         if ( insertScript ) {
           tempFile =
-            KettleVFS.createTempFile( "kettle", "shell.bat", System.getProperty( "java.io.tmpdir" ), this );
+            KettleVFS.createTempFile( KETTLE, "shell.bat", KettleVFS.TEMP_DIR, this );
           fileObject = createTemporaryShellFile( tempFile, realScript );
         }
       } else if ( Const.getOS().startsWith( "Windows" ) ) {
         base = new String[] { "cmd.exe", "/C" };
         if ( insertScript ) {
           tempFile =
-            KettleVFS.createTempFile( "kettle", "shell.bat", System.getProperty( "java.io.tmpdir" ), this );
+            KettleVFS.createTempFile( KETTLE, "shell.bat", KettleVFS.TEMP_DIR, this );
           fileObject = createTemporaryShellFile( tempFile, realScript );
         }
       } else {
-        if ( insertScript ) {
-          realScript = environmentSubstitute( script );
+        if ("Y".equalsIgnoreCase( System.getProperty( Const.KETTLE_EXECUTE_TEMPORARY_GENERATED_FILE, "Y" ) )) {
+          if ( insertScript ) {
+            tempFile = KettleVFS.createTempFile( KETTLE, SHELL, KettleVFS.TEMP_DIR, this );
+          } else {
+            String realFilename = environmentSubstitute( getFilename() );
+            URI uri = new URI( realFilename );
+            realFilename = uri.getPath();
+            try ( FileInputStream fis = new FileInputStream( realFilename ) ) {
+              realScript = IOUtils.toString( fis, "UTF-8" );
+            }
+            // PDI-19676 - creating a temp file in same file location to avoid script failure.
+            String parentDir = Paths.get( realFilename ).getParent().toString();
+            tempFile = KettleVFS.createTempFile( KETTLE, SHELL, parentDir, this );
+          }
+          fileObject = createTemporaryShellFile( tempFile, realScript );
         } else {
-          String realFilename = environmentSubstitute( getFilename() );
-          URI uri = new URI( realFilename );
-          realFilename = uri.getPath();
-          try ( FileInputStream fis = new FileInputStream( realFilename ) ) {
-            realScript = IOUtils.toString( fis, "UTF-8" );
+          if ( insertScript ) {
+            tempFile = KettleVFS.createTempFile( "kettle", SHELL, KettleVFS.TEMP_DIR, this );
+            fileObject = createTemporaryShellFile( tempFile, realScript );
           }
         }
-        tempFile = KettleVFS.createTempFile( "kettle", "shell", System.getProperty( "java.io.tmpdir" ), this );
-        fileObject = createTemporaryShellFile( tempFile, realScript );
         base = new String[] { KettleVFS.getFilename( fileObject ) };
       }
 

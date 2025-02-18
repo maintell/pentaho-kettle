@@ -1,31 +1,29 @@
-/*!
- * Copyright 2010 - 2019 Hitachi Vantara.  All rights reserved.
+/*! ******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Pentaho
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- */
+ * Change Date: 2029-07-20
+ ******************************************************************************/
+
 package com.pentaho.repository.importexport;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,6 +31,7 @@ import org.pentaho.di.cluster.SlaveServer;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleMissingPluginsException;
+import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.job.JobMeta;
 import org.pentaho.di.job.entries.missing.MissingEntry;
@@ -86,34 +85,48 @@ public class StreamToJobNodeConverter implements Converter {
    * @return
    */
   public InputStream convert( final Serializable fileId ) {
-    InputStream is = null;
-
+    if ( fileId == null ) {
+      return null;
+    }
     try {
-      if ( fileId != null ) {
-        Repository repository = connectToRepository();
-        RepositoryFile file = unifiedRepository.getFileById( fileId );
-        if ( file != null ) {
-          try {
-            JobMeta jobMeta = repository.loadJob( new StringObjectId( fileId.toString() ), null );
-            if ( jobMeta != null ) {
-              return new ByteArrayInputStream( filterPrivateDatabases( jobMeta ).getXML().getBytes() );
-            }
-          } catch ( KettleException e ) {
-            logger.error( e );
-            // file is there and may be legacy, attempt simple export
-            SimpleRepositoryFileData fileData =
-                unifiedRepository.getDataForRead( fileId, SimpleRepositoryFileData.class );
-            if ( fileData != null ) {
-              logger.warn( "Reading as legacy CE job " + file.getName() + "." );
-              return fileData.getInputStream();
-            }
-          }
-        }
-      }
+      return loadJobAsStream( fileId );
     } catch ( Exception e ) {
       logger.error( e );
+      return null;
     }
-    return is;
+  }
+
+  private InputStream loadJobAsStream( Serializable fileId ) throws KettleException {
+    Repository repository = connectToRepository();
+    RepositoryFile file = unifiedRepository.getFileById( fileId );
+    if ( file == null ) {
+      return null;
+    }
+    try {
+      return getJobStream( repository, fileId );
+    } catch ( KettleException e ) {
+      logger.error( e );
+      // file is there and may be legacy, attempt simple export
+      return getLegacyJobStream( fileId, file );
+    }
+  }
+
+  private InputStream getJobStream( Repository repository, Serializable fileId ) throws KettleException {
+    JobMeta jobMeta = repository.loadJob( new StringObjectId( fileId.toString() ), null );
+    if ( jobMeta == null ) {
+      return null;
+    }
+    String xml = XMLHandler.getXMLHeader() + filterPrivateDatabases( jobMeta ).getXML();
+    return new ByteArrayInputStream( xml.getBytes( StandardCharsets.UTF_8 ) );
+  }
+
+  private InputStream getLegacyJobStream( Serializable fileId, RepositoryFile file ) {
+    SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead( fileId, SimpleRepositoryFileData.class );
+    if ( fileData == null ) {
+      return null;
+    }
+    logger.warn( "Reading as legacy CE job " + file.getName() + "." );
+    return fileData.getInputStream();
   }
 
   @VisibleForTesting
@@ -146,10 +159,11 @@ public class StreamToJobNodeConverter implements Converter {
    */
   public IRepositoryFileData convert( final InputStream inputStream, final String charset, final String mimeType ) {
     try {
-      long size = inputStream.available();
+      BoundedInputStream bis = BoundedInputStream.builder().setInputStream( inputStream ).get();
+
       JobMeta jobMeta = new JobMeta();
       Repository repository = connectToRepository();
-      Document doc = PDIImportUtil.loadXMLFrom( inputStream );
+      Document doc = PDIImportUtil.loadXMLFrom( bis );
       if ( doc != null ) {
         jobMeta.loadXML( doc.getDocumentElement(), repository, null );
         if ( jobMeta.hasMissingPlugins() ) {
@@ -160,7 +174,7 @@ public class StreamToJobNodeConverter implements Converter {
         }
         JobDelegate delegate = new JobDelegate( repository, this.unifiedRepository );
         delegate.saveSharedObjects( jobMeta, null );
-        return new NodeRepositoryFileData( delegate.elementToDataNode( jobMeta ), size );
+        return new NodeRepositoryFileData( delegate.elementToDataNode( jobMeta ), bis.getCount() );
       } else {
         return null;
       }

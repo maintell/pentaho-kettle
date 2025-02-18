@@ -1,28 +1,20 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2019-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.connections.vfs;
 
-import org.pentaho.di.connections.ConnectionDetails;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import org.apache.commons.vfs2.FileSystemOptions;
 import org.pentaho.di.connections.ConnectionManager;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.value.ValueMetaBase;
@@ -36,23 +28,54 @@ import java.util.function.Supplier;
 
 public abstract class BaseVFSConnectionProvider<T extends VFSConnectionDetails> implements VFSConnectionProvider<T> {
 
+  @NonNull
   private Supplier<ConnectionManager> connectionManagerSupplier = ConnectionManager::getInstance;
 
-  @Override public List<String> getNames() {
-    return connectionManagerSupplier.get().getNamesByType( getClass() );
+  /**
+   * This method was added solely to support unit testing of deprecated behavior.
+   *
+   * @param connectionManagerSupplier A supplier of connection manager.
+   * @deprecated
+   */
+  @Deprecated( forRemoval = true )
+  protected void setConnectionManagerSupplier( @NonNull Supplier<ConnectionManager> connectionManagerSupplier ) {
+    this.connectionManagerSupplier = Objects.requireNonNull( connectionManagerSupplier );
+  }
+
+  @Override
+  public List<String> getNames() {
+    return getNames( connectionManagerSupplier.get() );
+  }
+
+  @Override
+  public List<T> getConnectionDetails() {
+    return getConnectionDetails( connectionManagerSupplier.get() );
+  }
+
+  @Override
+  public List<String> getNames( @NonNull ConnectionManager connectionManager ) {
+    return connectionManager.getNamesByType( getClass() );
   }
 
   @SuppressWarnings( "unchecked" )
-  @Override public List<T> getConnectionDetails() {
-    return (List<T>) connectionManagerSupplier.get().getConnectionDetailsByScheme( getKey() );
+  @Override
+  public List<T> getConnectionDetails( @NonNull ConnectionManager connectionManager ) {
+    return (List<T>) connectionManager.getConnectionDetailsByScheme( getKey() );
   }
 
-  @Override public T prepare( T connectionDetails ) throws KettleException {
+  @Override
+  public T prepare( T connectionDetails ) throws KettleException {
     return connectionDetails;
   }
 
-  @Override public String sanitizeName( String string ) {
+  @Override
+  public String sanitizeName( String string ) {
     return string;
+  }
+
+  @Override
+  public FileSystemOptions getOpts( T connectionDetails ) {
+    return new FileSystemOptions();
   }
 
   // Utility method to perform variable substitution on values
@@ -75,7 +98,8 @@ public abstract class BaseVFSConnectionProvider<T extends VFSConnectionDetails> 
     return Objects.equals( Boolean.TRUE, ValueMetaBase.convertStringToBoolean( defaultValue ) );
   }
 
-  protected VariableSpace getSpace( ConnectionDetails connectionDetails ) {
+  @NonNull
+  protected VariableSpace getSpace( @NonNull T connectionDetails ) {
     return connectionDetails.getSpace() == null ? Variables.getADefaultVariableSpace() : connectionDetails.getSpace();
   }
 }

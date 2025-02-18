@@ -1,29 +1,24 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 package org.pentaho.ui.database.event;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.database.DatabaseInterface;
+import org.pentaho.di.core.logging.KettleLogStore;
+import org.pentaho.di.core.plugins.DatabasePluginType;
+import org.pentaho.di.core.plugins.PluginRegistry;
 import org.pentaho.ui.xul.XulComponent;
 import org.pentaho.ui.xul.XulDomContainer;
 import org.pentaho.ui.xul.XulException;
@@ -32,9 +27,10 @@ import org.pentaho.ui.xul.components.XulTextbox;
 import org.pentaho.ui.xul.containers.XulListbox;
 import org.pentaho.ui.xul.dom.Document;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +42,13 @@ public class FragmentHandlerTest {
   FragmentHandler fragmentHandler;
   Document document;
   XulDomContainer xulDomContainer;
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+    PluginRegistry.addPluginType( DatabasePluginType.getInstance() );
+    PluginRegistry.init();
+    KettleLogStore.init();
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -120,7 +123,7 @@ public class FragmentHandlerTest {
     when( mockDoc.getFirstChild() ).thenReturn( firstChild );
     when( fragmentContainer.getDocumentRoot() ).thenReturn( mockDoc );
     when( xulDomContainer.loadFragment( anyString(), any( Object.class ) ) ).thenReturn( fragmentContainer );
-    fragmentHandler.loadDatabaseOptionsFragment( null );
+    fragmentHandler.loadDatabaseOptionsFragment( "", new DataHandler() );
   }
 
   @Test( expected = XulException.class )
@@ -130,7 +133,7 @@ public class FragmentHandlerTest {
     when( component.getParent() ).thenReturn( parent );
     when( document.getElementById( "database-options-box" ) ).thenReturn( component );
     when( xulDomContainer.loadFragment( anyString(), any( Object.class ) ) ).thenThrow( new XulException() );
-    fragmentHandler.loadDatabaseOptionsFragment( null );
+    fragmentHandler.loadDatabaseOptionsFragment( "", new DataHandler() );
   }
 
   @Test

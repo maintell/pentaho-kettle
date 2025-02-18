@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -45,26 +36,21 @@ public class AS400DatabaseMetaTest {
   @ClassRule public static RestorePDIEnvironment env = new RestorePDIEnvironment();
 
   AS400DatabaseMeta nativeMeta;
-  AS400DatabaseMeta odbcMeta;
 
   @Before
   public void setupOnce() throws Exception {
     nativeMeta = new AS400DatabaseMeta();
     nativeMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_NATIVE );
-    odbcMeta = new AS400DatabaseMeta();
-    odbcMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
     KettleClientEnvironment.init();
   }
 
   @Test
   public void testSettings() throws Exception {
     int[] aTypes =
-        new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI };
+        new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI };
     assertArrayEquals( aTypes, nativeMeta.getAccessTypeList() );
-    assertEquals( "sun.jdbc.odbc.JdbcOdbcDriver", odbcMeta.getDriverClass() );
     assertEquals( "com.ibm.as400.access.AS400JDBCDriver", nativeMeta.getDriverClass() );
     assertEquals( 65536, nativeMeta.getMaxTextFieldLength() );
-    assertEquals( "jdbc:odbc:FOO", odbcMeta.getURL( null, null, "FOO" ) );
     assertEquals( "jdbc:as400://foo/bar", nativeMeta.getURL( "foo", "1500", "bar" ) ); // note - AS400 driver ignores the port
     String[] expectedReservedWords = new String[] {
       // http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp

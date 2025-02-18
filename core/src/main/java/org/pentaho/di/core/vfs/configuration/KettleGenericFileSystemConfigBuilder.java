@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.vfs.configuration;
 
@@ -29,6 +20,7 @@ import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.FileSystem;
 import org.apache.commons.vfs2.util.DelegatingFileSystemOptionsBuilder;
+import org.pentaho.di.core.bowl.Bowl;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -46,6 +38,9 @@ import org.pentaho.di.core.vfs.KettleVFS;
  */
 public class KettleGenericFileSystemConfigBuilder extends FileSystemConfigBuilder implements
   IKettleFileSystemConfigBuilder {
+
+  private static final String BOWL_KEY = "kettle.bowl";
+  private static final String VAR_SPACE_KEY = "kettle.VariableSpace";
 
   private static final KettleGenericFileSystemConfigBuilder builder = new KettleGenericFileSystemConfigBuilder();
   private static final LogChannelInterface log = new LogChannel( "cfgbuilder" );
@@ -141,13 +136,21 @@ public class KettleGenericFileSystemConfigBuilder extends FileSystemConfigBuilde
 
   @Override
   public void setParameter( FileSystemOptions opts, String name, VariableSpace value, String vfsUrl ) {
-    DelegatingFileSystemOptionsBuilder delegateFSOptionsBuilder =
-      new DelegatingFileSystemOptionsBuilder( KettleVFS.getInstance().getFileSystemManager() );
-      super.setParam( opts, "VariableSpace", value );
+    super.setParam( opts, VAR_SPACE_KEY, value );
   }
 
   @Override
   public Object getVariableSpace( FileSystemOptions fileSystemOptions ) {
-    return getParam( fileSystemOptions, "VariableSpace" );
+    return getParam( fileSystemOptions, VAR_SPACE_KEY );
+  }
+
+  @Override
+  public void setBowl( FileSystemOptions opts, Bowl bowl ) {
+    super.setParam( opts, BOWL_KEY, bowl );
+  }
+
+  @Override
+  public Bowl getBowl( FileSystemOptions opts ) {
+    return super.getParam( opts, BOWL_KEY );
   }
 }

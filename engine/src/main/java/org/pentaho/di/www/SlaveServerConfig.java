@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2017 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.www;
 
@@ -44,13 +35,13 @@ import org.pentaho.di.repository.RepositoriesMeta;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.repository.RepositoryMeta;
 import org.pentaho.metastore.api.exceptions.MetaStoreException;
-import org.pentaho.metastore.stores.delegate.DelegatingMetaStore;
+import org.pentaho.metastore.api.IMetaStore;
 import org.pentaho.metastore.stores.memory.MemoryMetaStore;
-import org.pentaho.metastore.stores.xml.XmlMetaStore;
 import org.w3c.dom.Node;
 
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +89,7 @@ public class SlaveServerConfig {
   private String repositoryUsername;
   private String repositoryPassword;
 
-  private DelegatingMetaStore metaStore;
+  private Supplier<IMetaStore> metaStoreSupplier;
 
   private String passwordFile;
 
@@ -107,27 +98,17 @@ public class SlaveServerConfig {
     databases = new ArrayList<DatabaseMeta>();
     slaveSequences = new ArrayList<SlaveSequence>();
     automaticCreationAllowed = false;
-    metaStore = new DelegatingMetaStore();
-    // Add the local Hitachi Vantara MetaStore to the delegation.
-    // This sets it as the active one.
-    //
-    try {
-      XmlMetaStore localStore = new XmlMetaStore( MetaStoreConst.getDefaultPentahoMetaStoreLocation() );
-      metaStore.addMetaStore( localStore );
-      metaStore.setActiveMetaStoreName( localStore.getName() );
-    } catch ( MetaStoreException e ) {
-      LogChannel.GENERAL.logError( "Unable to open local Pentaho meta store from [" + MetaStoreConst.getDefaultPentahoMetaStoreLocation() + "]", e );
-      // now replace this with an in memory metastore.
-      //
-      try {
-        MemoryMetaStore memoryStore = new MemoryMetaStore();
-        memoryStore.setName( "Memory metastore" );
-        metaStore.addMetaStore( memoryStore );
-        metaStore.setActiveMetaStoreName( memoryStore.getName() );
-      } catch ( MetaStoreException e2 ) {
-        throw new RuntimeException( "Unable to add a default memory metastore to the delegating store", e );
+    metaStoreSupplier = () -> {
+      IMetaStore metastore = MetaStoreConst.getDefaultMetastoreSupplier().get();
+      if ( metastore != null ) {
+        return metastore;
       }
-    }
+      LogChannel.GENERAL.logError( "Unable to open local Pentaho meta store from [" + MetaStoreConst.getDefaultPentahoMetaStoreLocation() + "]");
+
+      MemoryMetaStore memoryStore = new MemoryMetaStore();
+      memoryStore.setName( "Memory metastore" );
+      return memoryStore;
+    };
     passwordFile = null; // force lookup by server in ~/.kettle or local folder
   }
 
@@ -303,14 +284,6 @@ public class SlaveServerConfig {
       repository = registry.loadClass( RepositoryPluginType.class, repositoryMeta, Repository.class );
       repository.init( repositoryMeta );
       repository.connect( repositoryUsername, repositoryPassword );
-
-      // Add the repository MetaStore to the delegation as well.
-      // Set this one as active with the highest priority
-      //
-      if ( repository.getMetaStore() != null ) {
-        metaStore.addMetaStore( 0, repository.getMetaStore() );
-        metaStore.setActiveMetaStoreName( repository.getMetaStore().getName() );
-      }
 
       LogChannel.GENERAL.logBasic( "Connected to repository '" + repository.getName() + "'" );
 
@@ -632,12 +605,22 @@ public class SlaveServerConfig {
     this.repositoryPassword = repositoryPassword;
   }
 
-  public DelegatingMetaStore getMetaStore() {
-    return metaStore;
+  public IMetaStore getMetaStore() {
+    return metaStoreSupplier == null ? null : metaStoreSupplier.get();
   }
 
-  public void setMetaStore( DelegatingMetaStore metaStore ) {
-    this.metaStore = metaStore;
+  public Supplier<IMetaStore> getMetastoreSupplier() {
+    return metaStoreSupplier;
+  }
+
+  /**
+   * Should generally be used only for tests.
+   *
+   *
+   * @param metastoreSupplier
+   */
+  public void setMetastoreSupplier( Supplier<IMetaStore> metastoreSupplier ) {
+    this.metaStoreSupplier = metastoreSupplier;
   }
 
   public String getPasswordFile() {

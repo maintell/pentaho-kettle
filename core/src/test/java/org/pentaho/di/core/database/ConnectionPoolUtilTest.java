@@ -1,62 +1,52 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.di.core.KettleClientEnvironment;
 import org.pentaho.di.core.exception.KettleDatabaseException;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannelInterface;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.anyString;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * User: Dzmitry Stsiapanau Date: 12/11/13 Time: 1:59 PM
@@ -65,8 +55,11 @@ import static org.mockito.Mockito.never;
 public class ConnectionPoolUtilTest implements Driver {
   private static final String PASSWORD = "manager";
   private static final String ENCR_PASSWORD = "Encrypted 2be98afc86aa7f2e4cb14af7edf95aac8";
-  @Mock( answer = Answers.RETURNS_MOCKS ) LogChannelInterface logChannelInterface;
-  @Mock( answer = Answers.RETURNS_MOCKS ) DatabaseMeta dbMeta;
+
+  @Mock
+  LogChannelInterface logChannelInterface;
+  @Mock
+  DatabaseMeta dbMeta;
   @Mock BasicDataSource dataSource;
   final int INITIAL_SIZE = 1;
   final int MAX_SIZE = 10;
@@ -104,8 +97,8 @@ public class ConnectionPoolUtilTest implements Driver {
     when( dbMeta.getPassword() ).thenReturn( PASSWORD );
     when( dbMeta.getInitialPoolSize() ).thenReturn( 1 );
     when( dbMeta.getMaximumPoolSize() ).thenReturn( 2 );
-    Connection conn = ConnectionPoolUtil.getConnection( logChannelInterface, dbMeta, "" );
-    assertTrue( conn != null );
+    DataSource conn = ConnectionPoolUtil.getDataSource( logChannelInterface, dbMeta, "" );
+    assertNotNull( conn );
   }
 
   @Test
@@ -114,8 +107,8 @@ public class ConnectionPoolUtilTest implements Driver {
     when( dbMeta.getPassword() ).thenReturn( ENCR_PASSWORD );
     when( dbMeta.getInitialPoolSize() ).thenReturn( 1 );
     when( dbMeta.getMaximumPoolSize() ).thenReturn( 2 );
-    Connection conn = ConnectionPoolUtil.getConnection( logChannelInterface, dbMeta, "" );
-    assertTrue( conn != null );
+    DataSource conn = ConnectionPoolUtil.getDataSource( logChannelInterface, dbMeta, "" );
+    assertNotNull( conn );
   }
 
   @Test
@@ -128,35 +121,34 @@ public class ConnectionPoolUtilTest implements Driver {
     when( dbMeta.getMaximumPoolSizeString() ).thenReturn( "MAXIMUM_POOL_SIZE" );
     when( dbMeta.environmentSubstitute( "MAXIMUM_POOL_SIZE" ) ).thenReturn( "10" );
     when( dbMeta.getMaximumPoolSize() ).thenCallRealMethod();
-    Connection conn = ConnectionPoolUtil.getConnection( logChannelInterface, dbMeta, "" );
-    assertTrue( conn != null );
+    DataSource conn = ConnectionPoolUtil.getDataSource( logChannelInterface, dbMeta, "" );
+    assertNotNull( conn );
   }
 
   @Test
-  public void testGetConnectionName() throws Exception {
+  public void testGetConnectionName() {
     when( dbMeta.getName() ).thenReturn( "CP2" );
     String connectionName = ConnectionPoolUtil.buildPoolName( dbMeta, "" );
-    assertTrue( connectionName.equals( "CP2" ) );
-    assertFalse( connectionName.equals( "CP2pentaho" ) );
+    assertEquals( "CP2", connectionName );
+    assertNotEquals( "CP2pentaho", connectionName );
 
     when( dbMeta.getDatabaseName() ).thenReturn( "pentaho" );
     connectionName = ConnectionPoolUtil.buildPoolName( dbMeta, "" );
-    assertTrue( connectionName.equals( "CP2pentaho" ) );
-    assertFalse( connectionName.equals( "CP2pentaholocal" ) );
+    assertEquals( "CP2pentaho", connectionName );
+    assertNotEquals( "CP2pentaholocal", connectionName );
 
     when( dbMeta.getHostname() ).thenReturn( "local" );
     connectionName = ConnectionPoolUtil.buildPoolName( dbMeta, "" );
-    assertTrue( connectionName.equals( "CP2pentaholocal" ) );
-    assertFalse( connectionName.equals( "CP2pentaholocal3306" ) );
+    assertEquals( "CP2pentaholocal", connectionName );
+    assertNotEquals( "CP2pentaholocal3306", connectionName );
 
     when( dbMeta.getDatabasePortNumberString() ).thenReturn( "3306" );
     connectionName = ConnectionPoolUtil.buildPoolName( dbMeta, "" );
-    assertTrue( connectionName.equals( "CP2pentaholocal3306" ) );
+    assertEquals( "CP2pentaholocal3306", connectionName );
   }
 
   @Test
   public void testGetDataSourceName() {
-    ConnectionPoolUtil connectionPoolUtil = new ConnectionPoolUtil();
     DatabaseMeta dbMetaMock = mock( DatabaseMeta.class );
     String dbMetaName = UUID.randomUUID().toString();
     String dbMetaUsername = UUID.randomUUID().toString();
@@ -185,7 +177,7 @@ public class ConnectionPoolUtilTest implements Driver {
 
     String dataSourceNameExpected = dbMetaName + dbMetaUsername + dbMetaPassword + dbMetaSchema + dbMetaDatabase +
       dbMetaHostname + dbMetaPort + partitionId;
-    String dataSourceName = connectionPoolUtil.getDataSourceName( dbMetaMock, partitionId );
+    String dataSourceName = ConnectionPoolUtil.getDataSourceName( dbMetaMock, partitionId );
 
     assertEquals( dataSourceNameExpected, dataSourceName );
   }
@@ -201,12 +193,11 @@ public class ConnectionPoolUtilTest implements Driver {
       dataSource, dbMeta, "partId", INITIAL_SIZE, MAX_SIZE );
 
     verify( dataSource ).setDriverClassName( "org.pentaho.di.core.database.ConnectionPoolUtilTest" );
-    verify( dataSource ).setDriverClassLoader( any( ClassLoader.class ) );
     verify( dataSource ).setUrl( "jdbc:foo://server:111" );
     verify( dataSource ).addConnectionProperty( "user", "suzy" );
     verify( dataSource ).addConnectionProperty( "password", "password" );
     verify( dataSource ).setInitialSize( INITIAL_SIZE );
-    verify( dataSource ).setMaxActive( MAX_SIZE );
+    verify( dataSource ).setMaxTotal( MAX_SIZE );
   }
 
   @Test
@@ -220,16 +211,21 @@ public class ConnectionPoolUtilTest implements Driver {
   @Override
   public Connection connect( String url, Properties info ) throws SQLException {
     String password = info.getProperty( "password" );
-    return PASSWORD.equals( password ) ? mock( Connection.class ) : null;
+    if ( PASSWORD.equals( password )) {
+      Connection mockConnection = mock( Connection.class );
+      when( mockConnection.isValid( anyInt() ) ).thenReturn( true );
+      return mockConnection;
+    }
+    return null;
   }
 
   @Override
-  public boolean acceptsURL( String url ) throws SQLException {
+  public boolean acceptsURL( String url ) {
     return true;
   }
 
   @Override
-  public DriverPropertyInfo[] getPropertyInfo( String url, Properties info ) throws SQLException {
+  public DriverPropertyInfo[] getPropertyInfo( String url, Properties info ) {
     return null;
   }
 
@@ -249,7 +245,7 @@ public class ConnectionPoolUtilTest implements Driver {
   }
 
   @Override
-  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+  public Logger getParentLogger() {
     return null;
   }
 }

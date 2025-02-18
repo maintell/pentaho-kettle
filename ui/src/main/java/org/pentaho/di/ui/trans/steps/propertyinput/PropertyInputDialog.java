@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.trans.steps.propertyinput;
 
@@ -1655,16 +1646,16 @@ public class PropertyInputDialog extends BaseStepDialog implements StepDialogInt
           String[] sectionsList = new String[wini.keySet().size()];
           int i = 0;
           while ( itSection.hasNext() ) {
-            sectionsList[i] = itSection.next().toString();
+            sectionsList[i] = itSection.next();
             i++;
           }
           Const.sortStrings( sectionsList );
           EnterSelectionDialog dialog = new EnterSelectionDialog( shell, sectionsList,
             BaseMessages.getString( PKG, "PropertyInputDialog.Dialog.SelectASection.Title" ),
             BaseMessages.getString( PKG, "PropertyInputDialog.Dialog.SelectASection.Message" ) );
-          String sectionname = dialog.open();
-          if ( sectionname != null ) {
-            wSection.setText( sectionname );
+          String sectionName = dialog.open();
+          if ( sectionName != null ) {
+            wSection.setText( sectionName );
           }
         } else {
           // The file not exists !

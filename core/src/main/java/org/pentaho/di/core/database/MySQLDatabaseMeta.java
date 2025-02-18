@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -62,7 +53,7 @@ public class MySQLDatabaseMeta extends BaseDatabaseMeta implements DatabaseInter
   }
 
   @Override public int[] getAccessTypeList() {
-    return new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_ODBC, DatabaseMeta.TYPE_ACCESS_JNDI };
+    return new int[] { DatabaseMeta.TYPE_ACCESS_NATIVE, DatabaseMeta.TYPE_ACCESS_JNDI };
   }
 
   @Override public int getDefaultDatabasePort() {
@@ -115,13 +106,7 @@ public class MySQLDatabaseMeta extends BaseDatabaseMeta implements DatabaseInter
   * org.gjt.mm.mysql.Driver to com.mysql.cj.jdbc.Driver
   * */
   @Override public String getDriverClass() {
-    String driver = null;
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      driver = "sun.jdbc.odbc.JdbcOdbcDriver";
-    } else {
-      driver = determineDriverClass();
-    }
-    return driver;
+    return determineDriverClass();
   }
 
   private static String determineDriverClass() {
@@ -130,21 +115,17 @@ public class MySQLDatabaseMeta extends BaseDatabaseMeta implements DatabaseInter
         driverClass = "com.mysql.cj.jdbc.Driver";
         Class.forName( driverClass );
       } catch ( ClassNotFoundException e ) {
-        driverClass = "org.gjt.mm.mysql.Driver";
+        driverClass = "com.mysql.jdbc.Driver";
       }
     }
     return driverClass;
   }
 
   @Override public String getURL( String hostname, String port, String databaseName ) {
-    if ( getAccessType() == DatabaseMeta.TYPE_ACCESS_ODBC ) {
-      return "jdbc:odbc:" + databaseName;
+    if ( Utils.isEmpty( port ) ) {
+      return "jdbc:mysql://" + hostname + "/" + databaseName;
     } else {
-      if ( Utils.isEmpty( port ) ) {
-        return "jdbc:mysql://" + hostname + "/" + databaseName;
-      } else {
-        return "jdbc:mysql://" + hostname + ":" + port + "/" + databaseName;
-      }
+      return "jdbc:mysql://" + hostname + ":" + port + "/" + databaseName;
     }
   }
 

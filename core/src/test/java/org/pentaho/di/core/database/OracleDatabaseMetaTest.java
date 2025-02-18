@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2022 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.core.database;
 
@@ -54,15 +45,13 @@ import org.pentaho.di.junit.rules.RestorePDIEnvironment;
 
 public class OracleDatabaseMetaTest {
   @ClassRule public static RestorePDIEnvironment env = new RestorePDIEnvironment();
-  private OracleDatabaseMeta nativeMeta, odbcMeta, ociMeta;
+  private OracleDatabaseMeta nativeMeta, ociMeta;
 
   @Before
   public void setupOnce() throws Exception {
     nativeMeta = new OracleDatabaseMeta();
-    odbcMeta = new OracleDatabaseMeta();
     ociMeta = new OracleDatabaseMeta();
     nativeMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_NATIVE );
-    odbcMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_ODBC );
     ociMeta.setAccessType( DatabaseMeta.TYPE_ACCESS_OCI );
     //nativeMeta.setSupportsTimestampDataType( true );
     KettleClientEnvironment.init();
@@ -74,12 +63,9 @@ public class OracleDatabaseMetaTest {
     // according to the features of the DB as we know them
 
     assertEquals( 1521, nativeMeta.getDefaultDatabasePort() );
-    assertEquals( -1, odbcMeta.getDefaultDatabasePort() );
     assertFalse( nativeMeta.supportsAutoInc() );
     assertFalse( nativeMeta.needsToLockAllTables() );
     assertEquals( "oracle.jdbc.driver.OracleDriver", nativeMeta.getDriverClass() );
-    assertEquals( "sun.jdbc.odbc.JdbcOdbcDriver", odbcMeta.getDriverClass() );
-    assertEquals( "jdbc:odbc:FOO", odbcMeta.getURL( null, null, "FOO" ) );
     assertEquals( "jdbc:oracle:thin:@FOO:1024:BAR", nativeMeta.getURL( "FOO", "1024", "BAR" ) );
     assertEquals( "jdbc:oracle:thin:@FOO:11:BAR", nativeMeta.getURL( "FOO", "11", ":BAR" ) );
     assertEquals( "jdbc:oracle:thin:@BAR:65534/FOO", nativeMeta.getURL( "BAR", "65534", "/FOO" ) );

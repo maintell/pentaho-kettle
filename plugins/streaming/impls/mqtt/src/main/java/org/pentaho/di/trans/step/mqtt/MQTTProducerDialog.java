@@ -1,24 +1,15 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2018 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.step.mqtt;
 
@@ -71,7 +62,7 @@ import static org.pentaho.di.ui.core.WidgetUtils.formDataBelow;
 
 @SuppressWarnings ( "unused" )
 @PluginDialog ( id = "MQTTProducer", image = "MQTTProducer.svg", pluginType = PluginDialog.PluginType.STEP,
-  documentationUrl = "Products/MQTT_Producer" )
+  documentationUrl = "mk-95pdia003/pdi-transformation-steps/mqtt-producer" )
 public class MQTTProducerDialog extends BaseStepDialog implements StepDialogInterface {
   private static final int SHELL_MIN_WIDTH = 527;
   private static final int SHELL_MIN_HEIGHT = 650;

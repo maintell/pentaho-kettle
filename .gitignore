@@ -2,11 +2,13 @@
 .classpath
 .settings
 build
+logs
 target
 release.properties
 pom.xml.releaseBackup
 *.iml
 .idea
+.vscode
 bin
 *.class
 *.jar
@@ -14,6 +16,8 @@ bin
 *.ear
 .DS_Store
 routes.yml
+logs
 
 rebel.xml
 rebel-remote.xml
+.java-version

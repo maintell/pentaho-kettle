@@ -1,30 +1,22 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2021 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.trans.steps.httppost;
 
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.vfs2.FileContent;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -53,6 +45,7 @@ import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.util.HttpClientManager;
 import org.pentaho.di.core.util.StringUtil;
 import org.pentaho.di.core.util.Utils;
+import org.pentaho.di.core.vfs.KettleVFS;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
@@ -62,8 +55,7 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -120,7 +112,7 @@ public class HTTPPOST extends BaseStep implements StepInterface {
       data.realUrl = data.inputRowMeta.getString( rowData, data.indexOfUrlField );
     }
     // Prepare HTTP POST
-    FileInputStream fis = null;
+    InputStream fis = null;
     try {
       if ( isDetailed() ) {
         logDetailed( BaseMessages.getString( PKG, "HTTPPOST.Log.ConnectingToURL", data.realUrl ) );
@@ -200,9 +192,9 @@ public class HTTPPOST extends BaseStep implements StepInterface {
         // content length is explicitly specified
 
         if ( meta.isPostAFile() ) {
-          File input = new File( tmp );
-          fis = new FileInputStream( input );
-          post.setEntity( new InputStreamEntity( fis, input.length() ) );
+          FileContent filecontent = KettleVFS.getInstance( getTransMeta().getBowl() ).getFileObject( tmp ).getContent();
+          fis = filecontent.getInputStream();
+          post.setEntity( new InputStreamEntity( fis, filecontent.getSize() ) );
         } else {
           byte[] bytes;
           if ( ( data.realEncoding != null ) && ( data.realEncoding.length() > 0 ) ) {

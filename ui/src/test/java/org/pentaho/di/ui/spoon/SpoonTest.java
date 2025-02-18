@@ -1,33 +1,25 @@
 /*! ******************************************************************************
  *
- * Pentaho Data Integration
+ * Pentaho
  *
- * Copyright (C) 2002-2019 by Hitachi Vantara : http://www.pentaho.com
+ * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
  *
- *******************************************************************************
+ * Use of this software is governed by the Business Source License included
+ * in the LICENSE.TXT file.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Change Date: 2029-07-20
  ******************************************************************************/
+
 
 package org.pentaho.di.ui.spoon;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static junit.framework.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
@@ -72,10 +64,8 @@ import org.pentaho.di.ui.core.FileDialogOperation;
 import org.pentaho.di.ui.core.PropsUI;
 import org.pentaho.di.ui.spoon.delegates.SpoonDelegates;
 import org.pentaho.di.ui.spoon.delegates.SpoonTabsDelegate;
-import org.pentaho.metastore.stores.delegate.DelegatingMetaStore;
 import org.pentaho.xul.swt.tab.TabItem;
 import org.pentaho.xul.swt.tab.TabSet;
-import org.powermock.api.mockito.PowerMockito;
 
 /**
  * Spoon tests
@@ -98,11 +88,13 @@ public class SpoonTest {
 
   @Before
   public void setUp() throws KettleException {
-    doCallRealMethod().when( spoon ).copySelected( any( TransMeta.class ), anyListOf( StepMeta.class ),
-        anyListOf( NotePadMeta.class ) );
+    doCallRealMethod().when( spoon ).copySelected( any( TransMeta.class ), anyList(),
+      anyList() );
     doCallRealMethod().when( spoon ).pasteXML( any( TransMeta.class ), anyString(), any( Point.class ) );
     doCallRealMethod().when( spoon ).delHop( any( TransMeta.class ), any( TransHopMeta.class ) );
     when( spoon.getLog() ).thenReturn( log );
+
+    spoon.metaStoreSupplier = () -> null;
 
     KettleEnvironment.init();
   }
@@ -153,7 +145,7 @@ public class SpoonTest {
   }
 
   /**
-   * test copy one step with error handling 
+   * test copy one step with error handling
    * @see http://jira.pentaho.com/browse/PDI-13358
    * 
    * @throws KettleException
@@ -441,7 +433,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveToRepository( any( AbstractMeta.class ) );
     assertTrue( spoon.saveToFile( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).renameTabs();
     verify( spoon ).enableMenus();
@@ -458,7 +450,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveToFile( mockJobMeta, false );
     assertTrue( spoon.saveToFile( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).renameTabs();
     verify( spoon ).enableMenus();
@@ -476,7 +468,7 @@ public class SpoonTest {
     doReturn( true ).when( spoon ).saveAsNew( mockJobMeta, false, FileDialogOperation.SAVE_AS );
     assertTrue( spoon.saveToFile( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).renameTabs();
     verify( spoon ).enableMenus();
@@ -494,7 +486,7 @@ public class SpoonTest {
     doReturn( true ).when( spoon ).saveFileAs( mockJobMeta );
     assertFalse( spoon.saveToFile( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     // repo is null, meta filename is null and meta.canSave() returns false, therefore none of the save methods are
     // called on the meta and the meta isn't actually saved - tabs should not be renamed
@@ -521,7 +513,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveToRepository( any( AbstractMeta.class ) );
     assertTrue( spoon.saveToFile( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).renameTabs();
     verify( spoon ).enableMenus();
@@ -538,7 +530,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockJobMeta );
     assertTrue( spoon.saveFileAs( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( mockJobMeta ).setObjectId( null );
     verify( mockJobMeta ).setFilename( null );
@@ -558,7 +550,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockJobMeta );
     assertFalse( spoon.saveFileAs( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( mockJobMeta ).setObjectId( null );
     verify( mockJobMeta ).setFilename( null );
@@ -577,7 +569,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockJobMeta );
     assertTrue( spoon.saveFileAs( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).findTabMapEntry( mockJobMeta );
     verify( spoon ).enableMenus();
@@ -594,7 +586,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockJobMeta );
     assertFalse( spoon.saveFileAs( mockJobMeta ) );
     verify( mockJobMeta ).setRepository( spoon.rep );
-    verify( mockJobMeta ).setMetaStore( spoon.metaStore );
+    verify( mockJobMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon ).enableMenus();
   }
@@ -610,7 +602,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockTransMeta );
     assertTrue( spoon.saveFileAs( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( mockTransMeta ).setObjectId( null );
     verify( mockTransMeta ).setFilename( null );
@@ -630,7 +622,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockTransMeta );
     assertFalse( spoon.saveFileAs( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( mockTransMeta ).setObjectId( null );
     verify( mockTransMeta ).setFilename( null );
@@ -649,7 +641,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockTransMeta );
     assertTrue( spoon.saveFileAs( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon.delegates.tabs ).findTabMapEntry( mockTransMeta );
     verify( spoon ).enableMenus();
@@ -666,7 +658,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveFileAs( mockTransMeta );
     assertFalse( spoon.saveFileAs( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( spoon ).enableMenus();
   }
@@ -682,7 +674,7 @@ public class SpoonTest {
     doCallRealMethod().when( spoon ).saveToFile( mockTransMeta, false );
     assertTrue( spoon.saveToFile( mockTransMeta ) );
     verify( mockTransMeta ).setRepository( spoon.rep );
-    verify( mockTransMeta ).setMetaStore( spoon.metaStore );
+    verify( mockTransMeta ).setMetaStore( spoon.getMetaStore() );
 
     verify( mockTransMeta, never() ).setFilename( null );
 
@@ -745,10 +737,9 @@ public class SpoonTest {
     TabItem mockTabItem = mock( TabItem.class );
 
     Repository mockRepository = mock( Repository.class );
-    DelegatingMetaStore mockMetaStore = mock( DelegatingMetaStore.class );
 
     spoon.rep = repIsNull ? null : mockRepository;
-    spoon.metaStore = mockMetaStore;
+    spoon.metaStoreSupplier = () -> null;
     spoon.delegates = mock( SpoonDelegates.class );
     spoon.delegates.tabs = mock( SpoonTabsDelegate.class );
     spoon.props = mock( PropsUI.class );
@@ -781,6 +772,7 @@ public class SpoonTest {
     doReturn( saveXMLFile ).when( spoon ).save( metaData, filename, false );
 
     doReturn( fileType ).when( metaData ).getFileType();
+	doReturn( mockRepository ).when( spoon ).getRepository();
   }
 
   @Test
